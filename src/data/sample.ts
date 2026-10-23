@@ -21,9 +21,10 @@ export interface DailyRow {
   impressions: number
   requests: number
   matched: number
-  crashRate: number
-  anrRate: number
-  rating: number
+  // Mağaza bağlı değilse ya da o gün veri yoksa null
+  crashRate: number | null
+  anrRate: number | null
+  rating: number | null
 }
 
 export const sampleGames: Game[] = [
@@ -194,7 +195,7 @@ export const admobAdvice = [
 export interface Alert {
   id: number
   level: 'critical' | 'warning' | 'info'
-  source: 'play' | 'app_store' | 'admob'
+  source: 'play' | 'app_store' | 'admob' | 'system'
   gameId: string | null
   title: string
   body: string
@@ -338,8 +339,10 @@ export interface Review {
   rating: number
   body: string
   date: string
-  category: ReviewCategory
+  category: ReviewCategory | null
   version: string
+  title?: string | null
+  reply?: string | null
 }
 
 export const reviews: Review[] = [
@@ -380,7 +383,17 @@ export function sampleReplyDraft(r: Review) {
 
 // ---------- Build ve inceleme durumu ----------
 
-export const builds = [
+export interface Build {
+  gameId: string
+  platform: Platform
+  version: string
+  build: string
+  status: string
+  review: string
+  date: string
+}
+
+export const builds: Build[] = [
   { gameId: 'salgin', platform: 'android' as Platform, version: '1.4.1', build: '57', status: 'Yayında', review: 'Onaylandı', date: isoDay(8) },
   { gameId: 'salgin', platform: 'ios' as Platform, version: '1.4.2', build: '61', status: 'Reddedildi', review: 'Reddedildi', date: isoDay(1) },
   { gameId: 'tasinma-kaosu', platform: 'android' as Platform, version: '2.3.0', build: '112', status: 'Yayında', review: 'Onaylandı', date: isoDay(6) },

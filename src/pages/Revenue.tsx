@@ -6,6 +6,7 @@ import { useData } from '../lib/data'
 import { byDay, periodRows, totals } from '../lib/metrics'
 import { change, dayLabel, int, money, money2, pct, short } from '../lib/format'
 import { ChartTip, GameChip, SampleBanner, Seg, StatCard } from '../components/ui'
+import Needs from '../components/Needs'
 
 type View = 'game' | 'country' | 'format' | 'unit'
 const formatColors = ['#0075ff', '#2cd9ff', '#01b574', '#9f7aea']
@@ -17,7 +18,7 @@ const fillBad = (v: number) => v < 85
 export default function Revenue() {
   const [view, setView] = useState<View>('game')
   const [game, setGame] = useState('all')
-  const { daily, games, adUnits, countries, live } = useData()
+  const { daily, games, adUnits, countries, demo, connected } = useData()
 
   const units = adUnits.filter((u) => game === 'all' || u.gameId === game)
   const { cur, prev } = useMemo(() => periodRows(daily, 30, (r) => game === 'all' || r.gameId === game), [daily, game])
@@ -37,9 +38,11 @@ export default function Revenue() {
   }, [units])
   const maxCountry = Math.max(1, ...countries.map((c) => c.revenue))
 
+  if (!demo && !connected.admob) return <Needs source="admob" />
+
   return (
     <>
-      {!live.admob && <SampleBanner>Örnek AdMob verileri gösteriliyor. AdMob bağlanınca gerçek veriler gelecek.</SampleBanner>}
+      <SampleBanner />
 
       <div className="flex between wrap">
         <Seg<View> value={view} onChange={setView} options={[
@@ -162,12 +165,12 @@ export default function Revenue() {
         </div>
       </section>
 
-      <section className="card">
+      {!demo && <Needs source="claude" title="Claude'un AdMob önerileri (mediation, yerleşim, sıklık) Claude bağlanınca gelecek" />}
+      {demo && <section className="card">
         <div className="card-head">
           <div>
             <div className="card-title flex"><Sparkles size={18} color="var(--primary)" /> Claude'un AdMob önerileri</div>
             <div className="card-sub">Mediation, reklam yerleşimi ve sıklık. Hiçbiri otomatik uygulanmaz.</div>
-            {live.admob && <span className="badge b-warning" style={{ marginTop: 8 }}>Örnek öneriler · Claude 4. aşamada bağlanacak</span>}
           </div>
         </div>
         <div className="grid g-3">
@@ -179,7 +182,7 @@ export default function Revenue() {
             </div>
           ))}
         </div>
-      </section>
+      </section>}
     </>
   )
 }

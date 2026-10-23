@@ -2,18 +2,21 @@ import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Area, AreaChart, CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { ArrowLeft, Download, Wallet, Star, Bug, Package } from 'lucide-react'
-import { builds, gameById, reviews, type Platform } from '../data/sample'
+import { gameById, type Platform } from '../data/sample'
+import Needs from '../components/Needs'
 import { useData } from '../lib/data'
 import { byDay, limits, periodRows, totals, type Range } from '../lib/metrics'
-import { change, dayLabel, int, money, money2, pct, platformLabel, short } from '../lib/format'
+import { change, dayLabel, int, money, money2, orDash, pct, platformLabel, short } from '../lib/format'
 import { ChartTip, GameLogo, RangePicker, SampleBanner, Seg, StatCard, Stars } from '../components/ui'
 
 export function GamesList() {
-  const { daily, games, live, storeMissing } = useData()
+  const { daily, games, demo, hasStore, loading } = useData()
   const { cur, prev } = useMemo(() => periodRows(daily, 30), [daily])
+  const showStore = demo || hasStore
   return (
     <>
-      {!live.admob && <SampleBanner />}
+      <SampleBanner />
+      {!loading && games.length === 0 && <div className="card empty">Henüz oyun yok. AdMob, Google Play ya da App Store bağlanınca oyunların burada kendiliğinden görünür.</div>}
       <div className="grid g-3">
         {games.map((g) => {
           const t = totals(cur.filter((r) => r.gameId === g.id))
@@ -49,8 +52,8 @@ export function GamesList() {
               </div>
               <div className="grid g-3" style={{ gap: 10 }}>
                 <div><div className="muted small">30 gün gelir</div><b>{money(t.revenue)}</b> <span className={d >= 0 ? 'up small' : 'down small'}>{d >= 0 ? '+' : ''}{d.toFixed(0)}%</span></div>
-                <div><div className="muted small">İndirme</div><b>{storeMissing ? '—' : short(t.downloads)}</b></div>
-                <div><div className="muted small">Çökme</div><b className={!storeMissing && t.crashRate > limits.crash ? 'bad' : ''}>{storeMissing ? '—' : pct(t.crashRate, 2)}</b></div>
+                <div><div className="muted small">İndirme</div><b>{showStore ? short(t.downloads) : '—'}</b></div>
+                <div><div className="muted small">Çökme</div><b className={t.crashRate != null && t.crashRate > limits.crash ? 'bad' : ''}>{orDash(t.crashRate, (v) => pct(v, 2))}</b></div>
               </div>
             </Link>
           )
@@ -65,7 +68,7 @@ export function GameDetail() {
   const game = gameById(id)
   const [range, setRange] = useState<Range>(30)
   const [platform, setPlatform] = useState<'all' | Platform>('all')
-  const { daily, live, storeMissing } = useData()
+  const { daily, demo, connected, hasStore, reviews, builds } = useData()
 
   const filter = useMemo(() => (r: { gameId: string; platform: Platform }) => r.gameId === id && (platform === 'all' || r.platform === platform), [id, platform])
   const { cur, prev } = useMemo(() => periodRows(daily, range, filter), [daily, range, filter])
@@ -76,15 +79,16 @@ export function GameDetail() {
   const t = totals(cur)
   const p = totals(prev)
   const platformRows = game.platforms.map((pl) => ({ pl, ...totals(cur.filter((r) => r.platform === pl)) }))
-  // Yorum ve build verileri 3. aşamada gelecek; o zamana kadar sadece demo/örnek modda gösterilir
-  const gameReviews = live.admob ? [] : reviews.filter((r) => r.gameId === id && (platform === 'all' || r.platform === platform)).slice(0, 5)
-  const gameBuilds = live.admob ? [] : builds.filter((b) => b.gameId === id)
-  const na = (v: string) => (storeMissing ? '—' : v)
+  const gameReviews = reviews.filter((r) => r.gameId === id && (platform === 'all' || r.platform === platform)).slice(0, 5)
+  const gameBuilds = builds.filter((b) => b.gameId === id)
+  const showStore = demo || hasStore
+  const na = (v: string) => (showStore ? v : '—')
+  const p2 = (v: number) => pct(v, 2)
+  const hasVitals = chart.some((d) => d.crash != null || d.anr != null)
 
   return (
     <>
-      {!live.admob && <SampleBanner />}
-      {storeMissing && <SampleBanner>Reklam verileri gerçek. İndirme, puan, çökme, yorum ve build bilgileri 3. aşamada gelecek.</SampleBanner>}
+      <SampleBanner />
       <div className="flex between wrap">
         <div className="flex">
           <Link to="/oyunlar" className="btn" aria-label="Geri"><ArrowLeft size={14} /></Link>
@@ -104,9 +108,9 @@ export function GameDetail() {
 
       <section className="grid g-4">
         <StatCard label="Gelir" value={t.revenue} format={money} delta={change(t.revenue, p.revenue)} icon={<Wallet size={20} />} />
-        <StatCard label="İndirme" value={t.downloads} format={(v) => na(int(v))} delta={storeMissing ? undefined : change(t.downloads, p.downloads)} icon={<Download size={20} />} />
-        <StatCard label="Puan" value={t.rating} format={(v) => na(v.toFixed(2).replace('.', ','))} icon={<Star size={20} />} color="#ffa53d" />
-        <StatCard label="Çökme oranı" value={t.crashRate} format={(v) => na(pct(v, 2))} delta={storeMissing ? undefined : change(t.crashRate, p.crashRate)} invertDelta icon={<Bug size={20} />} color="#ff4d5e" />
+        <StatCard label="İndirme" value={showStore ? t.downloads : null} format={int} delta={change(t.downloads, p.downloads)} icon={<Download size={20} />} />
+        <StatCard label="Puan" value={t.rating} format={(v) => v.toFixed(2).replace('.', ',')} icon={<Star size={20} />} color="#ffa53d" />
+        <StatCard label="Çökme oranı" value={t.crashRate} format={p2} delta={p.crashRate != null && t.crashRate != null ? change(t.crashRate, p.crashRate) : undefined} invertDelta icon={<Bug size={20} />} color="#ff4d5e" />
       </section>
 
       <section className="card">
@@ -121,11 +125,11 @@ export function GameDetail() {
                   <td className="num">{na(int(r.downloads))}</td>
                   <td className="num">{money(r.adRevenue)}</td>
                   <td className="num">{na(money(r.iapRevenue))}</td>
-                  <td className="num">{money2(r.ecpm)}</td>
-                  <td className={`num ${r.fillRate < 85 ? 'bad-cell' : ''}`}>{pct(r.fillRate)}</td>
-                  <td className={`num ${!storeMissing && r.rating < limits.rating ? 'bad-cell' : ''}`}>{na(r.rating.toFixed(2).replace('.', ','))}</td>
-                  <td className={`num ${!storeMissing && r.crashRate > limits.crash ? 'bad-cell' : ''}`}>{na(pct(r.crashRate, 2))}</td>
-                  <td className="num">{r.pl === 'ios' ? '–' : na(pct(r.anrRate, 2))}</td>
+                  <td className="num">{r.impressions ? money2(r.ecpm) : '—'}</td>
+                  <td className={`num ${r.requests && r.fillRate < 85 ? 'bad-cell' : ''}`}>{r.requests ? pct(r.fillRate) : '—'}</td>
+                  <td className={`num ${r.rating != null && r.rating < limits.rating ? 'bad-cell' : ''}`}>{orDash(r.rating, (v) => v.toFixed(2).replace('.', ','))}</td>
+                  <td className={`num ${r.crashRate != null && r.crashRate > limits.crash ? 'bad-cell' : ''}`}>{orDash(r.crashRate, p2)}</td>
+                  <td className="num">{r.pl === 'ios' ? '–' : orDash(r.anrRate, p2)}</td>
                 </tr>
               ))}
             </tbody>
@@ -148,7 +152,7 @@ export function GameDetail() {
                 <YAxis tick={{ fill: '#a0aec0', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => '$' + short(v)} />
                 <Tooltip content={<ChartTip fmt={money2} />} />
                 <Area type="monotone" dataKey="ad" name="Reklam" stroke={game.color} strokeWidth={2.5} fill="url(#gd1)" />
-                {!storeMissing && <Area type="monotone" dataKey="iap" name="Uygulama içi" stroke="#2cd9ff" strokeWidth={2} fill="transparent" />}
+                {showStore && <Area type="monotone" dataKey="iap" name="Uygulama içi" stroke="#2cd9ff" strokeWidth={2} fill="transparent" />}
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -157,8 +161,8 @@ export function GameDetail() {
         <div className="card">
           <div className="card-title">Çökme ve ANR trendi</div>
           <div className="card-sub" style={{ marginBottom: 14 }}>Kesikli çizgi: Google'ın "kötü davranış" eşiği (%{String(limits.crash).replace('.', ',')})</div>
-          {storeMissing ? (
-            <div className="empty">Google Play ve App Store bağlanınca (3. aşama) burada görünecek.</div>
+          {!hasVitals ? (
+            <div className="empty">{connected.google_play || demo ? 'Henüz çökme verisi yok. Google bu veriyi 1-2 gün geriden verir.' : 'Google Play bağlanınca burada görünecek.'}</div>
           ) : (
           <div style={{ height: 240 }}>
             <ResponsiveContainer>
@@ -189,7 +193,7 @@ export function GameDetail() {
               <p className="small" style={{ lineHeight: 1.55, color: '#dbe4f3' }}>{r.body}</p>
             </div>
           ))}
-          {gameReviews.length === 0 && <div className="empty">{live.admob ? 'Yorumlar 3. aşamada gelecek.' : 'Yorum yok'}</div>}
+          {gameReviews.length === 0 && <div className="empty">{hasStore || demo ? 'Henüz yorum yok.' : 'Mağazalar bağlanınca yorumlar burada görünecek.'}</div>}
         </div>
 
         <div className="card">
@@ -201,12 +205,19 @@ export function GameDetail() {
                 <b>{platformLabel(b.platform)} · v{b.version}</b> <span className="muted small">(build {b.build})</span>
                 <div className="muted small">{dayLabel(b.date)}</div>
               </div>
-              <span className={`badge ${b.status === 'Reddedildi' ? 'b-critical' : b.status === 'İncelemede' ? 'b-warning' : 'b-ok'}`}>{b.status}</span>
+              <span className={`badge ${/Reddedildi|Geçersiz|Durduruldu/.test(b.status) ? 'b-critical' : /Yayında/.test(b.status) ? 'b-ok' : 'b-warning'}`}>{b.status}</span>
             </div>
           ))}
-          {gameBuilds.length === 0 && <div className="empty">Build durumu 3. aşamada gelecek.</div>}
+          {gameBuilds.length === 0 && <div className="empty">{hasStore || demo ? 'Henüz build bilgisi yok.' : 'Mağazalar bağlanınca build ve inceleme durumu burada görünecek.'}</div>}
         </div>
       </section>
+
+      {!demo && (!connected.google_play || !connected.app_store) && (
+        <section className="grid g-2">
+          {!connected.google_play && game.platforms.includes('android') && <Needs source="google_play" />}
+          {!connected.app_store && game.platforms.includes('ios') && <Needs source="app_store" />}
+        </section>
+      )}
     </>
   )
 }

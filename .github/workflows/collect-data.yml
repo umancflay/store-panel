@@ -1,5 +1,5 @@
 # Zamanlanmış veri toplama işleri.
-# AdMob (2. aşama) çalışıyor. Play ve App Store (3. aşama), Gmail + Claude (4. aşama) sonra eklenecek.
+# AdMob (2. aşama), Google Play ve App Store (3. aşama) çalışıyor. Gmail + Claude (4. aşama) sonra eklenecek.
 # Her çalışma Supabase'deki sync_runs tablosuna kaydedilir.
 name: Veri topla
 
@@ -28,6 +28,12 @@ jobs:
       GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
       GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
       GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
+      GOOGLE_PLAY_SA_JSON: ${{ secrets.GOOGLE_PLAY_SA_JSON }}
+      PLAY_REPORTS_BUCKET: ${{ secrets.PLAY_REPORTS_BUCKET }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+      ASC_VENDOR_NUMBER: ${{ secrets.ASC_VENDOR_NUMBER }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

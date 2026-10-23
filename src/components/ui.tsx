@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { FlaskConical, ArrowUpRight, ArrowDownRight } from 'lucide-react'
 import { gameById } from '../data/sample'
 import { rangeLabels, type Range } from '../lib/metrics'
+import { isDemo } from '../lib/supabase'
 import { platformLabel } from '../lib/format'
 
 // Sayının 0'dan hedefe akarak gelmesi
@@ -26,11 +27,13 @@ export function useCountUp(target: number, ms = 900) {
   return v
 }
 
+// Sadece demo modda görünür; gerçek modda örnek veri hiç gösterilmez
 export function SampleBanner({ children }: { children?: ReactNode }) {
+  if (!isDemo) return null
   return (
     <div className="sample-banner fade-in">
       <FlaskConical size={16} />
-      <span>{children ?? 'Örnek veri gösteriliyor. Gerçek veriler bağlantılar kurulunca gelecek.'}</span>
+      <span>{children ?? 'Demo mod: örnek veriler gösteriliyor.'}</span>
     </div>
   )
 }
@@ -49,21 +52,21 @@ export function Delta({ value, invert = false }: { value: number; invert?: boole
 
 export function StatCard(props: {
   label: string
-  value: number
+  value: number | null
   format: (v: number) => string
   delta?: number
   invertDelta?: boolean
   icon: ReactNode
   color?: string
 }) {
-  const v = useCountUp(props.value)
+  const v = useCountUp(props.value ?? 0)
   return (
     <div className="card stat fade-in">
       <div style={{ minWidth: 0 }}>
         <div className="stat-label">{props.label}</div>
         <div className="stat-value">
-          {props.format(v)}
-          {props.delta !== undefined && <Delta value={props.delta} invert={props.invertDelta} />}
+          {props.value == null ? '—' : props.format(v)}
+          {props.value != null && props.delta !== undefined && <Delta value={props.delta} invert={props.invertDelta} />}
         </div>
       </div>
       <div className="icon-box" style={props.color ? { background: props.color, boxShadow: `0 6px 18px ${props.color}55` } : undefined}>
@@ -172,7 +175,7 @@ export function Stars({ n }: { n: number }) {
 }
 
 export const levelLabel = { critical: 'Kritik', warning: 'Uyarı', info: 'Bilgi' }
-export const sourceLabel = { play: 'Google Play', app_store: 'App Store', admob: 'AdMob' }
+export const sourceLabel = { play: 'Google Play', app_store: 'App Store', admob: 'AdMob', system: 'Sistem' }
 
 export function ChartTip({ active, payload, label, fmt }: { active?: boolean; payload?: { name: string; value: number; color: string }[]; label?: string; fmt: (v: number) => string }) {
   if (!active || !payload?.length) return null

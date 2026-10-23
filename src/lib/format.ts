@@ -29,3 +29,6 @@ export function daysUntil(iso: string) {
 }
 
 export const platformLabel = (p: string) => (p === 'ios' ? 'iOS' : 'Android')
+
+// Değer yoksa (kaynak bağlı değil ya da veri gelmedi) "—"
+export const orDash = (v: number | null | undefined, fmt: (n: number) => string) => (v == null ? '—' : fmt(v))

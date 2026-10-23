@@ -248,6 +248,47 @@ Paneldeki **Ayarlar** sayfasında AdMob'un yanında **Bağlı** yazmalı. Oyunla
 
 ---
 
+## Kurulum (3. aşama): Google Play ve App Store
+
+Panel artık **sadece gerçek veri** gösterir. Bağlı olmayan bir kaynağın yerinde "ne gerekiyor, nasıl bağlanır" kartı çıkar. Aynı rehberler sitedeki **Ayarlar › Bağlantı rehberleri** bölümünde de var.
+
+Önce Supabase'de **SQL Editor › New query**'ye gir, [`supabase/phase3-stores.sql`](supabase/phase3-stores.sql) dosyasını yapıştır ve **Run**'a bas.
+
+### Google Play Console
+
+Bağlanınca gelenler: çökme ve ANR oranı, yorumlar, sürüm durumu, günlük indirme ve puan. Çökme oranı Google'ın eşiğini aşınca otomatik uyarı da oluşur.
+
+1. Google Cloud'da (`store-panel` projesi) **APIs & Services › Library**'ye gir. **Google Play Android Developer API** ve **Google Play Developer Reporting API**'yi bul, ikisini de **Enable** yap.
+2. **IAM & Admin › Service Accounts › Create service account**'a gir. Adı `store-panel-play` olsun. Rol seçmeden **Done** de.
+3. Oluşan servis hesabına tıkla, sonra **Keys › Add key › Create new key › JSON**'a bas. Bir dosya iner. Bu dosya gizlidir, sakla.
+4. **Play Console › Kullanıcılar ve izinler › Yeni kullanıcı davet et**'e gir. E-posta olarak servis hesabının adresini (`…@….iam.gserviceaccount.com`) yaz.
+5. İzinlerde **Uygulama bilgilerini görüntüleme ve toplu raporları indirme** ile **Finansal verileri görüntüleme**'yi seç ve davet et.
+6. **Play Console › Raporları indir › İstatistikler** sayfasında **Cloud Storage URI'sini kopyala**'ya bas. Kopyalanan adres `gs://pubsite_prod_rev_…` ile başlar.
+7. GitHub Secrets'a iki değer ekle:
+   - `GOOGLE_PLAY_SA_JSON`: JSON dosyasını Not Defteri ile aç ve içeriğin tamamını yapıştır.
+   - `PLAY_REPORTS_BUCKET`: 6. adımda kopyaladığın `gs://` adresi.
+
+> Play Console izinlerinin devreye girmesi 24 saate kadar sürebilir.
+
+### App Store Connect
+
+Bağlanınca gelenler: günlük indirme, uygulama içi satın alma geliri (USD'ye çevrilir), yorumlar, sürüm ve inceleme durumu, puan. Bir sürüm reddedilince otomatik uyarı da oluşur.
+
+1. **App Store Connect › Kullanıcılar ve Erişim › Entegrasyonlar › App Store Connect API › Ekip Anahtarları**'na gir. İlk kez giriyorsan önce erişim iste.
+2. **+** ile yeni bir anahtar oluştur. Ad `store-panel`, erişim **Admin** olsun. Panel sadece okur, hiçbir şeyi değiştirmez; satış raporunu okumak için bu yetki gerekiyor.
+3. **API Anahtarını İndir**'e bas. `.p8` dosyası sadece bir kez iner, sakla.
+4. Sayfanın üstündeki **Issuer ID**'yi ve anahtarın satırındaki **Key ID**'yi kopyala.
+5. **Ödemeler ve Finansal Raporlar** sayfasının sol üstünde yazan 8 haneli sayı senin **vendor numaran**.
+6. GitHub Secrets'a dört değer ekle:
+   - `ASC_ISSUER_ID`: 4. adımdaki Issuer ID.
+   - `ASC_KEY_ID`: 4. adımdaki Key ID.
+   - `ASC_VENDOR_NUMBER`: 5. adımdaki vendor numarası.
+   - `ASC_PRIVATE_KEY`: `.p8` dosyasını Not Defteri ile aç ve `BEGIN`/`END` satırları dahil tamamını yapıştır.
+
+Anahtarları girdikten sonra **Actions › Veri topla › Run workflow** ile hemen çalıştırabilirsin.
+
+---
+
 ## Telefonda ana ekrana ekleme
 
 ### Android (Chrome)
@@ -308,10 +349,15 @@ supabase/
   schema.sql    Tablolar + güvenlik kuralları
   admins.sql    Admin e-postaları
   phase2-admob.sql  AdMob özet fonksiyonları
+  phase3-stores.sql Mağaza özet fonksiyonu
   functions/    "Şimdi güncelle" fonksiyonu
 scripts/
   collect.mjs   GitHub Actions'ta çalışan veri toplama betiği
   admob.mjs     AdMob verisini çeker
+  play.mjs      Google Play verisini çeker
+  appstore.mjs  App Store Connect verisini çeker
+  games.mjs     Uygulamaları paneldeki oyunlarla eşleştirir
+  rules.mjs     Çökme/ANR ve reddedilen sürüm uyarıları
   google-token.mjs  Google refresh token üretici (bilgisayarında bir kez çalışır)
 .github/workflows/
   deploy.yml        Siteyi yayınlar

@@ -4,11 +4,14 @@ import { gameById, type Alert } from '../data/sample'
 import { useStore } from '../lib/store'
 import { dateLong, daysUntil } from '../lib/format'
 import { GameLogo, SampleBanner, Seg, levelLabel, sourceLabel } from '../components/ui'
+import { useData } from '../lib/data'
+import Needs from '../components/Needs'
 
 type Filter = 'open' | 'critical' | 'resolved' | 'all'
 
 export default function Alerts() {
   const { alerts } = useStore()
+  const { demo, connected } = useData()
   const [filter, setFilter] = useState<Filter>('open')
   const [source, setSource] = useState<'all' | Alert['source']>('all')
 
@@ -25,7 +28,7 @@ export default function Alerts() {
 
   return (
     <>
-      <SampleBanner>Örnek uyarılar gösteriliyor. Gerçek uyarılar 4. aşamada Gmail'deki Play Console ve App Store mailleri okunarak gelecek.</SampleBanner>
+      <SampleBanner />
 
       <div className="flex between wrap">
         <Seg<Filter>
@@ -52,9 +55,19 @@ export default function Alerts() {
           <div className="card empty">
             <CheckCircle2 size={36} color="var(--green)" />
             <p style={{ marginTop: 10 }}>Bu filtrede uyarı yok. Her şey yolunda görünüyor.</p>
+            {!demo && <p className="small" style={{ marginTop: 6 }}>Uyarılar çökme/ANR eşiği aşılınca ve App Store bir sürümü reddedince otomatik oluşur.</p>}
           </div>
         )}
       </div>
+
+      {!demo && (
+        <section className="grid g-2">
+          {!connected.google_play && <Needs source="google_play" title="Çökme/ANR uyarıları için Google Play bağlantısı gerekiyor" />}
+          {!connected.app_store && <Needs source="app_store" title="Reddedilen sürüm uyarıları için App Store bağlantısı gerekiyor" />}
+          {!connected.gmail && <Needs source="gmail" title="Politika ihlali uyarıları için Gmail bağlantısı gerekiyor" />}
+          {!connected.claude && <Needs source="claude" title="Uyarılara özel 'nasıl düzeltilir' açıklamaları Claude bağlanınca gelecek" />}
+        </section>
+      )}
     </>
   )
 }
@@ -93,16 +106,18 @@ function AlertCard({ alert: a }: { alert: Alert }) {
             <h4><Sparkles size={15} color="var(--primary)" /> Nasıl düzeltilir <span className="ai-tag">Claude</span></h4>
             <ol className="steps">{a.howToFix.map((s) => <li key={s}>{s}</li>)}</ol>
           </div>
-          {a.unity && (
+          {a.unity && a.unity.length > 0 && (
             <div className="inner">
               <h4><Box size={15} color="var(--purple)" /> Unity tarafında</h4>
               <ol className="steps unity">{a.unity.map((s) => <li key={s}>{s}</li>)}</ol>
             </div>
           )}
           <div className="actions">
-            <a className="btn" href={a.consoleUrl} target="_blank" rel="noreferrer">
-              <ExternalLink size={14} /> {sourceLabel[a.source]} konsolunu aç
-            </a>
+            {a.consoleUrl && (
+              <a className="btn" href={a.consoleUrl} target="_blank" rel="noreferrer">
+                <ExternalLink size={14} /> {sourceLabel[a.source]} konsolunu aç
+              </a>
+            )}
             {a.status === 'open' ? (
               <button className="btn btn-green" onClick={() => resolveAlert(a.id)}><CheckCircle2 size={14} /> Çözüldü işaretle</button>
             ) : (

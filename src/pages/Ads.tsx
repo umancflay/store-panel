@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Users, Globe2, Wallet, Clapperboard, Image, Target, Check, X, Link2Off, ShieldCheck, Sparkles, Video } from 'lucide-react'
-import { adAccounts, adPlans, gameById, sampleGames as games } from '../data/sample'
+import { adAccounts, gameById } from '../data/sample'
+import { useData } from '../lib/data'
+import Needs from '../components/Needs'
 import { money } from '../lib/format'
 import { useStore } from '../lib/store'
 import { GameChip, GameLogo, SampleBanner } from '../components/ui'
@@ -8,22 +10,26 @@ import { GameChip, GameLogo, SampleBanner } from '../components/ui'
 const fitClass = { Yüksek: 'b-ok', Orta: 'b-warning', Düşük: 'b-muted' }
 
 export default function Ads() {
-  const [gameId, setGameId] = useState(games[0].id)
-  const plan = adPlans.find((p) => p.gameId === gameId)!
-  const game = gameById(gameId)!
+  const { adPlans, demo, connected } = useData()
+  // Sadece reklam planı hazırlanmış oyunlar seçilebilir
+  const planGames = adPlans.map((p) => gameById(p.gameId)).filter((g): g is NonNullable<typeof g> => !!g)
+  const [picked, setGameId] = useState<string | null>(null)
+  const gameId = picked ?? planGames[0]?.id ?? ''
+  const plan = adPlans.find((p) => p.gameId === gameId)
+  const game = gameById(gameId)
   const { recs, decide } = useStore()
   const pending = recs.filter((r) => r.status === 'pending')
   const decided = recs.filter((r) => r.status !== 'pending')
 
   return (
     <>
-      <SampleBanner>Örnek reklam planları gösteriliyor. Claude'un gerçek planları 5. aşamada, reklam hesabı bağlantıları 6. aşamada gelecek.</SampleBanner>
+      <SampleBanner />
 
       <section className="card">
         <div className="card-head">
           <div>
             <div className="card-title">Reklam hesapları</div>
-            <div className="card-sub">Bağlantılar onaylar geldikçe açılacak.</div>
+            <div className="card-sub">Bağlantılar onaylar geldikçe açılacak (6. aşama). Ne gerektiği için Ayarlar sayfasına bak.</div>
           </div>
         </div>
         <div className="grid g-4">
@@ -34,7 +40,7 @@ export default function Ads() {
                 <b>{a.name}</b>
                 <div className="muted small">{a.note}</div>
               </div>
-              <span className="badge b-muted" style={{ marginLeft: 'auto' }}>Bağlı değil</span>
+              <span className={`badge ${connected[a.id] ? 'b-ok' : 'b-muted'}`} style={{ marginLeft: 'auto' }}>{connected[a.id] && !demo ? 'Bağlı' : 'Bağlı değil'}</span>
             </div>
           ))}
         </div>
@@ -76,8 +82,11 @@ export default function Ads() {
         )}
       </section>
 
+      {!plan && !demo && <Needs source="claude" title="Oyun başına reklam planları (kitle, ülke, bütçe, kreatif) Claude bağlanınca hazırlanacak" />}
+
+      {plan && game && <>
       <div className="flex wrap">
-        {games.map((g) => (
+        {planGames.map((g) => (
           <button key={g.id} className={`btn ${g.id === gameId ? 'btn-primary' : ''}`} onClick={() => setGameId(g.id)}>{g.name}</button>
         ))}
       </div>
@@ -152,6 +161,8 @@ export default function Ads() {
           </div>
         </section>
       </div>
+
+      </>}
 
       <section className="card">
         <div className="card-title">Kampanyalar</div>

@@ -14,6 +14,23 @@ export function periodRows(all: DailyRow[], range: number, filter?: (r: DailyRow
   }
 }
 
+// Ortalama; hiç değer yoksa null (panelde "—")
+function avg(list: (number | null)[]) {
+  const v = list.filter((x): x is number => x != null)
+  return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null
+}
+
+// Puan zaten mağazanın toplam ortalaması: her oyun/platform için en son değeri al, onların ortalamasını göster
+function latestRating(rows: DailyRow[]) {
+  const latest = new Map<string, DailyRow>()
+  for (const r of rows) {
+    if (r.rating == null) continue
+    const k = r.gameId + r.platform
+    if (!latest.has(k) || latest.get(k)!.date < r.date) latest.set(k, r)
+  }
+  return avg([...latest.values()].map((r) => r.rating))
+}
+
 export function totals(rows: DailyRow[]) {
   const t = rows.reduce(
     (a, r) => {
@@ -23,23 +40,18 @@ export function totals(rows: DailyRow[]) {
       a.impressions += r.impressions
       a.requests += r.requests
       a.matched += r.matched
-      a.crash += r.crashRate
-      a.anr += r.anrRate
-      a.rating += r.rating
-      a.n++
-      if (r.platform === 'android') a.nAndroid++
       return a
     },
-    { adRevenue: 0, iapRevenue: 0, downloads: 0, impressions: 0, requests: 0, matched: 0, crash: 0, anr: 0, rating: 0, n: 0, nAndroid: 0 },
+    { adRevenue: 0, iapRevenue: 0, downloads: 0, impressions: 0, requests: 0, matched: 0 },
   )
   return {
     ...t,
     revenue: t.adRevenue + t.iapRevenue,
     ecpm: t.impressions ? (t.adRevenue / t.impressions) * 1000 : 0,
     fillRate: t.requests ? (t.matched / t.requests) * 100 : 0,
-    crashRate: t.n ? t.crash / t.n : 0,
-    anrRate: t.nAndroid ? t.anr / t.nAndroid : 0,
-    rating: t.n ? t.rating / t.n : 0,
+    crashRate: avg(rows.map((r) => r.crashRate)),
+    anrRate: avg(rows.filter((r) => r.platform === 'android').map((r) => r.anrRate)),
+    rating: latestRating(rows),
   }
 }
 
@@ -58,8 +70,8 @@ export function byDay(rows: DailyRow[]) {
         downloads: t.downloads,
         impressions: t.impressions,
         ecpm: +t.ecpm.toFixed(2),
-        crash: +t.crashRate.toFixed(2),
-        anr: +t.anrRate.toFixed(2),
+        crash: t.crashRate == null ? null : +t.crashRate.toFixed(2),
+        anr: t.anrRate == null ? null : +t.anrRate.toFixed(2),
       }
     })
 }

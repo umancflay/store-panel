@@ -5,19 +5,14 @@ import { useData } from '../lib/data'
 import { useStore } from '../lib/store'
 import { enablePush, pushConfigured, pushSupported } from '../lib/push'
 import { GameChip, SampleBanner, Toggle } from '../components/ui'
+import { requirements } from '../data/requirements'
+import Needs from '../components/Needs'
 
-const sources = [
-  { id: 'admob', name: 'AdMob', phase: 2 },
-  { id: 'google_play', name: 'Google Play Console', phase: 3 },
-  { id: 'app_store', name: 'App Store Connect', phase: 3 },
-  { id: 'gmail', name: 'Gmail (politika mailleri)', phase: 4 },
-  { id: 'claude', name: 'Claude (GitHub Actions)', phase: 4 },
-  { id: 'ads', name: 'Reklam platformları', phase: 6 },
-]
+const sources = ['admob', 'google_play', 'app_store', 'gmail', 'claude', 'google_ads', 'apple_ads', 'meta', 'tiktok'].map((id) => requirements[id])
 
 export default function Settings() {
   const { toast } = useStore()
-  const { games, connections, lastRun } = useData()
+  const { games, connections, lastRun, demo } = useData()
   const conn = (id: string) => connections.find((c) => c.source === id)
   const when = (iso: string | null) => (iso ? new Date(iso).toLocaleString('tr-TR', { dateStyle: 'medium', timeStyle: 'short' }) : '')
   const [critical, setCritical] = useState(true)
@@ -107,6 +102,15 @@ export default function Settings() {
         </div>
         <p className="muted small mt">Oyun eklemek veya paket adlarını girmek için şimdilik Supabase › Table Editor › games tablosunu kullan.</p>
       </section>
+
+      {!demo && (
+        <>
+          <div className="card-title" style={{ marginTop: 8 }}>Bağlantı rehberleri</div>
+          <div className="grid g-2">
+            {sources.filter((r) => conn(r.id)?.status !== 'connected').map((r) => <Needs key={r.id} source={r.id} />)}
+          </div>
+        </>
+      )}
     </>
   )
 }
