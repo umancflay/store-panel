@@ -21,6 +21,23 @@ Unity oyunlarım için yönetim paneli. App Store Connect, Google Play Console v
 | 4 | Gmail'den politika uyarıları, Claude analizi, telefon bildirimleri | ⏳ |
 | 5 | Reklam planları ve onay sistemi | ⏳ |
 | 6 | Reklam platformu bağlantıları | ⏳ |
+| 7 | Otomatik düzeltme ve yayınlama (onaylı): Claude sorunu çözer, Unity build alır, mağazaya yükler | ⏳ |
+
+### 7. aşama planı: Otomatik düzeltme ve yayınlama
+
+Akış: **sorun tespit edilir → Claude çözümü hazırlar → panelde "Onayla" → sistem uygular.** Onay olmadan hiçbir şey yayınlanmaz.
+
+| İş | Google Play | App Store |
+|---|---|---|
+| Unity build alma (AAB / IPA) | GitHub Actions + GameCI | GitHub Actions macOS makinesi |
+| Build yükleme, test/üretim kanalı | API ile | API ile |
+| Mağaza açıklaması, sürüm notları | API ile | API ile |
+| İncelemeye gönderme | API ile | API ile |
+| Unity ayar/kod düzeltmesi | Claude oyun reposuna PR açar | Claude oyun reposuna PR açar |
+| Yorumlara cevap | API ile | API ile |
+| İçerik derecelendirme, reklam beyanı, hedef kitle formları | API yok: adım adım tarif | API yok: adım adım tarif |
+
+Gerekenler: oyun kodlarının GitHub'da olması, Unity lisansının Actions'ta etkinleştirilmesi, **yazma yetkili ayrı bir servis hesabı** (okuma hesabı ayrı kalır) ve App Store için yazma yetkili API anahtarı.
 
 ---
 
