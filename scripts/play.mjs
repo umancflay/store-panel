@@ -99,8 +99,10 @@ async function installsAndRatings(pkg) {
       let rows
       try {
         rows = parseCsv(await api(`https://storage.googleapis.com/storage/v1/b/${bucket}/o/${encodeURIComponent(file)}?alt=media`, { raw: true }))
-      } catch {
-        continue // o ay için rapor yok
+      } catch (e) {
+        if (String(e.message).includes(': 404')) continue // o ay için rapor yok
+        if (String(e.message).includes(': 403')) throw new Error('rapor klasörüne erişim yok (Play Console izni 24 saate kadar sürebilir)')
+        throw e
       }
       for (const r of rows) {
         const e = byDate.get(r.Date) ?? { date: r.Date }
