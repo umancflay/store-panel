@@ -76,7 +76,7 @@ p { margin: 0; }
 .menu-btn:hover { background: rgba(255,255,255,.09); }
 .menu-pop {
   position: absolute; top: 46px; left: 50%; transform: translateX(-50%); z-index: 40; width: 290px; max-height: 76vh; overflow-y: auto; padding: 8px; border-radius: 20px;
-  background: rgba(20,20,20,.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.10); box-shadow: 0 30px 80px rgba(0,0,0,.75);
+  background: linear-gradient(170deg, #1c1c1c, #0f0f0f); border: 1px solid rgba(255,255,255,.12); box-shadow: 0 30px 80px rgba(0,0,0,.9), 0 0 0 100vmax rgba(0,0,0,.35);
   display: flex; flex-direction: column; gap: 2px; animation: pop .18s ease;
 }
 @keyframes pop { from { opacity: 0; transform: translate(-50%, -6px); } to { opacity: 1; transform: translate(-50%, 0); } }
@@ -222,7 +222,8 @@ p { margin: 0; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 
 .game-chip { display: inline-flex; align-items: center; gap: 10px; }
-.game-logo { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; font-size: 11px; font-weight: 500; color: #fff; flex-shrink: 0; background: linear-gradient(160deg, #333333, #151515); border: 1px solid rgba(255,255,255,.1); }
+.game-logo { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; font-size: 11px; font-weight: 500; color: #fff; flex-shrink: 0; overflow: hidden; background: linear-gradient(160deg, #333333, #151515); border: 1px solid rgba(255,255,255,.1); }
+.game-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 /* Tablo */
 .table-wrap { overflow-x: auto; }
@@ -335,20 +336,24 @@ tbody tr:hover { background: rgba(255,255,255,.025); }
 .welcome-stats span { font-size: 11px; color: var(--dim2); }
 .welcome-stats b { font-size: 26px; font-weight: 300; }
 
-/* ---------- Komuta: sinyal akışı ---------- */
-.flow { overflow-x: auto; }
-.flow-inner { min-width: 1060px; display: flex; flex-direction: column; gap: 18px; }
-.flow-head { display: grid; grid-template-columns: 200px 40px 22px 250px 40px 150px 40px minmax(0, 1fr); font-size: 11px; color: var(--dim); }
-.flow-game { display: grid; grid-template-columns: 200px 40px minmax(0, 1fr); align-items: center; }
-.flow-node { padding: 14px; border-radius: 16px; background: linear-gradient(150deg, #262626, #151515); border: 1px solid rgba(255,255,255,.08); box-shadow: var(--hl); display: flex; flex-direction: column; gap: 10px; }
-.wire { height: 1px; background: rgba(255,255,255,.22); }
-.flow-signals { border-left: 1px solid rgba(255,255,255,.22); display: flex; flex-direction: column; gap: 8px; padding: 2px 0; }
-.flow-row { display: grid; grid-template-columns: 22px 250px 40px 150px 40px minmax(0, 1fr); align-items: center; animation: fadeIn .4s ease both; }
-.flow-cell { padding: 9px 12px; border-radius: 10px; background: linear-gradient(150deg, #222222, #161616); border: 1px solid var(--line); display: flex; align-items: center; gap: 10px; font-size: 11px; color: #cfcfcf; min-width: 0; }
-.flow-cell.ghost { background: rgba(255,255,255,.03); }
-.flow-cell .tick { width: 3px; height: 16px; border-radius: 2px; flex-shrink: 0; }
-.flow-cell b { font-weight: 600; color: #fff; }
-.flow-cell .txt { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* ---------- Komuta: oyun kartları ---------- */
+.games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); gap: 14px; }
+.gcard { position: relative; overflow: hidden; padding: 18px; border-radius: 22px; background: linear-gradient(160deg, #222 0%, #141414 55%, #0f0f0f 100%); border: 1px solid var(--line); box-shadow: var(--hl); display: flex; flex-direction: column; gap: 14px; }
+.gcard.k { border-color: rgba(255,122,85,.35); }
+.gcard.d { border-color: rgba(232,192,122,.25); }
+.gcard-head { display: flex; align-items: center; gap: 14px; }
+.gcard-head b { font-size: 15px; font-weight: 500; line-height: 1.3; }
+.gcard-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.gcard-stats div { padding: 10px 12px; border-radius: 14px; background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.05); display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.gcard-stats span { font-size: 10px; color: var(--dim); }
+.gcard-stats b { font-size: 18px; font-weight: 300; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sig { display: grid; grid-template-columns: 3px minmax(0, 1fr) auto; gap: 4px 12px; padding: 11px 12px; border-radius: 14px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.05); align-items: center; }
+.sig .bar-l { grid-row: span 2; align-self: stretch; border-radius: 2px; }
+.sig-top { display: flex; align-items: center; gap: 10px; min-width: 0; font-size: 12px; }
+.sig-top .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sig-act { grid-column: 2 / 4; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 11px; color: var(--muted); }
+.lvl { font-size: 10px; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.ok-line { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
 .linkish { font-size: 10px; color: var(--muted); background: none; border: 0; cursor: pointer; padding: 4px 0; white-space: nowrap; font-family: inherit; }
 .linkish:hover { color: #fff; text-decoration: underline; }
 

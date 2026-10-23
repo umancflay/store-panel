@@ -7,12 +7,13 @@ import { useRows, trDate } from '../lib/rows'
 import { demoTasks } from '../data/demo'
 import { levelLabel, taskCode, type Task, type TaskLevel } from '../lib/types'
 import { byDay, periodRows, totals } from '../lib/metrics'
-import { change, int, money } from '../lib/format'
+import { change, int, money, platformLabel } from '../lib/format'
 import { computeSignals, levelColor, levelText, type Signal } from '../lib/signals'
-import { Donut, GameLogo, SampleBanner, StatCard, useIsMobile } from '../components/ui'
+import { Donut, GameLogo, SampleBanner, StatCard } from '../components/ui'
 import Needs from '../components/Needs'
 
 const taskLevel: Record<Signal['level'], TaskLevel> = { k: 'critical', d: 'medium', n: 'low' }
+const rank: Record<Signal['level'], number> = { k: 0, d: 1, n: 2 }
 const levelDot: Record<TaskLevel, string> = { critical: '#FF7A55', medium: '#E8C07A', low: '#8FD3AE' }
 
 // Komuta merkezi: günün rakamları + her oyunun sinyal → değerlendirme → aksiyon akışı
@@ -21,14 +22,13 @@ export default function Komuta() {
   const { alerts, toast } = useStore()
   const { me } = usePeople()
   const { rows: tasks, insert } = useRows<Task>('tasks', demoTasks)
-  const mobile = useIsMobile()
 
   const { cur, prev } = periodRows(daily, 7)
   const t = totals(cur)
   const p = totals(prev)
   const days = byDay(cur)
   const month = totals(periodRows(daily, 30).cur)
-  const flows = useMemo(() => computeSignals(games, daily, alerts, builds, hasStore), [games, daily, alerts, builds, hasStore])
+  const flows = useMemo(() => computeSignals(games, daily, alerts, builds), [games, daily, alerts, builds])
   const all = flows.flatMap((f) => f.signals)
   const count = (l: Signal['level']) => all.filter((s) => s.level === l).length
   const open = tasks.filter((x) => x.status !== 'done').sort((a, b) => (a.level === 'critical' ? -1 : 0) - (b.level === 'critical' ? -1 : 0))
@@ -132,93 +132,74 @@ export default function Komuta() {
         </div>
       </div>
 
-      <div className="card">
-        <div className="card-head">
-          <div>
-            <div className="card-title">Sinyal akışı</div>
-            <div className="card-sub">Sinyal → değerlendirme → aksiyon</div>
-          </div>
+      <div className="flex between wrap" style={{ gap: 10, marginTop: 6 }}>
+        <div>
+          <div className="card-title" style={{ fontSize: 16 }}>Oyunlar ve sinyaller</div>
+          <div className="card-sub">Sorunlu oyunlar önce · her sinyalin yanında önerilen aksiyon</div>
         </div>
-        {flows.length === 0 ? (
-          <div className="empty">{loading ? 'Yükleniyor…' : 'Henüz oyun yok. Veri toplama çalışınca oyunların burada görünür.'}</div>
-        ) : mobile ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {flows.map((f) => (
-              <div key={f.game.id} className="inner" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <div className="flex" style={{ gap: 10 }}>
-                  <GameLogo id={f.game.id} size={34} />
-                  <div className="grow">
-                    <b style={{ fontSize: 13, fontWeight: 500 }}>{f.game.name}</b>
-                    <div className="muted" style={{ fontSize: 10 }}>{f.headline} {f.headlineLabel}</div>
+        <div className="flex wrap" style={{ gap: 12, fontSize: 11 }}>
+          {(['k', 'd', 'n'] as const).map((l) => (
+            <span key={l} className="flex muted" style={{ gap: 6 }}><span className="dot" style={{ background: levelColor[l] }} />{levelText[l]}</span>
+          ))}
+        </div>
+      </div>
+      {flows.length === 0 ? (
+        <div className="card empty">{loading ? 'Yükleniyor…' : 'Henüz oyun yok. Veri toplama çalışınca oyunların burada görünür.'}</div>
+      ) : (
+        <div className="games-grid">
+          {[...flows]
+            .sort((a, b) => rank[a.level] - rank[b.level] || b.revenue - a.revenue)
+            .map((f) => (
+              <section key={f.game.id} className={`gcard ${f.level}`}>
+                <div className="gcard-head">
+                  <GameLogo id={f.game.id} size={52} />
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <Link to={`/oyunlar/${f.game.id}`}><b>{f.game.name}</b></Link>
+                    <div className="flex wrap" style={{ gap: 6, marginTop: 6 }}>
+                      {f.game.platforms.map((p) => <span key={p} className="chip">{platformLabel(p)}</span>)}
+                    </div>
+                  </div>
+                  <span className="lvl" style={{ background: levelColor[f.level] + '22', color: levelColor[f.level] }}>
+                    {f.level === 'n' ? 'Yolunda' : levelText[f.level]}
+                  </span>
+                </div>
+                <div className="gcard-stats">
+                  <div>
+                    <span>Toplam indirme</span>
+                    <b title={f.game.installsLabel ?? ''}>{f.game.installs != null ? int(f.game.installs) : f.downloads > 0 ? int(f.downloads) : '—'}</b>
+                  </div>
+                  <div>
+                    <span>Gelir · 7 gün</span>
+                    <b>{money(f.revenue)}</b>
+                  </div>
+                  <div>
+                    <span>Puan</span>
+                    <b>{f.rating != null ? '★ ' + f.rating.toFixed(1).replace('.', ',') : '—'}</b>
                   </div>
                 </div>
-                {f.signals.length === 0 && <div className="muted small">Sinyal yok.</div>}
-                {f.signals.map((s) => (
-                  <div key={s.key} className="flow-cell" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
-                    <div className="flex" style={{ gap: 8 }}>
-                      <span className="tick" style={{ background: levelColor[s.level] }} />
-                      <span className="txt">{s.label}</span>
-                      <b>{s.value}</b>
-                    </div>
-                    <div className="flex between" style={{ gap: 8 }}>
-                      <span className="muted">{s.action}</span>
-                      <TaskButton s={s} existing={taskBySource.get(s.key)} onCreate={() => toTask(s, f.game.name)} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="flow">
-            <div className="flow-inner">
-              <div className="flow-head">
-                <span>Oyun</span><span /><span /><span>Sinyal</span><span /><span>Değerlendirme</span><span /><span>Aksiyon</span>
-              </div>
-              {flows.map((f) => (
-                <div key={f.game.id} className="flow-game">
-                  <div className="flow-node">
-                    <div className="flex" style={{ gap: 10 }}>
-                      <GameLogo id={f.game.id} size={34} />
-                      <b style={{ fontSize: 13, fontWeight: 500 }}>{f.game.name}</b>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 20, fontWeight: 300 }}>{f.headline}</div>
-                      <div className="muted" style={{ fontSize: 10 }}>{f.headlineLabel}</div>
-                    </div>
-                  </div>
-                  <div className="wire" />
-                  <div className="flow-signals">
-                    {f.signals.length === 0 && (
-                      <div className="flow-row">
-                        <div className="wire" />
-                        <div className="flow-cell ghost"><span className="txt muted">Henüz sinyal yok</span></div>
-                      </div>
-                    )}
+                {f.signals.length === 0 ? (
+                  <div className="ok-line"><Check size={14} color="var(--green)" /> Sorun yok, izlemeye devam.</div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {f.signals.map((s) => (
-                      <div key={s.key} className="flow-row">
-                        <div className="wire" />
-                        <div className="flow-cell">
-                          <span className="tick" style={{ background: levelColor[s.level] }} />
-                          <span className="txt" title={s.label}>{s.label}</span>
-                          <b>{s.value}</b>
+                      <div key={s.key} className="sig">
+                        <span className="bar-l" style={{ background: levelColor[s.level] }} />
+                        <div className="sig-top">
+                          <span className="t" title={s.label}>{s.label}</span>
                         </div>
-                        <div className="wire" />
-                        <div className="flow-cell" style={{ color: levelColor[s.level] }}>{levelText[s.level]}</div>
-                        <div className="wire" />
-                        <div className="flow-cell ghost">
-                          <span className="txt" title={s.action}>{s.action}</span>
-                          {s.level !== 'n' && <TaskButton s={s} existing={taskBySource.get(s.key)} onCreate={() => toTask(s, f.game.name)} />}
+                        <b style={{ fontSize: 12, fontWeight: 600 }}>{s.value}</b>
+                        <div className="sig-act">
+                          <span>{s.action}</span>
+                          <TaskButton s={s} existing={taskBySource.get(s.key)} onCreate={() => toTask(s, f.game.name)} />
                         </div>
                       </div>
                     ))}
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+                )}
+              </section>
+            ))}
+        </div>
+      )}
     </div>
   )
 }

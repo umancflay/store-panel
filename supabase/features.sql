@@ -9,6 +9,12 @@ alter table public.admins add column if not exists role text default 'Stüdyo sa
 -- Oyun başına aylık gelir hedefi (Gelir sayfasındaki halka)
 alter table public.games add column if not exists monthly_goal numeric(12,2);
 
+-- Mağazadan gelen oyun bilgileri: ikon, toplam indirme (Play), puan veren sayısı
+alter table public.games add column if not exists icon_url text;
+alter table public.games add column if not exists installs bigint;
+alter table public.games add column if not exists installs_label text;
+alter table public.games add column if not exists ratings_count integer;
+
 -- ============================================================
 -- Görevler (Kanban)
 -- ============================================================

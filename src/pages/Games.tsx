@@ -35,7 +35,7 @@ export function GamesList() {
                 </div>
               </div>
               <div className="flex wrap" style={{ marginTop: 12, gap: 6 }}>
-                {g.platforms.map((p) => <span key={p} className="badge b-primary">{platformLabel(p)}</span>)}
+                {g.platforms.map((p) => <span key={p} className="chip">{platformLabel(p)}</span>)}
               </div>
               <div style={{ height: 70, margin: '14px -6px 6px' }}>
                 <ResponsiveContainer>
@@ -52,7 +52,7 @@ export function GamesList() {
               </div>
               <div className="grid g-3" style={{ gap: 10 }}>
                 <div><div className="muted small">30 gün gelir</div><b>{money(t.revenue)}</b> <span className={d >= 0 ? 'up small' : 'down small'}>{d >= 0 ? '+' : ''}{d.toFixed(0)}%</span></div>
-                <div><div className="muted small">İndirme</div><b>{showStore ? short(t.downloads) : '—'}</b></div>
+                <div><div className="muted small">Toplam indirme</div><b title={g.installsLabel ?? ''}>{g.installs != null ? short(g.installs) : showStore && t.downloads ? short(t.downloads) : '—'}</b></div>
                 <div><div className="muted small">Çökme</div><b className={t.crashRate != null && t.crashRate > limits.crash ? 'bad' : ''}>{orDash(t.crashRate, (v) => pct(v, 2))}</b></div>
               </div>
             </Link>
@@ -92,9 +92,9 @@ export function GameDetail() {
       <div className="flex between wrap">
         <div className="flex">
           <Link to="/oyunlar" className="btn" aria-label="Geri"><ArrowLeft size={14} /></Link>
-          <GameLogo id={game.id} size={44} />
+          <GameLogo id={game.id} size={64} />
           <div>
-            <div className="card-title">{game.name}</div>
+            <div style={{ fontSize: 22, fontWeight: 400 }}>{game.name}</div>
             <div className="muted small">{game.genre}</div>
           </div>
         </div>
@@ -108,7 +108,13 @@ export function GameDetail() {
 
       <section className="grid g-4">
         <StatCard label="Gelir" value={t.revenue} format={money} delta={change(t.revenue, p.revenue)} icon={<Wallet size={20} />} />
-        <StatCard label="İndirme" value={showStore ? t.downloads : null} format={int} delta={change(t.downloads, p.downloads)} icon={<Download size={20} />} />
+        <StatCard
+          label="Toplam indirme"
+          value={game.installs ?? (showStore && t.downloads ? t.downloads : null)}
+          format={int}
+          note={t.downloads > 0 ? `+${int(t.downloads)} bu dönem` : game.installsLabel ? `Play: ${game.installsLabel}` : undefined}
+          icon={<Download size={20} />}
+        />
         <StatCard label="Puan" value={t.rating} format={(v) => v.toFixed(2).replace('.', ',')} icon={<Star size={20} />} color="#E8C07A" />
         <StatCard label="Çökme oranı" value={t.crashRate} format={p2} delta={p.crashRate != null && t.crashRate != null ? change(t.crashRate, p.crashRate) : undefined} invertDelta icon={<Bug size={20} />} color="#FF7A55" />
       </section>

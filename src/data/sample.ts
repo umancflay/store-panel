@@ -10,6 +10,9 @@ export interface Game {
   platforms: Platform[]
   color: string
   goal?: number | null // aylık gelir hedefi (USD)
+  icon?: string | null // mağaza ikonu
+  installs?: number | null // Play'deki toplam indirme
+  installsLabel?: string | null // ör. "1K+"
 }
 
 export interface DailyRow {

@@ -5,7 +5,8 @@
 // Giriş: Google Cloud servis hesabı (GOOGLE_PLAY_SA_JSON), Play Console'da kullanıcı olarak davet edilmiş olmalı.
 
 import crypto from 'node:crypto'
-import { upsert, setConnection } from './db.mjs'
+import { db, upsert, setConnection } from './db.mjs'
+import { playStorePage } from './storepage.mjs'
 import { gameLinker } from './games.mjs'
 
 export const playReady = Boolean(process.env.GOOGLE_PLAY_SA_JSON)
@@ -198,6 +199,19 @@ export async function collectPlay({ light = false } = {}) {
     await safe('ANR', async () => {
       const rows = await vitals(pkg, 'anrRateMetricSet', 'userPerceivedAnrRate')
       if (rows.length) await upsert('store_daily', rows.map((r) => ({ ...key, date: r.date, anr_rate: r.value })), 'date,game_id,platform,country')
+    })
+    await safe('mağaza sayfası', async () => {
+      // Herkese açık Play sayfası: ikon, toplam indirme, puan (oyun yayında değilse yok)
+      const page = await playStorePage(pkg)
+      if (!page) return
+      await db(`games?id=eq.${encodeURIComponent(gameId)}`, 'PATCH', {
+        ...(page.icon ? { icon_url: page.icon } : {}),
+        installs: page.installs, installs_label: page.installsLabel, ratings_count: page.ratingsCount,
+      }, 'return=minimal')
+      if (page.rating) {
+        const day = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+        await upsert('store_daily', [{ ...key, date: day, rating: page.rating }], 'date,game_id,platform,country')
+      }
     })
     await safe('indirme', async () => {
       const rows = await installsAndRatings(pkg)

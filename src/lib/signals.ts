@@ -20,12 +20,14 @@ export interface Signal {
 
 export interface GameSignals {
   game: Game
-  headline: string
-  headlineLabel: string
+  level: Level // en kötü sinyalin seviyesi
+  revenue: number // son 7 gün
+  downloads: number // son 7 gün
+  rating: number | null
   signals: Signal[]
 }
 
-export function computeSignals(games: Game[], daily: DailyRow[], alerts: Alert[], builds: Build[], hasStore: boolean): GameSignals[] {
+export function computeSignals(games: Game[], daily: DailyRow[], alerts: Alert[], builds: Build[]): GameSignals[] {
   return games.map((g) => {
     const rows = (r: DailyRow) => r.gameId === g.id
     const { cur, prev } = periodRows(daily, 7, rows)
@@ -52,33 +54,27 @@ export function computeSignals(games: Game[], daily: DailyRow[], alerts: Alert[]
       }
     }
 
-    if (t.crashRate != null) {
-      const lv: Level = t.crashRate > limits.crash ? 'k' : t.crashRate > limits.crash * 0.7 ? 'd' : 'n'
-      out.push({ key: `crash:${g.id}`, gameId: g.id, level: lv, label: 'Çökme oranı · 7 gün', value: pct(t.crashRate, 2), action: lv === 'n' ? 'İzlemeye devam' : 'En sık çökmeyi düzeltip hızlı sürüm çıkar' })
+    // Normal seyreden metrikler kartın üstündeki rakamlarda görünür; sinyal sadece sorun varsa çıkar
+    if (t.crashRate != null && t.crashRate > limits.crash * 0.7) {
+      const lv: Level = t.crashRate > limits.crash ? 'k' : 'd'
+      out.push({ key: `crash:${g.id}`, gameId: g.id, level: lv, label: 'Çökme oranı · 7 gün', value: pct(t.crashRate, 2), action: 'En sık çökmeyi düzeltip hızlı sürüm çıkar' })
     }
     if (t.anrRate != null && t.anrRate > limits.anr) {
       out.push({ key: `anr:${g.id}`, gameId: g.id, level: 'k', label: 'ANR oranı · 7 gün', value: pct(t.anrRate, 2), action: 'Ana iş parçacığındaki uzun işleri taşı' })
     }
-    if (t.rating != null) {
-      const lv: Level = t.rating < limits.rating ? 'd' : 'n'
-      out.push({ key: `rating:${g.id}`, gameId: g.id, level: lv, label: 'Mağaza puanı', value: t.rating.toFixed(1).replace('.', ','), action: lv === 'n' ? 'İzlemeye devam' : 'Kötü yorumlara cevap ver, sık şikayeti düzelt' })
+    if (t.rating != null && t.rating < limits.rating) {
+      out.push({ key: `rating:${g.id}`, gameId: g.id, level: 'd', label: 'Mağaza puanı', value: t.rating.toFixed(1).replace('.', ','), action: 'Kötü yorumlara cevap ver, sık şikayeti düzelt' })
     }
     if (t.requests > 100 && t.fillRate < 85) {
       out.push({ key: `fill:${g.id}`, gameId: g.id, level: 'd', label: 'Fill rate · 7 gün', value: pct(t.fillRate, 0), action: 'Mediation’a ikinci reklam ağı ekle' })
     }
-    if (t.adRevenue > 0 || p.adRevenue > 0) {
-      const d = change(t.adRevenue, p.adRevenue)
-      const lv: Level = p.adRevenue > 1 && d < -25 ? 'd' : 'n'
-      out.push({ key: `rev:${g.id}`, gameId: g.id, level: lv, label: 'AdMob geliri · 7 gün', value: money(t.adRevenue), action: lv === 'n' ? 'İzlemeye devam' : `Gelir %${Math.abs(d).toFixed(0)} düştü, Gelir sayfasında sebebine bak` })
+    const drop = change(t.adRevenue, p.adRevenue)
+    if (p.adRevenue > 1 && drop < -25) {
+      out.push({ key: `rev:${g.id}`, gameId: g.id, level: 'd', label: 'AdMob geliri · 7 gün', value: money(t.adRevenue), action: `Gelir %${Math.abs(drop).toFixed(0)} düştü, Gelir sayfasında sebebine bak` })
     }
 
     const order: Record<Level, number> = { k: 0, d: 1, n: 2 }
     out.sort((a, b) => order[a.level] - order[b.level])
-    return {
-      game: g,
-      headline: hasStore && t.downloads > 0 ? t.downloads.toLocaleString('tr-TR') : money(t.revenue),
-      headlineLabel: hasStore && t.downloads > 0 ? 'indirme · 7 gün' : 'gelir · 7 gün',
-      signals: out,
-    }
+    return { game: g, level: out[0]?.level ?? 'n', revenue: t.revenue, downloads: t.downloads, rating: t.rating, signals: out }
   })
 }

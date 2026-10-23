@@ -152,6 +152,9 @@ async function loadLive(): Promise<Omit<DataState, 'reload'>> {
     platforms: ((g.platforms as Platform[]) ?? []).sort(),
     color: colors[i % colors.length],
     goal: g.monthly_goal == null ? null : Number(g.monthly_goal),
+    icon: (g.icon_url as string) ?? null,
+    installs: g.installs == null ? null : Number(g.installs),
+    installsLabel: (g.installs_label as string) ?? null,
   }))
 
   // AdMob ve mağaza verisini gün/oyun/platform bazında birleştir. Bugünün yarım verisi alınmaz.

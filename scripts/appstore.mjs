@@ -149,8 +149,14 @@ export async function collectAppStore({ light = false } = {}) {
     await safe('sürüm', async () => {
       const [{ data: versions = [] }, { data: builds = [] }] = await Promise.all([
         api(`/apps/${app.id}/appStoreVersions?limit=5`),
-        api(`/builds?filter[app]=${app.id}&sort=-uploadedDate&limit=1`),
+        api(`/builds?filter[app]=${app.id}&sort=-uploadedDate&limit=1&fields[builds]=version,iconAssetToken`),
       ])
+      // Oyunun ikonu: son build'in ikonu (Play'den ikon gelmediyse)
+      const tpl = builds[0]?.attributes?.iconAssetToken?.templateUrl
+      if (tpl) {
+        const icon = tpl.replace('{w}', '256').replace('{h}', '256').replace('{f}', 'png')
+        await db(`games?id=eq.${encodeURIComponent(gameId)}&icon_url=is.null`, 'PATCH', { icon_url: icon }, 'return=minimal').catch(() => {})
+      }
       const v = versions.sort((a, b) => (b.attributes.createdDate ?? '').localeCompare(a.attributes.createdDate ?? ''))[0]
       if (!v) return
       const state = v.attributes.appVersionState ?? v.attributes.appStoreState
