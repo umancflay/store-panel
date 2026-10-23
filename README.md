@@ -16,7 +16,7 @@ Unity oyunlarım için yönetim paneli. App Store Connect, Google Play Console v
 | Aşama | İçerik | Durum |
 |---|---|---|
 | 1 | Site iskeleti, giriş (iki adımlı doğrulama dahil), veritabanı, PWA, otomatik yayın. Örnek verilerle. | ✅ Bitti |
-| 2 | AdMob bağlantısı ve günlük veri çekme | ⏳ |
+| 2 | AdMob bağlantısı ve günlük veri çekme | ✅ Bitti |
 | 3 | Google Play ve App Store Connect | ⏳ |
 | 4 | Gmail'den politika uyarıları, Claude analizi, telefon bildirimleri | ⏳ |
 | 5 | Reklam planları ve onay sistemi | ⏳ |
@@ -178,6 +178,76 @@ Artık sitede **Şimdi güncelle**'ye bastığında GitHub'daki "Veri topla" iş
 
 ---
 
+## Kurulum (2. aşama): AdMob bağlantısı
+
+Bu aşamadan sonra panel AdMob'daki gerçek reklam gelirlerini gösterir: gelir, eCPM, gösterim ve fill rate (oyun, ülke, format ve reklam birimi bazında). Veriler her sabah 08:00'de kendiliğinden güncellenir.
+
+İndirme, puan ve çökme verileri 3. aşamada gelecek. O zamana kadar panelde bu alanlar "—" olarak görünür.
+
+### Adım 1: Veritabanına AdMob fonksiyonlarını ekle
+
+1. Supabase'de **SQL Editor › New query**'ye gir.
+2. [`supabase/phase2-admob.sql`](supabase/phase2-admob.sql) dosyasının tamamını yapıştır.
+3. **Run**'a bas.
+
+### Adım 2: Google Cloud projesi aç ve AdMob API'yi aç
+
+1. [console.cloud.google.com](https://console.cloud.google.com) adresine **AdMob hesabının bağlı olduğu Google hesabıyla** gir.
+2. Üstteki proje seçiciden **New project**'e tıkla. Adı `store-panel` olsun, **Create** de.
+3. Proje seçiliyken [AdMob API sayfasına](https://console.cloud.google.com/apis/library/admob.googleapis.com) git ve **Enable**'a bas.
+
+### Adım 3: İzin ekranını ayarla
+
+1. Sol menüden **Google Auth Platform**'a gir (eski adı: OAuth consent screen), sonra **Get started**'a tıkla.
+2. **App name:** `Store Panel`. **User support email:** kendi e-postan.
+3. **Audience:** **External**'ı seç.
+4. **Contact information:** kendi e-postan. Şartları kabul et ve **Create** de.
+5. Sol menüden **Audience**'a gir ve **Publish app › Confirm**'e bas.
+
+> Bu son adım önemli. Uygulama "Testing" modunda kalırsa Google bağlantıyı **7 günde bir koparır**. "In production" olunca kopmaz. Google uygulamanı doğrulamadığı için izin ekranında bir uyarı çıkar. Bu normal, çünkü uygulamayı sadece sen kullanıyorsun.
+
+### Adım 4: OAuth istemcisi oluştur
+
+1. **Google Auth Platform › Clients › Create client**'a gir.
+2. **Application type:** **Desktop app**. **Name:** `store-panel`.
+3. **Create**'e bas. Açılan pencerede **Client ID** ve **Client secret** yazar. İkisini de bir kenara kopyala.
+
+### Adım 5: Refresh token üret (bilgisayarında, bir kez)
+
+Bu klasörde bir terminal aç ve şunu çalıştır:
+
+```bash
+node scripts/google-token.mjs
+```
+
+1. Senden önce **Client ID**'yi, sonra **Client secret**'ı ister. Yapıştır ve Enter'a bas.
+2. Tarayıcıda Google izin ekranı açılır. **AdMob hesabının bağlı olduğu** Google hesabını seç.
+3. "Google bu uygulamayı doğrulamadı" uyarısı çıkarsa: **Gelişmiş › Store Panel'e git (güvenli değil)**'e tıkla. Bu uygulama senin kendi uygulaman.
+4. İzin ver. Tarayıcıda "Tamam!" yazısı çıkar.
+5. Terminale dön. Orada uzun bir **refresh token** yazıyor. Onu kopyala.
+
+### Adım 6: GitHub Secrets'a üç değer ekle
+
+Repoda **Settings › Secrets and variables › Actions › New repository secret**'a gir:
+
+| Secret adı | Değer |
+|---|---|
+| `GOOGLE_CLIENT_ID` | Adım 4'teki Client ID |
+| `GOOGLE_CLIENT_SECRET` | Adım 4'teki Client secret (**gizli**) |
+| `GOOGLE_REFRESH_TOKEN` | Adım 5'teki refresh token (**gizli**) |
+
+### Adım 7: İlk veri çekme
+
+1. Repoda **Actions** sekmesine geç ve soldan **Veri topla**'yı seç.
+2. **Run workflow › Run workflow**'a bas.
+3. İş yeşil tikle bitince paneli yenile. İlk çalıştırma son 60 günü çeker.
+
+Paneldeki **Ayarlar** sayfasında AdMob'un yanında **Bağlı** yazmalı. Oyunlar AdMob'daki uygulama adlarına göre kendiliğinden eşleşir. AdMob'da adı farklı olan bir oyun panelde yeni bir oyun olarak görünür.
+
+> Hata alırsan **Actions**'ta kırmızı işe tıkla, **collect** adımını aç ve hatayı oku. En sık sebep: refresh token'ın AdMob'a bağlı olmayan bir Google hesabıyla üretilmiş olması.
+
+---
+
 ## Telefonda ana ekrana ekleme
 
 ### Android (Chrome)
@@ -237,9 +307,12 @@ src/
 supabase/
   schema.sql    Tablolar + güvenlik kuralları
   admins.sql    Admin e-postaları
+  phase2-admob.sql  AdMob özet fonksiyonları
   functions/    "Şimdi güncelle" fonksiyonu
 scripts/
   collect.mjs   GitHub Actions'ta çalışan veri toplama betiği
+  admob.mjs     AdMob verisini çeker
+  google-token.mjs  Google refresh token üretici (bilgisayarında bir kez çalışır)
 .github/workflows/
   deploy.yml        Siteyi yayınlar
   collect-data.yml  Zamanlanmış veri toplama

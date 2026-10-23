@@ -2,16 +2,18 @@ import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Area, AreaChart, CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { ArrowLeft, Download, Wallet, Star, Bug, Package } from 'lucide-react'
-import { builds, gameById, games, reviews, type Platform } from '../data/sample'
+import { builds, gameById, reviews, type Platform } from '../data/sample'
+import { useData } from '../lib/data'
 import { byDay, limits, periodRows, totals, type Range } from '../lib/metrics'
 import { change, dayLabel, int, money, money2, pct, platformLabel, short } from '../lib/format'
 import { ChartTip, GameLogo, RangePicker, SampleBanner, Seg, StatCard, Stars } from '../components/ui'
 
 export function GamesList() {
-  const { cur, prev } = useMemo(() => periodRows(30), [])
+  const { daily, games, live, storeMissing } = useData()
+  const { cur, prev } = useMemo(() => periodRows(daily, 30), [daily])
   return (
     <>
-      <SampleBanner />
+      {!live.admob && <SampleBanner />}
       <div className="grid g-3">
         {games.map((g) => {
           const t = totals(cur.filter((r) => r.gameId === g.id))
@@ -47,8 +49,8 @@ export function GamesList() {
               </div>
               <div className="grid g-3" style={{ gap: 10 }}>
                 <div><div className="muted small">30 gün gelir</div><b>{money(t.revenue)}</b> <span className={d >= 0 ? 'up small' : 'down small'}>{d >= 0 ? '+' : ''}{d.toFixed(0)}%</span></div>
-                <div><div className="muted small">İndirme</div><b>{short(t.downloads)}</b></div>
-                <div><div className="muted small">Çökme</div><b className={t.crashRate > limits.crash ? 'bad' : ''}>{pct(t.crashRate, 2)}</b></div>
+                <div><div className="muted small">İndirme</div><b>{storeMissing ? '—' : short(t.downloads)}</b></div>
+                <div><div className="muted small">Çökme</div><b className={!storeMissing && t.crashRate > limits.crash ? 'bad' : ''}>{storeMissing ? '—' : pct(t.crashRate, 2)}</b></div>
               </div>
             </Link>
           )
@@ -63,22 +65,26 @@ export function GameDetail() {
   const game = gameById(id)
   const [range, setRange] = useState<Range>(30)
   const [platform, setPlatform] = useState<'all' | Platform>('all')
+  const { daily, live, storeMissing } = useData()
 
   const filter = useMemo(() => (r: { gameId: string; platform: Platform }) => r.gameId === id && (platform === 'all' || r.platform === platform), [id, platform])
-  const { cur, prev } = useMemo(() => periodRows(range, filter), [range, filter])
-  const chart = useMemo(() => byDay(periodRows(30, filter).cur), [filter])
+  const { cur, prev } = useMemo(() => periodRows(daily, range, filter), [daily, range, filter])
+  const chart = useMemo(() => byDay(periodRows(daily, 30, filter).cur), [daily, filter])
 
   if (!game) return <div className="card empty">Oyun bulunamadı. <Link to="/oyunlar" className="up">Oyunlara dön</Link></div>
 
   const t = totals(cur)
   const p = totals(prev)
   const platformRows = game.platforms.map((pl) => ({ pl, ...totals(cur.filter((r) => r.platform === pl)) }))
-  const gameReviews = reviews.filter((r) => r.gameId === id && (platform === 'all' || r.platform === platform)).slice(0, 5)
-  const gameBuilds = builds.filter((b) => b.gameId === id)
+  // Yorum ve build verileri 3. aşamada gelecek; o zamana kadar sadece demo/örnek modda gösterilir
+  const gameReviews = live.admob ? [] : reviews.filter((r) => r.gameId === id && (platform === 'all' || r.platform === platform)).slice(0, 5)
+  const gameBuilds = live.admob ? [] : builds.filter((b) => b.gameId === id)
+  const na = (v: string) => (storeMissing ? '—' : v)
 
   return (
     <>
-      <SampleBanner />
+      {!live.admob && <SampleBanner />}
+      {storeMissing && <SampleBanner>Reklam verileri gerçek. İndirme, puan, çökme, yorum ve build bilgileri 3. aşamada gelecek.</SampleBanner>}
       <div className="flex between wrap">
         <div className="flex">
           <Link to="/oyunlar" className="btn" aria-label="Geri"><ArrowLeft size={14} /></Link>
@@ -98,9 +104,9 @@ export function GameDetail() {
 
       <section className="grid g-4">
         <StatCard label="Gelir" value={t.revenue} format={money} delta={change(t.revenue, p.revenue)} icon={<Wallet size={20} />} />
-        <StatCard label="İndirme" value={t.downloads} format={int} delta={change(t.downloads, p.downloads)} icon={<Download size={20} />} />
-        <StatCard label="Puan" value={t.rating} format={(v) => v.toFixed(2).replace('.', ',')} icon={<Star size={20} />} color="#ffa53d" />
-        <StatCard label="Çökme oranı" value={t.crashRate} format={(v) => pct(v, 2)} delta={change(t.crashRate, p.crashRate)} invertDelta icon={<Bug size={20} />} color="#ff4d5e" />
+        <StatCard label="İndirme" value={t.downloads} format={(v) => na(int(v))} delta={storeMissing ? undefined : change(t.downloads, p.downloads)} icon={<Download size={20} />} />
+        <StatCard label="Puan" value={t.rating} format={(v) => na(v.toFixed(2).replace('.', ','))} icon={<Star size={20} />} color="#ffa53d" />
+        <StatCard label="Çökme oranı" value={t.crashRate} format={(v) => na(pct(v, 2))} delta={storeMissing ? undefined : change(t.crashRate, p.crashRate)} invertDelta icon={<Bug size={20} />} color="#ff4d5e" />
       </section>
 
       <section className="card">
@@ -112,14 +118,14 @@ export function GameDetail() {
               {platformRows.map((r) => (
                 <tr key={r.pl}>
                   <td>{platformLabel(r.pl)}</td>
-                  <td className="num">{int(r.downloads)}</td>
+                  <td className="num">{na(int(r.downloads))}</td>
                   <td className="num">{money(r.adRevenue)}</td>
-                  <td className="num">{money(r.iapRevenue)}</td>
+                  <td className="num">{na(money(r.iapRevenue))}</td>
                   <td className="num">{money2(r.ecpm)}</td>
                   <td className={`num ${r.fillRate < 85 ? 'bad-cell' : ''}`}>{pct(r.fillRate)}</td>
-                  <td className={`num ${r.rating < limits.rating ? 'bad-cell' : ''}`}>{r.rating.toFixed(2).replace('.', ',')}</td>
-                  <td className={`num ${r.crashRate > limits.crash ? 'bad-cell' : ''}`}>{pct(r.crashRate, 2)}</td>
-                  <td className="num">{r.pl === 'ios' ? '–' : pct(r.anrRate, 2)}</td>
+                  <td className={`num ${!storeMissing && r.rating < limits.rating ? 'bad-cell' : ''}`}>{na(r.rating.toFixed(2).replace('.', ','))}</td>
+                  <td className={`num ${!storeMissing && r.crashRate > limits.crash ? 'bad-cell' : ''}`}>{na(pct(r.crashRate, 2))}</td>
+                  <td className="num">{r.pl === 'ios' ? '–' : na(pct(r.anrRate, 2))}</td>
                 </tr>
               ))}
             </tbody>
@@ -142,7 +148,7 @@ export function GameDetail() {
                 <YAxis tick={{ fill: '#a0aec0', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => '$' + short(v)} />
                 <Tooltip content={<ChartTip fmt={money2} />} />
                 <Area type="monotone" dataKey="ad" name="Reklam" stroke={game.color} strokeWidth={2.5} fill="url(#gd1)" />
-                <Area type="monotone" dataKey="iap" name="Uygulama içi" stroke="#2cd9ff" strokeWidth={2} fill="transparent" />
+                {!storeMissing && <Area type="monotone" dataKey="iap" name="Uygulama içi" stroke="#2cd9ff" strokeWidth={2} fill="transparent" />}
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -151,6 +157,9 @@ export function GameDetail() {
         <div className="card">
           <div className="card-title">Çökme ve ANR trendi</div>
           <div className="card-sub" style={{ marginBottom: 14 }}>Kesikli çizgi: Google'ın "kötü davranış" eşiği (%{String(limits.crash).replace('.', ',')})</div>
+          {storeMissing ? (
+            <div className="empty">Google Play ve App Store bağlanınca (3. aşama) burada görünecek.</div>
+          ) : (
           <div style={{ height: 240 }}>
             <ResponsiveContainer>
               <LineChart data={chart} margin={{ left: -14, right: 4 }}>
@@ -164,6 +173,7 @@ export function GameDetail() {
               </LineChart>
             </ResponsiveContainer>
           </div>
+          )}
         </div>
       </section>
 
@@ -179,7 +189,7 @@ export function GameDetail() {
               <p className="small" style={{ lineHeight: 1.55, color: '#dbe4f3' }}>{r.body}</p>
             </div>
           ))}
-          {gameReviews.length === 0 && <div className="empty">Yorum yok</div>}
+          {gameReviews.length === 0 && <div className="empty">{live.admob ? 'Yorumlar 3. aşamada gelecek.' : 'Yorum yok'}</div>}
         </div>
 
         <div className="card">
@@ -194,6 +204,7 @@ export function GameDetail() {
               <span className={`badge ${b.status === 'Reddedildi' ? 'b-critical' : b.status === 'İncelemede' ? 'b-warning' : 'b-ok'}`}>{b.status}</span>
             </div>
           ))}
+          {gameBuilds.length === 0 && <div className="empty">Build durumu 3. aşamada gelecek.</div>}
         </div>
       </section>
     </>

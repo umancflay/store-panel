@@ -26,13 +26,19 @@ export interface DailyRow {
   rating: number
 }
 
-export const games: Game[] = [
+export const sampleGames: Game[] = [
   { id: 'salgin', name: 'Salgın', genre: 'Hastane yönetimi / strateji', platforms: ['android', 'ios'], color: '#0075ff' },
   { id: 'tasinma-kaosu', name: 'Taşınma Kaosu', genre: 'Co-op nakliyat', platforms: ['android', 'ios'], color: '#01b574' },
   { id: 'dropshipping', name: 'Dropshipping', genre: 'İşletme simülasyonu', platforms: ['android'], color: '#a855f7' },
 ]
 
-export const gameById = (id: string) => games.find((g) => g.id === id)
+// Şu an panelde kullanılan oyun listesi (örnek ya da Supabase'den gelen).
+// Veri katmanı (lib/data.tsx) gerçek liste gelince setGames ile günceller.
+let registry: Game[] = sampleGames
+export function setGames(list: Game[]) {
+  registry = list
+}
+export const gameById = (id: string) => registry.find((g) => g.id === id)
 
 function rng(seed: number) {
   return () => {
@@ -59,14 +65,14 @@ const profiles: Record<string, { dl: number; ecpm: number; iap: number; crash: n
   'dropshipping:android': { dl: 460, ecpm: 3.2, iap: 6, crash: 0.7, rating: 3.8 },
 }
 
-export const daily: DailyRow[] = (() => {
+export const sampleDaily: DailyRow[] = (() => {
   const r = rng(42)
   const rows: DailyRow[] = []
   for (let i = DAYS - 1; i >= 0; i--) {
     const date = isoDay(i + 1) // dün ve öncesi
     const weekday = new Date(date).getDay()
     const weekend = weekday === 0 || weekday === 6 ? 1.18 : 1
-    for (const g of games) {
+    for (const g of sampleGames) {
       for (const p of g.platforms) {
         const pr = profiles[`${g.id}:${p}`]
         const trend = 1 + (DAYS - i) * 0.004
@@ -105,7 +111,7 @@ export interface AdUnit {
   gameId: string
   platform: Platform
   name: string
-  format: 'Banner' | 'Geçiş (Interstitial)' | 'Ödüllü (Rewarded)' | 'Uygulama açılışı'
+  format: string
   impressions: number
   revenue: number
   ecpm: number
@@ -114,12 +120,12 @@ export interface AdUnit {
   fillPrev: number
 }
 
-export const adUnits: AdUnit[] = (() => {
+export const sampleAdUnits: AdUnit[] = (() => {
   const r = rng(7)
-  const formats: AdUnit['format'][] = ['Banner', 'Geçiş (Interstitial)', 'Ödüllü (Rewarded)', 'Uygulama açılışı']
+  const formats = ['Banner', 'Geçiş (Interstitial)', 'Ödüllü (Rewarded)', 'Uygulama açılışı'] as const
   const base = { Banner: 0.9, 'Geçiş (Interstitial)': 7.5, 'Ödüllü (Rewarded)': 12.4, 'Uygulama açılışı': 5.1 }
   const out: AdUnit[] = []
-  for (const g of games)
+  for (const g of sampleGames)
     for (const p of g.platforms)
       for (const f of formats) {
         const mult = p === 'ios' ? 1.6 : 1
@@ -145,7 +151,16 @@ export const adUnits: AdUnit[] = (() => {
   return out
 })()
 
-export const countries = [
+export interface Country {
+  code: string
+  name: string
+  revenue: number
+  ecpm: number
+  ecpmPrev: number
+  impressions: number
+}
+
+export const sampleCountries: Country[] = [
   { code: 'US', name: 'ABD', revenue: 1840, ecpm: 14.2, ecpmPrev: 14.8, impressions: 129600 },
   { code: 'TR', name: 'Türkiye', revenue: 612, ecpm: 2.1, ecpmPrev: 2.0, impressions: 291400 },
   { code: 'DE', name: 'Almanya', revenue: 548, ecpm: 10.6, ecpmPrev: 11.1, impressions: 51700 },

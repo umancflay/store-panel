@@ -2,6 +2,7 @@ import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import { AuthProvider, useAuth } from './lib/auth'
 import { StoreProvider } from './lib/store'
+import { DataProvider } from './lib/data'
 import Layout from './components/Layout'
 import Login from './pages/Login'
 import Overview from './pages/Overview'
@@ -18,22 +19,24 @@ function Gate() {
   if (stage === 'loading') return <div className="empty" style={{ paddingTop: '40vh' }}><Loader2 className="spin" /></div>
   if (stage !== 'ready') return <Login />
   return (
-    <StoreProvider>
-      <Routes>
-        <Route element={<Layout />}>
-          <Route index element={<Overview />} />
-          <Route path="uyarilar" element={<Alerts />} />
-          <Route path="oyunlar" element={<GamesList />} />
-          <Route path="oyunlar/:id" element={<GameDetail />} />
-          <Route path="yorumlar" element={<Reviews />} />
-          <Route path="gelir" element={<Revenue />} />
-          <Route path="reklamlar" element={<Ads />} />
-          <Route path="asistan" element={<Assistant />} />
-          <Route path="ayarlar" element={<Settings />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Route>
-      </Routes>
-    </StoreProvider>
+    <DataProvider>
+      <StoreProvider>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route index element={<Overview />} />
+            <Route path="uyarilar" element={<Alerts />} />
+            <Route path="oyunlar" element={<GamesList />} />
+            <Route path="oyunlar/:id" element={<GameDetail />} />
+            <Route path="yorumlar" element={<Reviews />} />
+            <Route path="gelir" element={<Revenue />} />
+            <Route path="reklamlar" element={<Ads />} />
+            <Route path="asistan" element={<Assistant />} />
+            <Route path="ayarlar" element={<Settings />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Route>
+        </Routes>
+      </StoreProvider>
+    </DataProvider>
   )
 }
 

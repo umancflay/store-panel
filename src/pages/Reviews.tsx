@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Sparkles, PenLine, Send, X } from 'lucide-react'
-import { categoryLabels, games, reviewClusters, reviews, sampleReplyDraft, type Review, type ReviewCategory } from '../data/sample'
+import { useData } from '../lib/data'
+import { categoryLabels, reviewClusters, reviews, sampleReplyDraft, type Review, type ReviewCategory } from '../data/sample'
 import { dayLabel, platformLabel } from '../lib/format'
 import { useStore } from '../lib/store'
 import { GameChip, SampleBanner, Stars } from '../components/ui'
@@ -11,6 +12,7 @@ const catClass: Record<ReviewCategory, string> = {
 
 export default function Reviews() {
   const [game, setGame] = useState('all')
+  const { games } = useData()
   const [platform, setPlatform] = useState('all')
   const [rating, setRating] = useState(0)
   const [cat, setCat] = useState<ReviewCategory | 'all'>('all')

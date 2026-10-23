@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Users, Globe2, Wallet, Clapperboard, Image, Target, Check, X, Link2Off, ShieldCheck, Sparkles, Video } from 'lucide-react'
-import { adAccounts, adPlans, gameById, games } from '../data/sample'
+import { adAccounts, adPlans, gameById, sampleGames as games } from '../data/sample'
 import { money } from '../lib/format'
 import { useStore } from '../lib/store'
 import { GameChip, GameLogo, SampleBanner } from '../components/ui'

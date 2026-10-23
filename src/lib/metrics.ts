@@ -1,13 +1,13 @@
-import { daily, isoDay, type DailyRow } from '../data/sample'
+import { isoDay, type DailyRow } from '../data/sample'
 
 export type Range = 1 | 7 | 30
 export const rangeLabels: Record<Range, string> = { 1: 'Dün', 7: '7 gün', 30: '30 gün' }
 
 // Seçilen aralık ve bir önceki eşit uzunluktaki dönem
-export function periodRows(range: Range, filter?: (r: DailyRow) => boolean) {
+export function periodRows(all: DailyRow[], range: number, filter?: (r: DailyRow) => boolean) {
   const start = isoDay(range)
   const prevStart = isoDay(range * 2)
-  const rows = filter ? daily.filter(filter) : daily
+  const rows = filter ? all.filter(filter) : all
   return {
     cur: rows.filter((r) => r.date >= start),
     prev: rows.filter((r) => r.date >= prevStart && r.date < start),
@@ -56,6 +56,7 @@ export function byDay(rows: DailyRow[]) {
         ad: +t.adRevenue.toFixed(2),
         iap: +t.iapRevenue.toFixed(2),
         downloads: t.downloads,
+        impressions: t.impressions,
         ecpm: +t.ecpm.toFixed(2),
         crash: +t.crashRate.toFixed(2),
         anr: +t.anrRate.toFixed(2),

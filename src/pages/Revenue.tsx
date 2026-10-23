@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Cell, Line, LineChart, CartesianGrid, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { Sparkles, TrendingDown, Wallet, Eye, BarChart3, Percent } from 'lucide-react'
-import { adUnits, admobAdvice, countries, gameById, games, type AdUnit } from '../data/sample'
+import { admobAdvice, gameById, type AdUnit } from '../data/sample'
+import { useData } from '../lib/data'
 import { byDay, periodRows, totals } from '../lib/metrics'
 import { change, dayLabel, int, money, money2, pct, short } from '../lib/format'
 import { ChartTip, GameChip, SampleBanner, Seg, StatCard } from '../components/ui'
@@ -16,9 +17,10 @@ const fillBad = (v: number) => v < 85
 export default function Revenue() {
   const [view, setView] = useState<View>('game')
   const [game, setGame] = useState('all')
+  const { daily, games, adUnits, countries, live } = useData()
 
   const units = adUnits.filter((u) => game === 'all' || u.gameId === game)
-  const { cur, prev } = useMemo(() => periodRows(30, (r) => game === 'all' || r.gameId === game), [game])
+  const { cur, prev } = useMemo(() => periodRows(daily, 30, (r) => game === 'all' || r.gameId === game), [daily, game])
   const t = totals(cur)
   const p = totals(prev)
   const chart = useMemo(() => byDay(cur), [cur])
@@ -33,10 +35,11 @@ export default function Revenue() {
     }
     return [...m.values()].map((e) => ({ ...e, ecpm: e.ecpm / e.n, ecpmPrev: e.ecpmPrev / e.n, fill: e.fill / e.n, fillPrev: e.fillPrev / e.n }))
   }, [units])
+  const maxCountry = Math.max(1, ...countries.map((c) => c.revenue))
 
   return (
     <>
-      <SampleBanner>Örnek AdMob verileri gösteriliyor. Gerçek veriler 2. aşamada AdMob API'den gelecek.</SampleBanner>
+      {!live.admob && <SampleBanner>Örnek AdMob verileri gösteriliyor. AdMob bağlanınca gerçek veriler gelecek.</SampleBanner>}
 
       <div className="flex between wrap">
         <Seg<View> value={view} onChange={setView} options={[
@@ -131,9 +134,9 @@ export default function Revenue() {
                     <td><b>{c.code}</b> <span className="muted">{c.name}</span></td>
                     <td className="num">{money(c.revenue)}</td>
                     <td className="num">{int(c.impressions)}</td>
-                    <td className={`num ${ecpmDropped(c.ecpm, c.ecpmPrev) ? 'bad-cell' : ''}`}>{money2(c.ecpm)}</td>
+                    <td className={`num ${c.ecpmPrev && ecpmDropped(c.ecpm, c.ecpmPrev) ? 'bad-cell' : ''}`}>{money2(c.ecpm)}</td>
                     <td className="num muted">{money2(c.ecpmPrev)}</td>
-                    <td><div className="bar"><i style={{ width: `${(c.revenue / countries[0].revenue) * 100}%` }} /></div></td>
+                    <td><div className="bar"><i style={{ width: `${(c.revenue / maxCountry) * 100}%` }} /></div></td>
                   </tr>
                 ))}
               </tbody>
@@ -164,6 +167,7 @@ export default function Revenue() {
           <div>
             <div className="card-title flex"><Sparkles size={18} color="var(--primary)" /> Claude'un AdMob önerileri</div>
             <div className="card-sub">Mediation, reklam yerleşimi ve sıklık. Hiçbiri otomatik uygulanmaz.</div>
+            {live.admob && <span className="badge b-warning" style={{ marginTop: 8 }}>Örnek öneriler · Claude 4. aşamada bağlanacak</span>}
           </div>
         </div>
         <div className="grid g-3">
