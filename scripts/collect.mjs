@@ -18,7 +18,8 @@ async function db(path, method, body) {
     method,
     headers: {
       apikey: key,
-      Authorization: `Bearer ${key}`,
+      // Eski tip (JWT) service_role anahtarı Authorization ister; yeni sb_secret_ anahtarı apikey yeter
+      ...(key.startsWith('eyJ') ? { Authorization: `Bearer ${key}` } : {}),
       'Content-Type': 'application/json',
       Prefer: 'return=representation',
     },
