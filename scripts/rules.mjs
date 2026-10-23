@@ -63,7 +63,7 @@ export async function applyRules() {
   } catch {
     console.log('Otomasyon tablosu yok (features.sql çalıştırılmamış); varsayılan kurallar kullanılıyor.')
   }
-  const games = await db('games?select=id,name,android_package,ios_app_id&active=eq.true')
+  const games = await db('games?select=id,name,android_package,ios_app_id&active=eq.true&hidden=is.false')
   const name = (id) => games.find((g) => g.id === id)?.name ?? id
   const month = new Date().toISOString().slice(0, 7)
   const day = (n) => new Date(Date.now() - n * 86400000).toISOString().slice(0, 10)

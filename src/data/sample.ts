@@ -13,6 +13,7 @@ export interface Game {
   icon?: string | null // mağaza ikonu
   installs?: number | null // Play'deki toplam indirme
   installsLabel?: string | null // ör. "1K+"
+  hidden?: boolean // panelde gizli
 }
 
 export interface DailyRow {

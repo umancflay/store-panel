@@ -13,7 +13,7 @@ const sources = ['admob', 'google_play', 'app_store', 'gmail', 'claude', 'google
 
 export default function Settings() {
   const { toast } = useStore()
-  const { games, connections, lastRun, demo, reload } = useData()
+  const { allGames, connections, lastRun, demo, reload, setGameHidden } = useData()
   const { me } = usePeople()
   const [name, setName] = useState(me.name)
   const [role, setRole] = useState(me.role)
@@ -135,12 +135,11 @@ export default function Settings() {
         <div className="card-title flex" style={{ marginBottom: 6 }}><Gamepad2 size={18} color="var(--muted)" /> Oyun listesi</div>
         <div className="table-wrap">
           <table>
-            <thead><tr><th>Oyun</th><th>Tür</th><th>Platformlar</th><th>Aylık hedef ($)</th></tr></thead>
+            <thead><tr><th>Oyun</th><th>Platformlar</th><th>Aylık hedef ($)</th><th>Panelde göster</th></tr></thead>
             <tbody>
-              {games.map((g) => (
-                <tr key={g.id}>
+              {allGames.map((g) => (
+                <tr key={g.id} style={{ opacity: g.hidden ? 0.5 : 1 }}>
                   <td><GameChip id={g.id} /></td>
-                  <td className="muted">{g.genre}</td>
                   <td><div className="flex" style={{ gap: 6 }}>{g.platforms.map((p) => <span key={p} className="chip">{platformLabel(p)}</span>)}</div></td>
                   <td>
                     <input
@@ -155,12 +154,23 @@ export default function Settings() {
                       onBlur={(e) => e.target.value !== String(g.goal ?? '') && saveGoal(g.id, e.target.value)}
                     />
                   </td>
+                  <td>
+                    <Toggle
+                      on={!g.hidden}
+                      label={`${g.name} panelde görünsün`}
+                      onChange={(v) =>
+                        setGameHidden(g.id, !v)
+                          .then(() => toast(v ? `${g.name} panelde gösteriliyor` : `${g.name} gizlendi`, 'info'))
+                          .catch((e) => toast('Kaydedilemedi: ' + e.message + ' (features.sql çalıştırıldı mı?)', 'warn'))
+                      }
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <p className="muted small mt">Oyun eklemek veya paket adlarını girmek için şimdilik Supabase › Table Editor › games tablosunu kullan.</p>
+        <p className="muted small mt">Boş ya da takip etmek istemediğin oyunları kapat; gizlenen oyun panelin hiçbir yerinde görünmez ve hesaplara katılmaz. İstediğin zaman buradan geri açabilirsin.</p>
       </section>
 
       {!demo && (

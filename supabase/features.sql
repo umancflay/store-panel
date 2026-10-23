@@ -15,6 +15,9 @@ alter table public.games add column if not exists installs bigint;
 alter table public.games add column if not exists installs_label text;
 alter table public.games add column if not exists ratings_count integer;
 
+-- Panelde gösterilmesini istemediğin oyunlar (Ayarlar › Oyun listesi)
+alter table public.games add column if not exists hidden boolean not null default false;
+
 -- ============================================================
 -- Görevler (Kanban)
 -- ============================================================

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
   adPlans as sampleAdPlans, alerts as sampleAlerts, builds as sampleBuilds, isoDay, recommendations as sampleRecs,
   reviews as sampleReviews, sampleAdUnits, sampleCountries, sampleDaily, sampleGames, setGames,
@@ -40,7 +40,10 @@ interface DataState {
   connections: Connection[]
   people: Person[]
   lastRun: { job: string; status: string; finished_at: string | null; message: string | null } | null
+  // Gizlenenler dahil tüm oyunlar (Ayarlar › Oyun listesi için)
+  allGames: Game[]
   reload: () => void
+  setGameHidden: (id: string, hidden: boolean) => Promise<void>
 }
 
 const allConnected = { admob: true, google_play: true, app_store: true, gmail: true, claude: true }
@@ -62,7 +65,9 @@ const sample: DataState = {
   connections: [],
   people: demoPeople,
   lastRun: null,
+  allGames: sampleGames,
   reload: () => {},
+  setGameHidden: async () => {},
 }
 
 const empty: DataState = {
@@ -83,6 +88,9 @@ const empty: DataState = {
 }
 
 const DataContext = createContext<DataState>(sample)
+
+// Yüklenen ham veri (gizli oyunlar dahil); ekrana gitmeden önce gizli oyunlar süzülür
+type Raw = Omit<DataState, 'reload' | 'setGameHidden' | 'allGames'>
 
 const colors = ['#FFFFFF', '#8FD3AE', '#E8C07A', '#D9D9D9', '#FF7A55', '#9A9A9A', '#BFE6CF', '#F2D9A8']
 
@@ -110,7 +118,7 @@ const numOrNull = (v: unknown) => (v == null ? null : Number(v))
 const ecpm = (rev: number, imp: number) => (imp ? (rev / imp) * 1000 : 0)
 const fill = (m: number, r: number) => (r ? (m / r) * 100 : 0)
 
-async function loadLive(): Promise<Omit<DataState, 'reload'>> {
+async function loadLive(): Promise<Raw> {
   const db = supabase!
   const cur = { from: isoDay(30), to: isoDay(1) }
   const prev = { from: isoDay(60), to: isoDay(31) }
@@ -152,6 +160,7 @@ async function loadLive(): Promise<Omit<DataState, 'reload'>> {
     platforms: ((g.platforms as Platform[]) ?? []).sort(),
     color: colors[i % colors.length],
     goal: g.monthly_goal == null ? null : Number(g.monthly_goal),
+    hidden: Boolean(g.hidden),
     icon: (g.icon_url as string) ?? null,
     installs: g.installs == null ? null : Number(g.installs),
     installsLabel: (g.installs_label as string) ?? null,
@@ -305,23 +314,54 @@ async function loadLive(): Promise<Omit<DataState, 'reload'>> {
 }
 
 export function DataProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<Omit<DataState, 'reload'>>(isDemo ? sample : empty)
+  const [state, setState] = useState<Raw>(isDemo ? sample : empty)
   const [version, setVersion] = useState(0)
 
   useEffect(() => {
     if (isDemo) return
     loadLive()
-      .then((s) => {
-        setGames(s.games)
-        setState(s)
-      })
+      .then(setState)
       .catch((e) => {
         console.error('Veri yüklenemedi', e)
         setState({ ...empty, loading: false })
       })
   }, [version])
 
-  return <DataContext.Provider value={{ ...state, reload: () => setVersion((v) => v + 1) }}>{children}</DataContext.Provider>
+  // Gizlenen oyunlar ve onlara ait tüm veriler panelden çıkar
+  const view = useMemo(() => {
+    const visible = new Set(state.games.filter((g) => !g.hidden).map((g) => g.id))
+    const keep = (id: string | null) => id == null || visible.has(id)
+    return {
+      ...state,
+      allGames: state.games,
+      games: state.games.filter((g) => !g.hidden),
+      daily: state.daily.filter((r) => keep(r.gameId)),
+      adUnits: state.adUnits.filter((u) => keep(u.gameId)),
+      alerts: state.alerts.filter((a) => keep(a.gameId)),
+      reviews: state.reviews.filter((r) => keep(r.gameId)),
+      builds: state.builds.filter((b) => keep(b.gameId)),
+      recs: state.recs.filter((r) => keep(r.gameId)),
+      adPlans: state.adPlans.filter((p) => keep(p.gameId)),
+    }
+  }, [state])
+
+  useEffect(() => setGames(view.allGames), [view.allGames])
+
+  const setGameHidden = async (id: string, hidden: boolean) => {
+    setState((s) => ({ ...s, games: s.games.map((g) => (g.id === id ? { ...g, hidden } : g)) }))
+    if (isDemo) return
+    const { error } = await supabase!.from('games').update({ hidden }).eq('id', id)
+    if (error) {
+      setState((s) => ({ ...s, games: s.games.map((g) => (g.id === id ? { ...g, hidden: !hidden } : g)) }))
+      throw new Error(error.message)
+    }
+  }
+
+  return (
+    <DataContext.Provider value={{ ...view, reload: () => setVersion((v) => v + 1), setGameHidden }}>
+      {children}
+    </DataContext.Provider>
+  )
 }
 
 export const useData = () => useContext(DataContext)

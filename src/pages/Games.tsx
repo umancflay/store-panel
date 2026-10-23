@@ -1,21 +1,36 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Area, AreaChart, CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { ArrowLeft, Download, Wallet, Star, Bug, Package } from 'lucide-react'
+import { ArrowLeft, Download, Wallet, Star, Bug, Package, EyeOff } from 'lucide-react'
 import { gameById, type Platform } from '../data/sample'
 import Needs from '../components/Needs'
 import { useData } from '../lib/data'
+import { useStore } from '../lib/store'
 import { byDay, limits, periodRows, totals, type Range } from '../lib/metrics'
 import { change, dayLabel, int, money, money2, orDash, pct, platformLabel, short } from '../lib/format'
 import { ChartTip, GameLogo, RangePicker, SampleBanner, Seg, StatCard, Stars } from '../components/ui'
 
 export function GamesList() {
-  const { daily, games, demo, hasStore, loading } = useData()
+  const { daily, games, allGames, demo, hasStore, loading, setGameHidden } = useData()
+  const { toast } = useStore()
   const { cur, prev } = useMemo(() => periodRows(daily, 30), [daily])
   const showStore = demo || hasStore
+  const hiddenCount = allGames.length - games.length
+  const hide = (id: string, name: string) =>
+    setGameHidden(id, true)
+      .then(() => toast(`${name} gizlendi. Ayarlar › Oyun listesi'nden geri açabilirsin.`, 'info'))
+      .catch((e) => toast('Gizlenemedi: ' + e.message, 'warn'))
   return (
     <>
       <SampleBanner />
+      <div className="page-head flex between wrap" style={{ gap: 12 }}>
+        <div>
+          <span className="eyebrow">Oyunlar</span>
+          <h1>Mağazadaki oyunların</h1>
+          <p>Boş ya da takip etmediğin oyunu kartın sağ üstündeki göz simgesiyle gizleyebilirsin.</p>
+        </div>
+        {hiddenCount > 0 && <Link to="/ayarlar" className="btn btn-ghost sm"><EyeOff size={13} /> {hiddenCount} gizli oyun</Link>}
+      </div>
       {!loading && games.length === 0 && <div className="card empty">Henüz oyun yok. AdMob, Google Play ya da App Store bağlanınca oyunların burada kendiliğinden görünür.</div>}
       <div className="grid g-3">
         {games.map((g) => {
@@ -29,10 +44,22 @@ export function GamesList() {
               onMouseLeave={(e) => (e.currentTarget.style.transform = '')}>
               <div className="flex">
                 <GameLogo id={g.id} size={48} />
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div className="card-title">{g.name}</div>
                   <div className="muted small">{g.genre}</div>
                 </div>
+                <button
+                  type="button"
+                  className="icon-btn"
+                  title="Panelde gizle"
+                  aria-label={`${g.name} oyununu gizle`}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    hide(g.id, g.name)
+                  }}
+                >
+                  <EyeOff size={14} />
+                </button>
               </div>
               <div className="flex wrap" style={{ marginTop: 12, gap: 6 }}>
                 {g.platforms.map((p) => <span key={p} className="chip">{platformLabel(p)}</span>)}
