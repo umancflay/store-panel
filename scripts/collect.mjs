@@ -2,13 +2,16 @@
 // Anahtarlar ortam değişkeninden gelir (GitHub Secrets). Koda asla yazılmaz.
 //
 // İşler:
-//   daily / manual  → tüm veriler (şimdilik AdMob)
-//   policy_check    → politika mailleri ve inceleme durumları (4. aşama)
+//   daily / manual  → tüm veriler: AdMob, Google Play, App Store
+//   policy_check    → sürüm/inceleme durumları ve yorumlar (Gmail politika mailleri 4. aşamada)
 //   ad_plans        → reklam planları (5. aşama)
 
 import { db, dbReady, setConnection } from './db.mjs'
 import { googleReady } from './google.mjs'
 import { collectAdmob } from './admob.mjs'
+import { collectPlay, playReady } from './play.mjs'
+import { collectAppStore, appStoreReady } from './appstore.mjs'
+import { applyRules } from './rules.mjs'
 
 const job = process.argv[2] || 'manual'
 
@@ -23,24 +26,26 @@ console.log(`İş başladı: ${job} (#${run.id})`)
 const notes = []
 const errors = []
 
-async function step(name, fn) {
+// Bir kaynak hata verse bile diğerleri çalışmaya devam eder
+async function step(name, source, ready, fn) {
+  if (!ready) return notes.push(`${name}: anahtarlar girilmemiş, atlandı`)
   try {
     await fn()
     notes.push(`${name}: tamam`)
   } catch (err) {
     console.error(`${name} hatası:`, err)
-    errors.push(`${name}: ${String(err.message ?? err).slice(0, 300)}`)
+    const msg = `${name}: ${String(err.message ?? err).slice(0, 300)}`
+    errors.push(msg)
+    if (source) await setConnection(source, 'error', msg).catch(() => {})
   }
 }
 
-if (job === 'daily' || job === 'manual') {
-  if (googleReady) {
-    await step('AdMob', collectAdmob)
-    if (errors.some((e) => e.startsWith('AdMob'))) await setConnection('admob', 'error', errors.find((e) => e.startsWith('AdMob')))
-  } else {
-    notes.push('AdMob: Google anahtarları girilmemiş, atlandı')
-  }
-  // TODO 3. aşama: Google Play, App Store Connect
+const light = job === 'policy_check'
+if (job === 'daily' || job === 'manual' || light) {
+  if (!light) await step('AdMob', 'admob', googleReady, collectAdmob)
+  await step('Google Play', 'google_play', playReady, () => collectPlay({ light }))
+  await step('App Store', 'app_store', appStoreReady, () => collectAppStore({ light }))
+  if (!light) await step('Uyarı kuralları', null, true, applyRules)
   // TODO 4. aşama: Gmail politika mailleri + Claude analizi
 }
 // TODO 5. aşama: ad_plans

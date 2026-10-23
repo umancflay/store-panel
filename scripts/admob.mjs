@@ -3,15 +3,12 @@
 
 import { db, upsert, setConnection } from './db.mjs'
 import { googleApi } from './google.mjs'
+import { gameLinker } from './games.mjs'
 
 const API = 'https://admob.googleapis.com/v1'
 
 const ymd = (d) => ({ year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: d.getUTCDate() })
 const daysAgo = (n) => new Date(Date.now() - n * 86400000)
-
-// "Taşınma Kaosu" → "tasinmakaosu": oyun adlarını eşleştirmek için
-const normalize = (s) =>
-  s.toLocaleLowerCase('tr').replace(/ı/g, 'i').replace(/ş/g, 's').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ö/g, 'o').replace(/ç/g, 'c').replace(/[^a-z0-9]/g, '')
 
 export async function collectAdmob() {
   const { account } = await googleApi(`${API}/accounts`)
@@ -56,37 +53,14 @@ export async function collectAdmob() {
   console.log(`AdMob: ${out.length} satır yazıldı.`)
 }
 
-// AdMob uygulama ID'sini panel oyununa bağlar.
-// Önce games.admob_app_ids'e bakar, yoksa adı benzeyen oyunu bulup ID'yi kaydeder,
-// o da yoksa yeni oyun olarak ekler. Böylece elle eşleştirme gerekmez.
+// AdMob uygulama ID'lerini paneldeki oyunlara bağlar (scripts/games.mjs)
 async function gameMapper(rows) {
-  const games = await db('games?select=id,name,platforms,admob_app_ids')
+  const link = await gameLinker()
   const map = new Map()
-  for (const g of games) for (const a of g.admob_app_ids ?? []) map.set(a, g.id)
-
-  const apps = new Map()
-  for (const { dimensionValues: d } of rows) apps.set(d.APP.value, { name: d.APP.displayLabel ?? d.APP.value, platform: d.PLATFORM.value.toLowerCase() === 'ios' ? 'ios' : 'android' })
-
-  for (const [appId, app] of apps) {
-    if (map.has(appId)) continue
-    // "Brick Gate iOS" ile "Brick Gate: Color Block Puzzle" aynı oyun: platform adını at, baş kısmı karşılaştır
-    const n = normalize(app.name)
-    const base = normalize(app.name.replace(/\b(ios|android)\b/gi, ''))
-    const gBase = (g) => normalize(g.name.replace(/\b(ios|android)\b/gi, ''))
-    let game =
-      games.find((g) => normalize(g.name) === n) ??
-      games.find((g) => base.length >= 4 && (gBase(g).startsWith(base) || base.startsWith(gBase(g))))
-    if (game) {
-      game.admob_app_ids = [...(game.admob_app_ids ?? []), appId]
-      game.platforms = [...new Set([...(game.platforms ?? []), app.platform])]
-      await db(`games?id=eq.${encodeURIComponent(game.id)}`, 'PATCH', { admob_app_ids: game.admob_app_ids, platforms: game.platforms }, 'return=minimal')
-    } else {
-      game = { id: n || appId.replace(/\W/g, ''), name: app.name, platforms: [app.platform], admob_app_ids: [appId] }
-      await upsert('games', [game], 'id')
-      games.push(game)
-    }
-    console.log(`Eşleşti: ${app.name} (${appId}) → ${game.id}`)
-    map.set(appId, game.id)
+  for (const { dimensionValues: d } of rows) {
+    if (map.has(d.APP.value)) continue
+    const platform = d.PLATFORM.value.toLowerCase() === 'ios' ? 'ios' : 'android'
+    map.set(d.APP.value, await link({ name: d.APP.displayLabel ?? d.APP.value, platform, admobAppId: d.APP.value }))
   }
   return (appId) => map.get(appId)
 }
