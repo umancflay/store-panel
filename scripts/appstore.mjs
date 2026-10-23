@@ -198,7 +198,12 @@ export async function collectAppStore({ light = false } = {}) {
       const appsById = new Map(apps.map((a) => [a.id, a]))
       await sales(appsBySku, appsById, link, existing.length ? 4 : 30)
     } catch (e) {
-      notes.push(`satış raporu: ${String(e.message).slice(0, 300)}`)
+      // Apple, hesapta yayında uygulama olmadan satış raporu vermez ve vendor numarasını "geçersiz" sayar
+      notes.push(
+        /Invalid vendor number/i.test(String(e.message))
+          ? 'indirme/satış raporu henüz yok (ilk iOS uygulaması yayınlanınca başlar)'
+          : `satış raporu: ${String(e.message).slice(0, 300)}`,
+      )
     }
   }
 
