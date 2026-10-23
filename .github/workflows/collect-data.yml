@@ -1,0 +1,46 @@
+# Zamanlanmış veri toplama işleri.
+# 1. aşamada sadece iskelet: çalıştığını Supabase'deki sync_runs tablosuna yazar.
+# AdMob (2. aşama), Play ve App Store (3. aşama), Gmail + Claude (4. aşama) sonra eklenecek.
+name: Veri topla
+
+on:
+  schedule:
+    - cron: '0 5 * * *'     # Her gün 08:00 İstanbul (05:00 UTC): tüm veriler + Claude analizi
+    - cron: '30 */6 * * *'  # 6 saatte bir: politika mailleri ve inceleme durumları
+    - cron: '0 6 * * 1'     # Her pazartesi 09:00 İstanbul: reklam planları
+  workflow_dispatch:
+    inputs:
+      job:
+        description: 'Hangi iş? (daily, policy_check, ad_plans, manual)'
+        default: manual
+
+concurrency:
+  group: collect-data
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Hangi işin çalışacağını belirle
+        id: which
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "job=${{ inputs.job }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event.schedule }}" = "30 */6 * * *" ]; then
+            echo "job=policy_check" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event.schedule }}" = "0 6 * * 1" ]; then
+            echo "job=ad_plans" >> "$GITHUB_OUTPUT"
+          else
+            echo "job=daily" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Çalıştır
+        run: node scripts/collect.mjs "${{ steps.which.outputs.job }}"

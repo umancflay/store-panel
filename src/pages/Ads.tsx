@@ -1,0 +1,170 @@
+import { useState } from 'react'
+import { Users, Globe2, Wallet, Clapperboard, Image, Target, Check, X, Link2Off, ShieldCheck, Sparkles, Video } from 'lucide-react'
+import { adAccounts, adPlans, gameById, games } from '../data/sample'
+import { money } from '../lib/format'
+import { useStore } from '../lib/store'
+import { GameChip, GameLogo, SampleBanner } from '../components/ui'
+
+const fitClass = { Yüksek: 'b-ok', Orta: 'b-warning', Düşük: 'b-muted' }
+
+export default function Ads() {
+  const [gameId, setGameId] = useState(games[0].id)
+  const plan = adPlans.find((p) => p.gameId === gameId)!
+  const game = gameById(gameId)!
+  const { recs, decide } = useStore()
+  const pending = recs.filter((r) => r.status === 'pending')
+  const decided = recs.filter((r) => r.status !== 'pending')
+
+  return (
+    <>
+      <SampleBanner>Örnek reklam planları gösteriliyor. Claude'un gerçek planları 5. aşamada, reklam hesabı bağlantıları 6. aşamada gelecek.</SampleBanner>
+
+      <section className="card">
+        <div className="card-head">
+          <div>
+            <div className="card-title">Reklam hesapları</div>
+            <div className="card-sub">Bağlantılar onaylar geldikçe açılacak.</div>
+          </div>
+        </div>
+        <div className="grid g-4">
+          {adAccounts.map((a) => (
+            <div className="account" key={a.id}>
+              <span className="icon-box sm" style={{ width: 38, height: 38, background: '#1a1f37', boxShadow: 'none', color: 'var(--muted)' }}><Link2Off size={16} /></span>
+              <div style={{ minWidth: 0 }}>
+                <b>{a.name}</b>
+                <div className="muted small">{a.note}</div>
+              </div>
+              <span className="badge b-muted" style={{ marginLeft: 'auto' }}>Bağlı değil</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="card">
+        <div className="card-head">
+          <div>
+            <div className="card-title flex"><ShieldCheck size={18} color="var(--green)" /> Onayını bekleyen öneriler</div>
+            <div className="card-sub">Para harcayan ya da ayar değiştiren hiçbir şey sen onaylamadan uygulanmaz.</div>
+          </div>
+          {pending.length > 0 && <span className="badge b-warning">{pending.length} bekliyor</span>}
+        </div>
+        {pending.map((r) => (
+          <div className="rec fade-in" key={r.id}>
+            <GameLogo id={r.gameId} size={40} />
+            <div className="rec-body">
+              <b>{r.title}</b>
+              <div className="muted small" style={{ marginTop: 4 }}>{gameById(r.gameId)?.name} · {r.detail}</div>
+            </div>
+            <span className={`badge ${r.cost ? 'b-warning' : 'b-muted'}`}>{r.cost ? `Tahmini ${money(r.cost)}` : 'Para harcamaz'}</span>
+            <div className="actions">
+              <button className="btn btn-green" onClick={() => decide(r.id, 'approved')}><Check size={14} /> Onayla</button>
+              <button className="btn btn-red" onClick={() => decide(r.id, 'rejected')}><X size={14} /> Reddet</button>
+            </div>
+          </div>
+        ))}
+        {pending.length === 0 && <div className="empty">Bekleyen öneri yok.</div>}
+        {decided.length > 0 && (
+          <div className="mt">
+            <div className="muted small" style={{ marginBottom: 8, fontWeight: 700 }}>KARAR VERİLENLER</div>
+            {decided.map((r) => (
+              <div className="flex small" key={r.id} style={{ padding: '6px 0' }}>
+                <span className={`badge ${r.status === 'approved' ? 'b-ok' : 'b-muted'}`}>{r.status === 'approved' ? 'Onaylandı' : 'Reddedildi'}</span>
+                {r.title}
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <div className="flex wrap">
+        {games.map((g) => (
+          <button key={g.id} className={`btn ${g.id === gameId ? 'btn-primary' : ''}`} onClick={() => setGameId(g.id)}>{g.name}</button>
+        ))}
+      </div>
+
+      <div className="grid g-2 fade-in" key={gameId}>
+        <section className="card span-2" style={{ overflow: 'hidden' }}>
+          <div className="flex between wrap">
+            <div className="flex">
+              <GameChip id={gameId} />
+              <span className="muted small">{game.genre}</span>
+            </div>
+            <span className="ai-tag"><Sparkles size={12} /> Claude'un reklam planı · haftalık güncellenir</span>
+          </div>
+        </section>
+
+        <section className="card plan-section">
+          <h4><Users size={15} /> Kime</h4>
+          <div className="inner" style={{ marginBottom: 12 }}>
+            <div className="muted small">Yaş aralığı</div>
+            <div style={{ fontSize: 22, fontWeight: 800 }}>{plan.audience.age}</div>
+          </div>
+          <div className="muted small" style={{ marginBottom: 8 }}>İlgi alanları</div>
+          <div className="tags" style={{ marginBottom: 14 }}>{plan.audience.interests.map((i) => <span key={i} className="badge b-primary">{i}</span>)}</div>
+          <div className="muted small" style={{ marginBottom: 8 }}>Bu oyunları oynayan kitle</div>
+          <div className="tags">{plan.audience.similarGames.map((i) => <span key={i} className="badge b-muted">{i}</span>)}</div>
+        </section>
+
+        <section className="card plan-section">
+          <h4><Globe2 size={15} /> Nerede</h4>
+          {plan.countries.map((c) => (
+            <div className="tier" key={c.tier}>
+              <span className="badge b-primary" style={{ alignSelf: 'start', justifySelf: 'start' }}>{c.tier}</span>
+              <div>
+                <b>{c.list.join(', ')}</b>
+                <p className="muted small" style={{ marginTop: 4, lineHeight: 1.5 }}>{c.why}</p>
+              </div>
+            </div>
+          ))}
+        </section>
+
+        <section className="card plan-section">
+          <h4><Wallet size={15} /> Ne bütçeyle</h4>
+          <div className="grid g-2" style={{ gap: 12, marginBottom: 14 }}>
+            <div className="inner"><div className="muted small">Günlük test bütçesi</div><div style={{ fontSize: 22, fontWeight: 800 }}>{money(plan.budget.daily)}</div></div>
+            <div className="inner"><div className="muted small">Test süresi</div><div style={{ fontSize: 22, fontWeight: 800 }}>{plan.budget.days} gün</div></div>
+          </div>
+          <div className="row"><X size={16} color="var(--red)" /><div className="grow small"><b>Ne zaman durdur:</b> <span className="muted">{plan.budget.stopRule}</span></div></div>
+          <div className="row"><Check size={16} color="var(--green)" /><div className="grow small"><b>Ne zaman büyüt:</b> <span className="muted">{plan.budget.scaleRule}</span></div></div>
+          <div className="muted small mt">Toplam test maliyeti: <b style={{ color: '#fff' }}>{money(plan.budget.daily * plan.budget.days)}</b></div>
+        </section>
+
+        <section className="card plan-section">
+          <h4><Target size={15} /> Hangi platform</h4>
+          {plan.platforms.map((p) => (
+            <div className="fit-row" key={p.name}>
+              <b>{p.name}</b>
+              <span className={`badge ${fitClass[p.fit]}`}>{p.fit}</span>
+              <span className="muted small" style={{ lineHeight: 1.5 }}>{p.why}</span>
+            </div>
+          ))}
+        </section>
+
+        <section className="card plan-section span-2">
+          <h4><Clapperboard size={15} /> Kreatif fikirleri</h4>
+          <div className="grid g-3">
+            {plan.creatives.map((c) => (
+              <div className="inner" key={c.idea}>
+                <span className={`badge ${c.type === 'Video' ? 'b-primary' : 'b-info'}`}>{c.type === 'Video' ? <Video size={12} /> : <Image size={12} />} {c.type}</span>
+                <p className="small" style={{ marginTop: 10, lineHeight: 1.6, color: '#dbe4f3' }}>{c.idea}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+
+      <section className="card">
+        <div className="card-title">Kampanyalar</div>
+        <div className="card-sub" style={{ marginBottom: 10 }}>Platformlar bağlandığında harcama, kurulum ve kurulum başı maliyet burada görünecek.</div>
+        <div className="table-wrap">
+          <table>
+            <thead><tr><th>Kampanya</th><th>Platform</th><th className="num">Harcama</th><th className="num">Kurulum</th><th className="num">Kurulum başı maliyet</th><th>Durum</th></tr></thead>
+            <tbody>
+              <tr><td colSpan={6} className="empty" style={{ whiteSpace: 'normal' }}>Henüz bağlı reklam hesabı yok.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </>
+  )
+}
