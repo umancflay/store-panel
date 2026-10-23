@@ -1,4 +1,4 @@
-/* Store Panel · "Pixel" tasarımı: siyah zemin, ince Poppins, parlak çizgiler, beyaz hap butonlar */
+/* Voo Game Studio paneli: siyah zemin, ince Poppins, parlak çizgiler, beyaz hap butonlar */
 
 :root {
   --bg: #030303;
@@ -70,23 +70,30 @@ p { margin: 0; }
   border-bottom: 1px solid rgba(255,255,255,.05);
 }
 .logo { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 14px; letter-spacing: 1.2px; }
-.logo-mark { width: 30px; height: 30px; border-radius: 9px; background: linear-gradient(160deg, #2a2a2a, #0e0e0e); border: 1px solid rgba(255,255,255,.14); display: grid; place-items: center; font-weight: 600; font-size: 13px; }
+.logo-mark { width: 32px; height: 32px; border-radius: 10px; color: #0a0a0a; background: linear-gradient(150deg, #ffffff, #bdbdbd 60%, #8fd3ae); display: grid; place-items: center; box-shadow: 0 0 18px rgba(255,255,255,.18); flex-shrink: 0; }
+.logo-text { font-weight: 600; font-size: 13px; letter-spacing: 2px; white-space: nowrap; }
+.logo-text span { font-weight: 300; color: var(--muted); letter-spacing: 2px; }
 .menu-wrap { position: relative; }
 .menu-btn { height: 38px; padding: 0 16px 0 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.05); color: #fff; font: 400 12px var(--font); display: flex; align-items: center; gap: 10px; cursor: pointer; transition: background .2s; }
 .menu-btn:hover { background: rgba(255,255,255,.09); }
 .menu-pop {
-  position: absolute; top: 46px; left: 50%; transform: translateX(-50%); z-index: 40; width: 290px; max-height: 76vh; overflow-y: auto; padding: 8px; border-radius: 20px;
-  background: linear-gradient(170deg, #1c1c1c, #0f0f0f); border: 1px solid rgba(255,255,255,.12); box-shadow: 0 30px 80px rgba(0,0,0,.9), 0 0 0 100vmax rgba(0,0,0,.35);
-  display: flex; flex-direction: column; gap: 2px; animation: pop .18s ease;
+  position: absolute; top: 50px; left: 50%; transform: translateX(-50%); z-index: 40; width: min(820px, calc(100vw - 48px)); max-height: 80vh; overflow-y: auto;
+  padding: 18px; border-radius: 26px; background: linear-gradient(170deg, #1d1d1d 0%, #111 60%, #0d0d0d 100%); border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 40px 100px rgba(0,0,0,.9), 0 0 0 100vmax rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.08);
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 14px; animation: pop .2s ease;
 }
-@keyframes pop { from { opacity: 0; transform: translate(-50%, -6px); } to { opacity: 1; transform: translate(-50%, 0); } }
-.menu-sep { height: 1px; background: var(--line); margin: 6px 8px; }
-.menu-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; font-size: 13px; color: var(--muted); transition: background .15s, color .15s; }
+@keyframes pop { from { opacity: 0; transform: translate(-50%, -8px) scale(.98); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
+.menu-group { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.menu-title { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--dim); padding: 4px 10px 8px; }
+.menu-item { position: relative; display: flex; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 14px; color: var(--muted); transition: background .15s, color .15s; }
 .menu-item:hover { background: rgba(255,255,255,.05); color: #fff; }
-.menu-item.active { background: rgba(255,255,255,.08); color: #fff; }
-.menu-dot { width: 6px; height: 6px; border-radius: 999px; background: rgba(255,255,255,.18); flex-shrink: 0; }
-.menu-item.active .menu-dot { background: var(--green); box-shadow: 0 0 8px var(--green); }
-.menu-hint { margin-left: auto; font-size: 10px; color: var(--dim2); }
+.menu-item.active { background: rgba(255,255,255,.07); color: #fff; }
+.menu-ico { width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; flex-shrink: 0; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.07); color: #cfcfcf; transition: background .15s, color .15s; }
+.menu-item:hover .menu-ico { background: rgba(255,255,255,.1); color: #fff; }
+.menu-item.active .menu-ico, .sheet-tile.on .menu-ico { background: linear-gradient(150deg, #fff, #8fd3ae); color: #0a0a0a; border-color: transparent; box-shadow: 0 0 16px rgba(143,211,174,.35); }
+.menu-txt { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.menu-txt b { font-size: 13px; font-weight: 500; }
+.menu-txt small { font-size: 10px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .menu-badge { margin-left: auto; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--orange); color: #1a0600; font-size: 10px; font-weight: 600; display: grid; place-items: center; }
 .top-right { display: flex; align-items: center; gap: 8px; }
 .icon-btn { width: 36px; height: 36px; border-radius: 999px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.05); color: #fff; display: grid; place-items: center; cursor: pointer; transition: background .2s; }
@@ -106,12 +113,15 @@ p { margin: 0; }
 .page-head.flex { flex-direction: row; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; }
 .page-head h1 { font-size: clamp(28px, 3.4vw, 40px); font-weight: 300; letter-spacing: -1px; line-height: 1.1; margin-top: 4px; }
 .page-head p { font-size: 13px; color: var(--muted); margin-top: 6px; max-width: 640px; line-height: 1.6; }
-.eyebrow { font-size: 11px; letter-spacing: 2.5px; color: var(--dim); text-transform: uppercase; }
+.eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: 2.5px; color: var(--dim); text-transform: uppercase; }
+.eyebrow::before { content: ''; width: 6px; height: 6px; border-radius: 999px; background: var(--green); box-shadow: 0 0 10px var(--green); }
 .display { font-weight: 200; letter-spacing: -3px; line-height: 1; }
 
 /* ---------- Kartlar ---------- */
 
-.card { position: relative; overflow: hidden; padding: 18px; border-radius: var(--radius); background: var(--card); border: 1px solid rgba(255,255,255,.08); box-shadow: var(--hl); min-width: 0; }
+.card { position: relative; overflow: hidden; padding: 18px; border-radius: var(--radius); background: var(--card); border: 1px solid rgba(255,255,255,.08); box-shadow: var(--hl), 0 20px 50px rgba(0,0,0,.35); min-width: 0; transition: border-color .25s, box-shadow .25s; }
+.card::after { content: ''; position: absolute; inset: 0 0 auto; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.22), transparent); pointer-events: none; }
+.card:hover { border-color: rgba(255,255,255,.14); }
 .card.plain { background: var(--panel); }
 .card.tile { background: var(--card2); border-radius: 20px; }
 .card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
@@ -337,7 +347,12 @@ tbody tr:hover { background: rgba(255,255,255,.025); }
 
 /* ---------- Komuta: oyun kartları ---------- */
 .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); gap: 14px; }
-.gcard { position: relative; overflow: hidden; padding: 18px; border-radius: 22px; background: linear-gradient(160deg, #222 0%, #141414 55%, #0f0f0f 100%); border: 1px solid var(--line); box-shadow: var(--hl); display: flex; flex-direction: column; gap: 14px; }
+.gcard { position: relative; overflow: hidden; padding: 18px; border-radius: 22px; background: linear-gradient(160deg, #232323 0%, #141414 55%, #0f0f0f 100%); border: 1px solid var(--line); box-shadow: var(--hl), 0 20px 50px rgba(0,0,0,.35); display: flex; flex-direction: column; gap: 14px; transition: transform .2s, border-color .2s; }
+.gcard:hover { transform: translateY(-2px); border-color: rgba(255,255,255,.16); }
+.gcard::before { content: ''; position: absolute; top: -80px; right: -60px; width: 220px; height: 160px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,255,255,.08), transparent); pointer-events: none; }
+.gcard.k::before { background: radial-gradient(closest-side, rgba(255,122,85,.16), transparent); }
+.gcard.d::before { background: radial-gradient(closest-side, rgba(232,192,122,.12), transparent); }
+.gcard .game-logo { box-shadow: 0 8px 24px rgba(0,0,0,.5); }
 .gcard.k { border-color: rgba(255,122,85,.35); }
 .gcard.d { border-color: rgba(232,192,122,.25); }
 .gcard-head { display: flex; align-items: center; gap: 14px; }
@@ -507,9 +522,14 @@ tbody tr:hover { background: rgba(255,255,255,.025); }
 /* ---------- Mobil alt menü ---------- */
 .bottom-nav { display: none; }
 .sheet { position: fixed; inset: 0; z-index: 61; background: rgba(8,8,8,.97); backdrop-filter: blur(20px); padding: calc(20px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 2px; overflow-y: auto; animation: fadeIn .2s; }
-.sheet-link { display: flex; align-items: baseline; justify-content: space-between; padding: 12px 4px; border-bottom: 1px solid rgba(255,255,255,.06); font-size: 22px; font-weight: 300; color: var(--muted); background: none; border-left: 0; border-right: 0; border-top: 0; font-family: inherit; text-align: left; cursor: pointer; }
-.sheet-link.on { color: #fff; }
-.sheet-link small { font-size: 11px; color: #6e6e6e; }
+.sheet-link { display: flex; align-items: center; justify-content: space-between; padding: 14px 6px; margin-top: 10px; border-top: 1px solid rgba(255,255,255,.06); font-size: 14px; color: var(--muted); background: none; border-left: 0; border-right: 0; border-bottom: 0; font-family: inherit; text-align: left; cursor: pointer; }
+.sheet-group { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; }
+.sheet-group .menu-title { padding-left: 2px; }
+.sheet-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.sheet-tile { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 18px; background: linear-gradient(160deg, #1f1f1f, #121212); border: 1px solid rgba(255,255,255,.07); color: #fff; }
+.sheet-tile b { font-size: 13px; font-weight: 500; }
+.sheet-tile small { font-size: 10px; color: var(--dim); margin-top: -4px; }
+.sheet-tile.on { border-color: rgba(143,211,174,.45); }
 
 .muted { color: var(--muted); }
 .small { font-size: 11px; }

@@ -326,3 +326,21 @@ export function useIsMobile(max = 900) {
   }, [q])
   return m
 }
+
+// Stüdyo logosu: "V" işareti + ad
+export function Brand({ compact = false }: { compact?: boolean }) {
+  return (
+    <span className="logo">
+      <span className="logo-mark" aria-hidden>
+        <svg viewBox="0 0 24 24" width="16" height="16">
+          <path d="M4 5h4.2l3.8 9.6L15.8 5H20l-6.2 14h-3.6z" fill="currentColor" />
+        </svg>
+      </span>
+      {!compact && (
+        <span className="logo-text">
+          VOO <span>GAME STUDIO</span>
+        </span>
+      )}
+    </span>
+  )
+}

@@ -6,6 +6,7 @@ name: Veri topla
 on:
   schedule:
     - cron: '0 5 * * *'     # Her gün 08:00 İstanbul (05:00 UTC): tüm veriler + Claude analizi
+    - cron: '0 15 * * *'    # Her gün 18:00 İstanbul: tüm veriler tekrar (akşam güncel olsun)
     - cron: '30 */6 * * *'  # 6 saatte bir: politika mailleri ve inceleme durumları
     - cron: '0 6 * * 1'     # Her pazartesi 09:00 İstanbul: reklam planları
   workflow_dispatch:

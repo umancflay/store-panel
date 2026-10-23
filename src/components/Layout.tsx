@@ -2,35 +2,48 @@ import { Component, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
   Home, Radar, Bot, KanbanSquare, Network, Users, Workflow, NotebookPen, CalendarDays, Wallet, Megaphone,
-  BellRing, Gamepad2, MessageSquareText, Settings, RefreshCw, LogOut, Menu, X, CheckCircle2, AlertTriangle, Info,
+  BellRing, Gamepad2, MessageSquareText, Settings, RefreshCw, LogOut, Menu, X, CheckCircle2, AlertTriangle, Info, ChevronDown,
 } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { useStore } from '../lib/store'
 import { usePeople } from '../lib/data'
-import { initials } from './ui'
+import { Brand, initials } from './ui'
 
-// Menü: tasarımdaki 11 sayfa + panelin mağaza sayfaları
-export const navItems = [
-  { to: '/', label: 'Ana sayfa', hint: 'Özet', icon: Home },
-  { to: '/komuta', label: 'Komuta', hint: 'Sinyal akışı', icon: Radar },
-  { to: '/asistan', label: 'Asistan', hint: 'Yapay zeka', icon: Bot },
-  { to: '/gorevler', label: 'Görevler', hint: 'Pano', icon: KanbanSquare },
-  { to: '/plan', label: 'Plan', hint: 'Çalışma sırası', icon: Network },
-  { to: '/ortak', label: 'Ortak plan', hint: 'Birlikte çalış', icon: Users },
-  { to: '/otomasyon', label: 'Otomasyon', hint: 'Kurallar', icon: Workflow },
-  { to: '/notlar', label: 'Notlar', hint: 'Dokümanlar', icon: NotebookPen },
-  { to: '/takvim', label: 'Takvim', hint: 'Yayınlar', icon: CalendarDays },
-  { to: '/gelir', label: 'Gelir', hint: 'AdMob', icon: Wallet },
-  { to: '/reklamlar', label: 'Reklam', hint: 'Kampanyalar', icon: Megaphone },
-  { sep: true },
-  { to: '/uyarilar', label: 'Uyarılar', hint: 'Politika', icon: BellRing },
-  { to: '/oyunlar', label: 'Oyunlar', hint: 'Mağazalar', icon: Gamepad2 },
-  { to: '/yorumlar', label: 'Yorumlar', hint: 'Oyuncular', icon: MessageSquareText },
-  { to: '/ayarlar', label: 'Ayarlar', hint: 'Bağlantılar', icon: Settings },
-] as const
-
+// Menü grupları: günlük bakış, çalışma ve mağaza/gelir sayfaları
 type NavItem = { to: string; label: string; hint: string; icon: typeof Home }
-const links = navItems.filter((n): n is (typeof navItems)[number] & NavItem => !('sep' in n))
+export const navGroups: { title: string; items: NavItem[] }[] = [
+  {
+    title: 'Günlük',
+    items: [
+      { to: '/', label: 'Ana sayfa', hint: 'Günün özeti', icon: Home },
+      { to: '/komuta', label: 'Komuta', hint: 'Oyunlar ve sinyaller', icon: Radar },
+      { to: '/asistan', label: 'Asistan', hint: 'Yapay zekaya sor', icon: Bot },
+      { to: '/uyarilar', label: 'Uyarılar', hint: 'Politika ve hatalar', icon: BellRing },
+    ],
+  },
+  {
+    title: 'Çalışma',
+    items: [
+      { to: '/gorevler', label: 'Görevler', hint: 'İş panosu', icon: KanbanSquare },
+      { to: '/plan', label: 'Plan', hint: 'Çalışma sırası', icon: Network },
+      { to: '/ortak', label: 'Ortak plan', hint: 'Birlikte çalış', icon: Users },
+      { to: '/otomasyon', label: 'Otomasyon', hint: 'Kurallar', icon: Workflow },
+      { to: '/notlar', label: 'Notlar', hint: 'Dokümanlar', icon: NotebookPen },
+      { to: '/takvim', label: 'Takvim', hint: 'Tarihler', icon: CalendarDays },
+    ],
+  },
+  {
+    title: 'Mağaza ve gelir',
+    items: [
+      { to: '/oyunlar', label: 'Oyunlar', hint: 'Mağazalar', icon: Gamepad2 },
+      { to: '/gelir', label: 'Gelir', hint: 'AdMob ve satış', icon: Wallet },
+      { to: '/reklamlar', label: 'Reklam', hint: 'Kampanyalar', icon: Megaphone },
+      { to: '/yorumlar', label: 'Yorumlar', hint: 'Oyuncular', icon: MessageSquareText },
+      { to: '/ayarlar', label: 'Ayarlar', hint: 'Profil ve bağlantılar', icon: Settings },
+    ],
+  },
+]
+const links = navGroups.flatMap((g) => g.items)
 const mobileMain = ['/', '/komuta', '/gorevler', '/gelir']
 
 export default function Layout() {
@@ -52,8 +65,13 @@ export default function Layout() {
   useEffect(() => {
     if (!menu) return
     const close = (e: MouseEvent) => !menuRef.current?.contains(e.target as Node) && setMenu(false)
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && setMenu(false)
     document.addEventListener('mousedown', close)
-    return () => document.removeEventListener('mousedown', close)
+    document.addEventListener('keydown', esc)
+    return () => {
+      document.removeEventListener('mousedown', close)
+      document.removeEventListener('keydown', esc)
+    }
   }, [menu])
 
   const critical = alerts.filter((a) => a.level === 'critical' && a.status === 'open').length
@@ -69,29 +87,33 @@ export default function Layout() {
       <div className="frame">
         <div className="frame-inner">
           <header className="topbar">
-            <Link to="/" className="logo">
-              <span className="logo-mark">P</span>
-              PIXEL GAME
+            <Link to="/" aria-label="Ana sayfa">
+              <Brand />
             </Link>
 
             <div className="menu-wrap" ref={menuRef}>
               <button type="button" className="menu-btn" aria-expanded={menu} aria-label="Menüyü aç" onClick={() => setMenu(!menu)}>
-                <Menu size={16} />
+                {current ? <current.icon size={15} /> : <Menu size={15} />}
                 {current?.label ?? 'Menü'}
+                <ChevronDown size={14} className={`chev ${menu ? 'open' : ''}`} />
               </button>
               {menu && (
                 <nav className="menu-pop" aria-label="Ana menü">
-                  {navItems.map((n, i) =>
-                    'sep' in n ? (
-                      <div key={'sep' + i} className="menu-sep" />
-                    ) : (
-                      <NavLink key={n.to} to={n.to} end={n.to === '/'} className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}>
-                        <span className="menu-dot" />
-                        {n.label}
-                        {n.to === '/uyarilar' && critical > 0 ? <span className="menu-badge">{critical}</span> : <span className="menu-hint">{n.hint}</span>}
-                      </NavLink>
-                    ),
-                  )}
+                  {navGroups.map((g) => (
+                    <div key={g.title} className="menu-group">
+                      <span className="menu-title">{g.title}</span>
+                      {g.items.map((n) => (
+                        <NavLink key={n.to} to={n.to} end={n.to === '/'} className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}>
+                          <span className="menu-ico"><n.icon size={16} /></span>
+                          <span className="menu-txt">
+                            <b>{n.label}</b>
+                            <small>{n.hint}</small>
+                          </span>
+                          {n.to === '/uyarilar' && critical > 0 && <span className="menu-badge">{critical}</span>}
+                        </NavLink>
+                      ))}
+                    </div>
+                  ))}
                 </nav>
               )}
             </div>
@@ -138,14 +160,22 @@ export default function Layout() {
       {sheet && (
         <nav className="sheet" aria-label="Ana menü">
           <div className="flex between" style={{ paddingBottom: 14 }}>
-            <span className="logo"><span className="logo-mark">P</span>PIXEL GAME</span>
+            <Brand />
             <button type="button" className="icon-btn" onClick={() => setSheet(false)} aria-label="Menüyü kapat"><X size={18} /></button>
           </div>
-          {links.map((n) => (
-            <NavLink key={n.to} to={n.to} end={n.to === '/'} className={({ isActive }) => `sheet-link ${isActive ? 'on' : ''}`}>
-              {n.label}
-              <small>{n.to === '/uyarilar' && critical > 0 ? `${critical} kritik` : n.hint}</small>
-            </NavLink>
+          {navGroups.map((g) => (
+            <div key={g.title} className="sheet-group">
+              <span className="menu-title">{g.title}</span>
+              <div className="sheet-grid">
+                {g.items.map((n) => (
+                  <NavLink key={n.to} to={n.to} end={n.to === '/'} className={({ isActive }) => `sheet-tile ${isActive ? 'on' : ''}`}>
+                    <span className="menu-ico"><n.icon size={17} /></span>
+                    <b>{n.label}</b>
+                    <small>{n.to === '/uyarilar' && critical > 0 ? `${critical} kritik` : n.hint}</small>
+                  </NavLink>
+                ))}
+              </div>
+            </div>
           ))}
           <button type="button" className="sheet-link" onClick={signOut}>
             Çıkış yap <small><LogOut size={14} /></small>

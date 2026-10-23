@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { ShieldCheck, Loader2 } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { supabase, isDemo } from '../lib/supabase'
+import { Brand } from '../components/ui'
 
 // Giriş ekranı: e-posta + şifre → (ilk seferde) iki adımlı doğrulama kurulumu → 6 haneli kod.
 // Yeni hesap açma yok; hesapları Supabase panelinden admin açar.
@@ -14,9 +15,9 @@ export default function Login() {
     <div className="auth-page">
       <div className="streak s1" />
       <div className="streak s2" />
-      <span className="watermark" style={{ bottom: -30, left: -10 }} aria-hidden>PIXEL GAME</span>
+      <span className="watermark" style={{ bottom: -30, left: -10 }} aria-hidden>VOO GAME STUDIO</span>
       <header className="flex" style={{ position: 'relative', zIndex: 1 }}>
-        <span className="logo"><span className="logo-mark">P</span>PIXEL GAME</span>
+        <Brand />
       </header>
       <main className="auth-main" style={{ position: 'relative', zIndex: 1 }}>
         <div className="auth-hello">
@@ -107,7 +108,7 @@ function EnrollStep({ onDone, onCancel }: { onDone: () => void; onCancel: () => 
       // Yarım kalmış eski kurulumları temizle
       const { data: list } = await supabase!.auth.mfa.listFactors()
       for (const f of list?.all ?? []) if (f.status === 'unverified') await supabase!.auth.mfa.unenroll({ factorId: f.id })
-      const { data, error } = await supabase!.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Store Panel ' + Date.now() })
+      const { data, error } = await supabase!.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Voo Game Studio ' + Date.now() })
       if (error) return setError(error.message)
       setFactor({ id: data.id, qr: data.totp.qr_code, secret: data.totp.secret })
     })()

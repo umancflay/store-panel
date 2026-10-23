@@ -1,6 +1,6 @@
 {
-  "name": "Store Panel",
-  "short_name": "Store Panel",
+  "name": "Voo Game Studio",
+  "short_name": "Voo Panel",
   "description": "Oyun stüdyosu yönetim paneli",
   "lang": "tr",
   "start_url": "./",

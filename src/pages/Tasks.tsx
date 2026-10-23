@@ -4,8 +4,9 @@ import { Plus, Search, Trash2, X, Sparkles } from 'lucide-react'
 import { useData, usePeople } from '../lib/data'
 import { useStore } from '../lib/store'
 import { useRows, trDate, trDateTime, today } from '../lib/rows'
-import { demoTasks } from '../data/demo'
-import { ASSISTANT, levelLabel, statusLabel, taskCode, type Task, type TaskLevel, type TaskStatus } from '../lib/types'
+import { demoNodes, demoTasks } from '../data/demo'
+import { finishNode } from '../lib/planSync'
+import { ASSISTANT, levelLabel, statusLabel, taskCode, type PlanNode, type Task, type TaskLevel, type TaskStatus } from '../lib/types'
 import { gameById } from '../data/sample'
 import { GameLogo, Modal, SampleBanner, initials, useIsMobile } from '../components/ui'
 
@@ -19,6 +20,7 @@ const levelColor: Record<TaskLevel, string> = { critical: '#FF7A55', medium: '#E
 // Görevler: üç sütunlu pano, sürükle-bırak, sağda düzenlenebilir detay
 export default function Tasks() {
   const { rows: tasks, insert, update, remove } = useRows<Task>('tasks', demoTasks, { order: 'created_at', ascending: false })
+  const nodes = useRows<PlanNode>('plan_nodes', demoNodes)
   const { toast } = useStore()
   const { me } = usePeople()
   const mobile = useIsMobile()
@@ -42,6 +44,11 @@ export default function Tasks() {
     const history = what ? [...t.history, { what, at: new Date().toISOString() }] : t.history
     try {
       await update(t.id, { ...patch, history, updated_at: new Date().toISOString() })
+      // Plana bağlı görev bitince plan adımı da biter, sıradaki adım başlar
+      if (patch.status === 'done' && t.plan_node_id) {
+        const started = await finishNode(nodes.rows, t.plan_node_id, nodes.update)
+        toast(started.length ? `Plan adımı bitti · sıradaki başladı: ${started.join(', ')}` : 'Plan adımı da bitti olarak işaretlendi', 'info')
+      }
     } catch (e) {
       toast('Kaydedilemedi: ' + (e as Error).message, 'warn')
     }

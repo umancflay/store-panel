@@ -5,6 +5,7 @@ import { useData, usePeople } from '../lib/data'
 import { useStore } from '../lib/store'
 import { useRows, addDays, daysBetween, today, trDate } from '../lib/rows'
 import { demoNodes, demoPlans, demoTasks } from '../data/demo'
+import { finishNode } from '../lib/planSync'
 import { ASSISTANT, type NodeStatus, type Plan as PlanT, type PlanNode, type Task } from '../lib/types'
 import { Modal, SampleBanner, initials, useIsMobile } from '../components/ui'
 
@@ -80,12 +81,12 @@ export default function Plan() {
   async function patch(n: PlanNode, p: Partial<PlanNode>) {
     try {
       await nodesDb.update(n.id, p)
-      // Bir adım bitince, tüm bağımlılıkları biten bekleyen adımlar kendiliğinden başlar
       if (p.status === 'done') {
-        const all = nodesDb.rows.map((x) => (x.id === n.id ? { ...x, ...p } : x))
-        const ready = all.filter((x) => x.plan_id === n.plan_id && x.status === 'wait' && x.depends_on.includes(n.id) && x.depends_on.every((id) => all.find((y) => y.id === id)?.status === 'done'))
-        for (const r of ready) await nodesDb.update(r.id, { status: 'active', start_date: today() })
-        if (ready.length) toast(`Sıradaki adım başladı: ${ready.map((r) => r.title).join(', ')}`)
+        // Sıradaki adımlar kendiliğinden başlar, bu adıma bağlı görev de biter
+        const started = await finishNode(nodesDb.rows, n.id, nodesDb.update)
+        if (started.length) toast(`Sıradaki adım başladı: ${started.join(', ')}`)
+        const task = tasksDb.rows.find((t) => t.plan_node_id === n.id && t.status !== 'done')
+        if (task) await tasksDb.update(task.id, { status: 'done', history: [...task.history, { what: 'Plan adımı bitti, otomatik kapandı', at: new Date().toISOString() }] })
       }
     } catch (e) {
       toast('Kaydedilemedi: ' + (e as Error).message, 'warn')

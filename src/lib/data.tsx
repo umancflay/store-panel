@@ -327,6 +327,30 @@ export function DataProvider({ children }: { children: ReactNode }) {
       })
   }, [version])
 
+  // Otomatik yenileme: veri toplama bitince ya da sekmeye dönünce panel kendini günceller
+  useEffect(() => {
+    if (isDemo) return
+    let lastFinish: string | null | undefined
+    const check = async () => {
+      const { data } = await supabase!.from('sync_runs').select('finished_at').order('started_at', { ascending: false }).limit(1)
+      const f = (data?.[0] as { finished_at: string | null } | undefined)?.finished_at ?? null
+      if (lastFinish !== undefined && f && f !== lastFinish) setVersion((v) => v + 1)
+      lastFinish = f
+    }
+    check()
+    const t = setInterval(check, 2 * 60 * 1000)
+    let hiddenAt = 0
+    const vis = () => {
+      if (document.hidden) hiddenAt = Date.now()
+      else if (hiddenAt && Date.now() - hiddenAt > 5 * 60 * 1000) setVersion((v) => v + 1)
+    }
+    document.addEventListener('visibilitychange', vis)
+    return () => {
+      clearInterval(t)
+      document.removeEventListener('visibilitychange', vis)
+    }
+  }, [])
+
   // Gizlenen oyunlar ve onlara ait tüm veriler panelden çıkar
   const view = useMemo(() => {
     const visible = new Set(state.games.filter((g) => !g.hidden).map((g) => g.id))

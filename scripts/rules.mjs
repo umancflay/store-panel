@@ -79,6 +79,7 @@ export async function applyRules() {
   const alerts = []
   const tasks = []
   const runs = new Map()
+  const active = new Set() // şu an süren sorunlar: "crash_rate-salgin", "auto:rejected-salgin-ios-1.2" …
 
   for (const rule of rules) {
     const hits = [] // { gameId, value, title, body, level, source, url }
@@ -147,6 +148,8 @@ export async function applyRules() {
     runs.set(rule, hits.length)
     for (const h of hits) {
       const key = `${rule.trigger}-${h.gameId}-${h.key ?? month}`
+      active.add(`${rule.trigger}-${h.gameId}`)
+      active.add(`auto:${key}`)
       if (!h.alertExists) {
         alerts.push({
           external_id: key, level: h.level, source: h.source, game_id: h.gameId, title: h.title, body: h.body,
@@ -180,10 +183,51 @@ export async function applyRules() {
     }
   }
 
+  const closed = await closeFixed(rules.map((r) => r.trigger), active)
+
   for (const [rule, n] of runs) {
     if (rule.id == null) continue
     await db(`automations?id=eq.${rule.id}`, 'PATCH', { runs: (rule.runs ?? 0) + 1, last_run_at: new Date().toISOString() }, 'return=minimal')
     console.log(`Kural "${rule.name}": ${n} eşleşme`)
   }
-  console.log(`Otomasyon: ${alerts.length} uyarı, ${newTasks} yeni görev`)
+  console.log(`Otomasyon: ${alerts.length} uyarı, ${newTasks} yeni görev, ${closed} kendiliğinden kapandı`)
+}
+
+// Sorun düzeldiyse: kuralın açtığı uyarıyı çözüldü yap, ilgili görevi (otomasyon ya da Komuta'dan açılan) bitir.
+// Sadece bu çalışmada kontrol edilen kurallara bakılır; kapalı kuralların kayıtlarına dokunulmaz.
+const komutaKey = { crash_rate: 'crash', anr_rate: 'anr', rating: 'rating', fill_rate: 'fill' }
+async function closeFixed(checked, active) {
+  const now = new Date().toISOString()
+  let n = 0
+  const metric = checked.filter((t) => komutaKey[t])
+
+  const openAlerts = await db('alerts?status=eq.open&external_id=not.is.null&select=id,external_id')
+  for (const a of openAlerts) {
+    const m = a.external_id.match(/^(crash_rate|anr_rate|rating|fill_rate)-(.+)-\d{4}-\d{2}$/)
+    if (!m || !metric.includes(m[1]) || active.has(`${m[1]}-${m[2]}`)) continue
+    await db(`alerts?id=eq.${a.id}`, 'PATCH', { status: 'resolved', resolved_at: now, resolved_by: 'otomasyon' }, 'return=minimal')
+    n++
+  }
+
+  let openTasks = []
+  try {
+    openTasks = await db('tasks?status=neq.done&source=not.is.null&select=id,source,history')
+  } catch {
+    return n // görev tablosu yok
+  }
+  for (const t of openTasks) {
+    let fixed = false
+    const auto = t.source.match(/^auto:(crash_rate|anr_rate|rating|fill_rate|rejected)-/)
+    if (auto && checked.includes(auto[1])) fixed = !active.has(t.source)
+    const sig = t.source.match(/^(crash|anr|rating|fill):(.+)$/)
+    if (sig) {
+      const trigger = Object.keys(komutaKey).find((k) => komutaKey[k] === sig[1])
+      if (metric.includes(trigger)) fixed = !active.has(`${trigger}-${sig[2]}`)
+    }
+    if (!fixed) continue
+    const history = [...(t.history ?? []), { what: 'Sorun düzeldi, otomatik kapandı', at: now }]
+    await db(`tasks?id=eq.${t.id}`, 'PATCH', { status: 'done', history, updated_at: now }, 'return=minimal')
+    n++
+  }
+  return n
 }

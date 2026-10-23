@@ -376,6 +376,7 @@ Tarayıcıda `http://localhost:5173` adresini aç.
 - **Supabase bedava planda 1 hafta hiç kullanılmayan projeleri duraklatır.** Her sabah çalışan veri toplama işi projeyi aktif tutar. Proje yine de duraklarsa Supabase panelinden **Restore** de.
 - **GitHub, public repolarda 60 gün hiç commit gelmezse zamanlanmış işleri durdurur.** Böyle olursa **Actions** sekmesinde bir uyarı çıkar. **Enable workflow** demen yeterli.
 - **Yapay zeka hiçbir şeyi onaysız uygulamaz.** Para harcayan ya da mağazada bir şeyi değiştiren her öneri "Onayını bekleyen öneriler" listesine düşer. Sen **Onayla** demeden hiçbir şey yapılmaz.
+- **Otomatik işler:** Veriler her gün 08:00 ve 18:00'de toplanır. Sorun düzelince (ör. çökme oranı eşiğin altına inince) ilgili uyarı ve görev kendiliğinden kapanır. Plana bağlı bir görev bitince plan adımı da biter ve sıradaki adım başlar. Panel açıkken yeni veri gelince sayfa kendini yeniler.
 - **Arama motorları siteyi indekslemez.** Bunu `noindex` etiketi ve `robots.txt` sağlar.
 - **Telefon bildirimleri** 4. aşamada açılacak. Altyapısı (service worker, abonelik tablosu) hazır.
 
