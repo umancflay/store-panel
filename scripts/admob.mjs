@@ -69,8 +69,13 @@ async function gameMapper(rows) {
 
   for (const [appId, app] of apps) {
     if (map.has(appId)) continue
+    // "Brick Gate iOS" ile "Brick Gate: Color Block Puzzle" aynı oyun: platform adını at, baş kısmı karşılaştır
     const n = normalize(app.name)
-    let game = games.find((g) => normalize(g.name) === n) ?? games.find((g) => n.includes(normalize(g.name)) || normalize(g.name).includes(n))
+    const base = normalize(app.name.replace(/\b(ios|android)\b/gi, ''))
+    const gBase = (g) => normalize(g.name.replace(/\b(ios|android)\b/gi, ''))
+    let game =
+      games.find((g) => normalize(g.name) === n) ??
+      games.find((g) => base.length >= 4 && (gBase(g).startsWith(base) || base.startsWith(gBase(g))))
     if (game) {
       game.admob_app_ids = [...(game.admob_app_ids ?? []), appId]
       game.platforms = [...new Set([...(game.platforms ?? []), app.platform])]
