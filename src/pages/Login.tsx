@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Gamepad2, ShieldCheck, Loader2 } from 'lucide-react'
+import { ShieldCheck, Loader2 } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { supabase, isDemo } from '../lib/supabase'
 
@@ -7,28 +7,39 @@ import { supabase, isDemo } from '../lib/supabase'
 // Yeni hesap açma yok; hesapları Supabase panelinden admin açar.
 export default function Login() {
   const { stage, email: userEmail, refresh, signOut, demoSignIn } = useAuth()
+  const hour = new Date().getHours()
+  const hello = hour < 6 ? 'İyi geceler' : hour < 12 ? 'Günaydın' : hour < 18 ? 'İyi günler' : 'İyi akşamlar'
 
   return (
     <div className="auth-page">
-      <div className="auth-art">
-        <div className="brand-mark" style={{ width: 72, height: 72, borderRadius: 22 }}><Gamepad2 size={36} /></div>
-        <h2>STORE PANEL</h2>
-        <p>Oyunların, mağazaların ve reklamların tek ekranda.</p>
-      </div>
-      <div className="auth-form">
+      <div className="streak s1" />
+      <div className="streak s2" />
+      <span className="watermark" style={{ bottom: -30, left: -10 }} aria-hidden>PIXEL GAME</span>
+      <header className="flex" style={{ position: 'relative', zIndex: 1 }}>
+        <span className="logo"><span className="logo-mark">P</span>PIXEL GAME</span>
+      </header>
+      <main className="auth-main" style={{ position: 'relative', zIndex: 1 }}>
+        <div className="auth-hello">
+          <span className="eyebrow">Stüdyo paneli</span>
+          <h1>
+            {hello}.<br />
+            <span>Tekrar hoş geldin.</span>
+          </h1>
+          <p>AdMob, Google Play ve App Store tek ekranda. Sorunları asistan bulur, sen onaylarsın.</p>
+        </div>
         <div className="auth-box fade-in" key={stage}>
           {stage === 'signedOut' && <PasswordStep demoSignIn={demoSignIn} />}
           {stage === 'enroll' && <EnrollStep onDone={refresh} onCancel={signOut} />}
           {stage === 'verify' && <VerifyStep onDone={refresh} onCancel={signOut} />}
           {stage === 'denied' && (
             <>
-              <h1>Erişim yok</h1>
+              <h2>Erişim yok</h2>
               <p className="card-sub"><b>{userEmail}</b> bu panelin admin listesinde değil.</p>
               <button className="btn btn-block" onClick={signOut}>Başka hesapla giriş yap</button>
             </>
           )}
         </div>
-      </div>
+      </main>
     </div>
   )
 }
@@ -51,7 +62,7 @@ function PasswordStep({ demoSignIn }: { demoSignIn: (e: string) => void }) {
 
   return (
     <form onSubmit={submit}>
-      <h1>Hoş geldin</h1>
+      <h2>Giriş yap</h2>
       <p className="card-sub">Devam etmek için e-posta ve şifrenle giriş yap.</p>
       {isDemo && (
         <div className="sample-banner" style={{ marginBottom: 20 }}>
@@ -60,19 +71,15 @@ function PasswordStep({ demoSignIn }: { demoSignIn: (e: string) => void }) {
       )}
       <div className="field">
         <label htmlFor="email">E-posta</label>
-        <div className="gradient-border">
-          <input id="email" className="input" type="email" autoComplete="username" placeholder="ornek@mail.com" value={email} onChange={(e) => setEmail(e.target.value)} required={!isDemo} />
-        </div>
+        <input id="email" className="input" type="email" autoComplete="username" placeholder="ornek@mail.com" value={email} onChange={(e) => setEmail(e.target.value)} required={!isDemo} />
       </div>
       <div className="field">
         <label htmlFor="password">Şifre</label>
-        <div className="gradient-border">
-          <input id="password" className="input" type="password" autoComplete="current-password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required={!isDemo} />
-        </div>
+        <input id="password" className="input" type="password" autoComplete="current-password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required={!isDemo} />
       </div>
       {error && <div className="error">{error}</div>}
       <button className="btn btn-primary btn-block" disabled={busy}>
-        {busy && <Loader2 size={16} className="spin" />} GİRİŞ YAP
+        {busy && <Loader2 size={16} className="spin" />} Giriş yap
       </button>
       <p className="muted small" style={{ textAlign: 'center', marginTop: 18 }}>Yeni hesap açılamaz. Hesaplar yönetici tarafından eklenir.</p>
     </form>
@@ -83,9 +90,7 @@ function CodeInput({ value, onChange }: { value: string; onChange: (v: string) =
   return (
     <div className="field">
       <label htmlFor="code">Doğrulama kodu</label>
-      <div className="gradient-border">
-        <input id="code" className="input otp" inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="000000" value={value} onChange={(e) => onChange(e.target.value.replace(/\D/g, ''))} autoFocus required />
-      </div>
+      <input id="code" className="input otp" inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="000000" value={value} onChange={(e) => onChange(e.target.value.replace(/\D/g, ''))} autoFocus required />
     </div>
   )
 }
@@ -120,7 +125,7 @@ function EnrollStep({ onDone, onCancel }: { onDone: () => void; onCancel: () => 
 
   return (
     <form onSubmit={submit}>
-      <h1 className="flex"><ShieldCheck color="var(--primary)" /> İki adımlı doğrulama</h1>
+      <h2 className="flex" style={{ gap: 8 }}><ShieldCheck size={18} color="var(--green)" /> İki adımlı doğrulama</h2>
       <p className="card-sub">Telefonundaki doğrulama uygulamasıyla (Google Authenticator, Authy…) bu QR kodu okut, sonra uygulamadaki 6 haneli kodu yaz.</p>
       {factor ? (
         <>
@@ -132,7 +137,7 @@ function EnrollStep({ onDone, onCancel }: { onDone: () => void; onCancel: () => 
       )}
       <CodeInput value={code} onChange={setCode} />
       {error && <div className="error">{error}</div>}
-      <button className="btn btn-primary btn-block" disabled={busy || !factor}>ETKİNLEŞTİR</button>
+      <button className="btn btn-primary btn-block" disabled={busy || !factor}>Etkinleştir</button>
       <button type="button" className="btn btn-block" style={{ marginTop: 10 }} onClick={onCancel}>Vazgeç</button>
     </form>
   )
@@ -160,11 +165,11 @@ function VerifyStep({ onDone, onCancel }: { onDone: () => void; onCancel: () => 
 
   return (
     <form onSubmit={submit}>
-      <h1 className="flex"><ShieldCheck color="var(--primary)" /> Doğrulama</h1>
+      <h2 className="flex" style={{ gap: 8 }}><ShieldCheck size={18} color="var(--green)" /> Doğrulama</h2>
       <p className="card-sub">Doğrulama uygulamandaki 6 haneli kodu gir.</p>
       <CodeInput value={code} onChange={setCode} />
       {error && <div className="error">{error}</div>}
-      <button className="btn btn-primary btn-block" disabled={busy || code.length !== 6}>DOĞRULA</button>
+      <button className="btn btn-primary btn-block" disabled={busy || code.length !== 6}>Doğrula</button>
       <button type="button" className="btn btn-block" style={{ marginTop: 10 }} onClick={onCancel}>Çıkış yap</button>
     </form>
   )

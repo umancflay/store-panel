@@ -17,7 +17,8 @@ Unity oyunlarım için yönetim paneli. App Store Connect, Google Play Console v
 |---|---|---|
 | 1 | Site iskeleti, giriş (iki adımlı doğrulama dahil), veritabanı, PWA, otomatik yayın. Örnek verilerle. | ✅ Bitti |
 | 2 | AdMob bağlantısı ve günlük veri çekme | ✅ Bitti |
-| 3 | Google Play ve App Store Connect | ⏳ |
+| 3 | Google Play ve App Store Connect | ✅ Bitti |
+| 3+ | Yeni tasarım ve çalışma sayfaları: Komuta, Görevler, Plan, Ortak plan, Otomasyon, Notlar, Takvim | ✅ Bitti |
 | 4 | Gmail'den politika uyarıları, Claude analizi, telefon bildirimleri | ⏳ |
 | 5 | Reklam planları ve onay sistemi | ⏳ |
 | 6 | Reklam platformu bağlantıları | ⏳ |
@@ -306,6 +307,30 @@ Anahtarları girdikten sonra **Actions › Veri topla › Run workflow** ile hem
 
 ---
 
+## Kurulum: Çalışma sayfaları (Görevler, Plan, Notlar …)
+
+Yeni sayfaların verisi Supabase'de durur. Bir kez kurman yeterli:
+
+1. Supabase'de **SQL Editor › New query**'ye gir.
+2. [`supabase/features.sql`](supabase/features.sql) dosyasının tamamını yapıştır ve **Run**'a bas. (Tekrar çalıştırılabilir, mevcut veriyi silmez.)
+3. Sitede **Ayarlar › Profil** bölümünden adını yaz. Ana sayfadaki karşılama ve menü bu adı kullanır.
+4. Aynı sayfadaki **Oyun listesi**'nde her oyuna aylık gelir hedefi girebilirsin. Gelir sayfasındaki "Oyun sağlığı" halkası bu hedefe göre dolar.
+
+| Sayfa | Ne işe yarar |
+|---|---|
+| Ana sayfa | Karşılama, dünün geliri ve indirmesi, kritik iş sayısı |
+| Komuta | Her oyunun sinyalleri (uyarı, sürüm, çökme, puan, fill rate, gelir) → değerlendirme → önerilen aksiyon. Tek tıkla göreve çevrilir. |
+| Görevler | Açık / Devam ediyor / Bitti panosu. Kartı sürükle; adımlar, notlar, sorumlu, son tarih. |
+| Plan | Sürüm planı. Adımları birbirine bağla; bir adım bitince sıradaki kendiliğinden başlar. |
+| Ortak plan | İkiniz ve asistanın zaman çizelgesi, kim çevrimiçi, ortak kararlar (oylama), canlı sohbet |
+| Otomasyon | "Çökme %1,09'u aşarsa görev aç" gibi kurallar. Veri her toplandığında çalışır. Sadece görev/uyarı üretir, para harcamaz, mağazada bir şey değiştirmez. |
+| Notlar | Klasörlü dokümanlar. `[ ] iş`, `[x] bitti`, `- madde` yazımı. Not göreve çevrilebilir. |
+| Takvim | Görev son tarihleri, politika son tarihleri, plan yayın tarihleri, kendi etkinliklerin ve sezon fırsatları (Black Friday, Cadılar Bayramı …) |
+| Gelir | Toplam gelir grafiği, oyun sağlığı halkaları, haftalık ritim ısı haritası, ülkeler, formatlar, oyuncu nabzı |
+| Asistan | Sorularını kaydeder; 4. aşamada Claude cevaplar. Onay bekleyen öneriler burada da görünür. |
+
+---
+
 ## Telefonda ana ekrana ekleme
 
 ### Android (Chrome)
@@ -358,15 +383,16 @@ Tarayıcıda `http://localhost:5173` adresini aç.
 
 ```
 src/
-  pages/        Sayfalar (Genel Bakış, Uyarılar, Oyunlar, …)
+  pages/        Sayfalar (Ana sayfa, Komuta, Görevler, Plan, Gelir, …)
   components/   Menü, kartlar, göstergeler
-  lib/          Supabase bağlantısı, giriş, ortak durum
-  data/         1. aşamanın örnek verileri
+  lib/          Supabase bağlantısı, giriş, ortak durum, sinyal hesapları
+  data/         Demo modun örnek verileri (gerçek modda kullanılmaz)
 supabase/
   schema.sql    Tablolar + güvenlik kuralları
   admins.sql    Admin e-postaları
   phase2-admob.sql  AdMob özet fonksiyonları
   phase3-stores.sql Mağaza özet fonksiyonu
+  features.sql  Görevler, notlar, planlar, takvim, otomasyonlar, sohbet
   functions/    "Şimdi güncelle" fonksiyonu
 scripts/
   collect.mjs   GitHub Actions'ta çalışan veri toplama betiği
@@ -374,7 +400,7 @@ scripts/
   play.mjs      Google Play verisini çeker
   appstore.mjs  App Store Connect verisini çeker
   games.mjs     Uygulamaları paneldeki oyunlarla eşleştirir
-  rules.mjs     Çökme/ANR ve reddedilen sürüm uyarıları
+  rules.mjs     Otomasyon kuralları: uyarı ve görev açar
   google-token.mjs  Google refresh token üretici (bilgisayarında bir kez çalışır)
 .github/workflows/
   deploy.yml        Siteyi yayınlar

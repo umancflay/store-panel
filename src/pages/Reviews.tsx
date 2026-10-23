@@ -40,7 +40,7 @@ export default function Reviews() {
         <section className="card">
           <div className="card-head">
             <div>
-              <div className="card-title flex"><Sparkles size={18} color="var(--primary)" /> Sık tekrar eden sorunlar</div>
+              <div className="card-title flex"><Sparkles size={18} color="var(--green)" /> Sık tekrar eden sorunlar</div>
               <div className="card-sub">Claude yorumları gruplayıp en çok tekrar edenleri üste çıkarır.</div>
             </div>
           </div>
@@ -121,7 +121,7 @@ function ReviewItem({ r, canDraft }: { r: Review; canDraft: boolean }) {
       </div>
       <div className="flex"><Stars n={r.rating} /><b className="small">{r.author}</b></div>
       {r.title && <b style={{ fontSize: 13 }}>{r.title}</b>}
-      {r.body && <p style={{ lineHeight: 1.6, color: '#dbe4f3' }}>{r.body}</p>}
+      {r.body && <p style={{ lineHeight: 1.6, color: '#d0d0d0' }}>{r.body}</p>}
       {r.reply && (
         <div className="inner small" style={{ display: 'flex', gap: 8 }}>
           <MessageCircleReply size={15} color="var(--green)" style={{ flexShrink: 0, marginTop: 2 }} />

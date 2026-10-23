@@ -109,8 +109,8 @@ export function GameDetail() {
       <section className="grid g-4">
         <StatCard label="Gelir" value={t.revenue} format={money} delta={change(t.revenue, p.revenue)} icon={<Wallet size={20} />} />
         <StatCard label="İndirme" value={showStore ? t.downloads : null} format={int} delta={change(t.downloads, p.downloads)} icon={<Download size={20} />} />
-        <StatCard label="Puan" value={t.rating} format={(v) => v.toFixed(2).replace('.', ',')} icon={<Star size={20} />} color="#ffa53d" />
-        <StatCard label="Çökme oranı" value={t.crashRate} format={p2} delta={p.crashRate != null && t.crashRate != null ? change(t.crashRate, p.crashRate) : undefined} invertDelta icon={<Bug size={20} />} color="#ff4d5e" />
+        <StatCard label="Puan" value={t.rating} format={(v) => v.toFixed(2).replace('.', ',')} icon={<Star size={20} />} color="#E8C07A" />
+        <StatCard label="Çökme oranı" value={t.crashRate} format={p2} delta={p.crashRate != null && t.crashRate != null ? change(t.crashRate, p.crashRate) : undefined} invertDelta icon={<Bug size={20} />} color="#FF7A55" />
       </section>
 
       <section className="card">
@@ -148,11 +148,11 @@ export function GameDetail() {
                   <linearGradient id="gd1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={game.color} stopOpacity={0.6} /><stop offset="100%" stopColor={game.color} stopOpacity={0} /></linearGradient>
                 </defs>
                 <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="5 5" vertical={false} />
-                <XAxis dataKey="date" tickFormatter={dayLabel} tick={{ fill: '#a0aec0', fontSize: 11 }} axisLine={false} tickLine={false} minTickGap={30} />
-                <YAxis tick={{ fill: '#a0aec0', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => '$' + short(v)} />
+                <XAxis dataKey="date" tickFormatter={dayLabel} tick={{ fill: '#8a8a8a', fontSize: 11 }} axisLine={false} tickLine={false} minTickGap={30} />
+                <YAxis tick={{ fill: '#8a8a8a', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => '$' + short(v)} />
                 <Tooltip content={<ChartTip fmt={money2} />} />
                 <Area type="monotone" dataKey="ad" name="Reklam" stroke={game.color} strokeWidth={2.5} fill="url(#gd1)" />
-                {showStore && <Area type="monotone" dataKey="iap" name="Uygulama içi" stroke="#2cd9ff" strokeWidth={2} fill="transparent" />}
+                {showStore && <Area type="monotone" dataKey="iap" name="Uygulama içi" stroke="#8FD3AE" strokeWidth={2} fill="transparent" />}
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -168,12 +168,12 @@ export function GameDetail() {
             <ResponsiveContainer>
               <LineChart data={chart} margin={{ left: -14, right: 4 }}>
                 <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="5 5" vertical={false} />
-                <XAxis dataKey="date" tickFormatter={dayLabel} tick={{ fill: '#a0aec0', fontSize: 11 }} axisLine={false} tickLine={false} minTickGap={30} />
-                <YAxis tick={{ fill: '#a0aec0', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => '%' + v} />
+                <XAxis dataKey="date" tickFormatter={dayLabel} tick={{ fill: '#8a8a8a', fontSize: 11 }} axisLine={false} tickLine={false} minTickGap={30} />
+                <YAxis tick={{ fill: '#8a8a8a', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => '%' + v} />
                 <Tooltip content={<ChartTip fmt={(v) => pct(v, 2)} />} />
-                <ReferenceLine y={limits.crash} stroke="#ff4d5e" strokeDasharray="6 4" />
-                <Line type="monotone" dataKey="crash" name="Çökme" stroke="#ff4d5e" strokeWidth={2.5} dot={false} />
-                {game.platforms.includes('android') && platform !== 'ios' && <Line type="monotone" dataKey="anr" name="ANR" stroke="#ffa53d" strokeWidth={2} dot={false} />}
+                <ReferenceLine y={limits.crash} stroke="#FF7A55" strokeDasharray="6 4" />
+                <Line type="monotone" dataKey="crash" name="Çökme" stroke="#FF7A55" strokeWidth={2.5} dot={false} />
+                {game.platforms.includes('android') && platform !== 'ios' && <Line type="monotone" dataKey="anr" name="ANR" stroke="#E8C07A" strokeWidth={2} dot={false} />}
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -190,7 +190,7 @@ export function GameDetail() {
           {gameReviews.map((r) => (
             <div className="review" key={r.id}>
               <div className="review-head"><Stars n={r.rating} /><b className="small">{r.author}</b><span className="badge b-muted">{platformLabel(r.platform)}</span><span className="muted small">{dayLabel(r.date)}</span></div>
-              <p className="small" style={{ lineHeight: 1.55, color: '#dbe4f3' }}>{r.body}</p>
+              <p className="small" style={{ lineHeight: 1.55, color: '#d0d0d0' }}>{r.body}</p>
             </div>
           ))}
           {gameReviews.length === 0 && <div className="empty">{hasStore || demo ? 'Henüz yorum yok.' : 'Mağazalar bağlanınca yorumlar burada görünecek.'}</div>}

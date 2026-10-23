@@ -22,8 +22,13 @@ export default function Ads() {
   const decided = recs.filter((r) => r.status !== 'pending')
 
   return (
-    <>
+    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
       <SampleBanner />
+      <div className="page-head">
+        <span className="eyebrow">Reklam</span>
+        <h1>Kampanyalar ve planlar</h1>
+        <p>Asistan reklam planı hazırlar. Para harcayan her adım senin “Onayla” demeni bekler.</p>
+      </div>
 
       <section className="card">
         <div className="card-head">
@@ -35,7 +40,7 @@ export default function Ads() {
         <div className="grid g-4">
           {adAccounts.map((a) => (
             <div className="account" key={a.id}>
-              <span className="icon-box sm" style={{ width: 38, height: 38, background: '#1a1f37', boxShadow: 'none', color: 'var(--muted)' }}><Link2Off size={16} /></span>
+              <span className="icon-box sm" style={{ width: 38, height: 38, background: 'rgba(255,255,255,.05)', boxShadow: 'none', color: 'var(--muted)' }}><Link2Off size={16} /></span>
               <div style={{ minWidth: 0 }}>
                 <b>{a.name}</b>
                 <div className="muted small">{a.note}</div>
@@ -71,7 +76,7 @@ export default function Ads() {
         {pending.length === 0 && <div className="empty">Bekleyen öneri yok.</div>}
         {decided.length > 0 && (
           <div className="mt">
-            <div className="muted small" style={{ marginBottom: 8, fontWeight: 700 }}>KARAR VERİLENLER</div>
+            <div className="eyebrow" style={{ marginBottom: 8 }}>Karar verilenler</div>
             {decided.map((r) => (
               <div className="flex small" key={r.id} style={{ padding: '6px 0' }}>
                 <span className={`badge ${r.status === 'approved' ? 'b-ok' : 'b-muted'}`}>{r.status === 'approved' ? 'Onaylandı' : 'Reddedildi'}</span>
@@ -106,7 +111,7 @@ export default function Ads() {
           <h4><Users size={15} /> Kime</h4>
           <div className="inner" style={{ marginBottom: 12 }}>
             <div className="muted small">Yaş aralığı</div>
-            <div style={{ fontSize: 22, fontWeight: 800 }}>{plan.audience.age}</div>
+            <div style={{ fontSize: 26, fontWeight: 300 }}>{plan.audience.age}</div>
           </div>
           <div className="muted small" style={{ marginBottom: 8 }}>İlgi alanları</div>
           <div className="tags" style={{ marginBottom: 14 }}>{plan.audience.interests.map((i) => <span key={i} className="badge b-primary">{i}</span>)}</div>
@@ -130,10 +135,10 @@ export default function Ads() {
         <section className="card plan-section">
           <h4><Wallet size={15} /> Ne bütçeyle</h4>
           <div className="grid g-2" style={{ gap: 12, marginBottom: 14 }}>
-            <div className="inner"><div className="muted small">Günlük test bütçesi</div><div style={{ fontSize: 22, fontWeight: 800 }}>{money(plan.budget.daily)}</div></div>
-            <div className="inner"><div className="muted small">Test süresi</div><div style={{ fontSize: 22, fontWeight: 800 }}>{plan.budget.days} gün</div></div>
+            <div className="inner"><div className="muted small">Günlük test bütçesi</div><div style={{ fontSize: 26, fontWeight: 300 }}>{money(plan.budget.daily)}</div></div>
+            <div className="inner"><div className="muted small">Test süresi</div><div style={{ fontSize: 26, fontWeight: 300 }}>{plan.budget.days} gün</div></div>
           </div>
-          <div className="row"><X size={16} color="var(--red)" /><div className="grow small"><b>Ne zaman durdur:</b> <span className="muted">{plan.budget.stopRule}</span></div></div>
+          <div className="row"><X size={16} color="var(--orange)" /><div className="grow small"><b>Ne zaman durdur:</b> <span className="muted">{plan.budget.stopRule}</span></div></div>
           <div className="row"><Check size={16} color="var(--green)" /><div className="grow small"><b>Ne zaman büyüt:</b> <span className="muted">{plan.budget.scaleRule}</span></div></div>
           <div className="muted small mt">Toplam test maliyeti: <b style={{ color: '#fff' }}>{money(plan.budget.daily * plan.budget.days)}</b></div>
         </section>
@@ -155,7 +160,7 @@ export default function Ads() {
             {plan.creatives.map((c) => (
               <div className="inner" key={c.idea}>
                 <span className={`badge ${c.type === 'Video' ? 'b-primary' : 'b-info'}`}>{c.type === 'Video' ? <Video size={12} /> : <Image size={12} />} {c.type}</span>
-                <p className="small" style={{ marginTop: 10, lineHeight: 1.6, color: '#dbe4f3' }}>{c.idea}</p>
+                <p className="small" style={{ marginTop: 10, lineHeight: 1.6, color: '#d0d0d0' }}>{c.idea}</p>
               </div>
             ))}
           </div>
@@ -176,6 +181,6 @@ export default function Ads() {
           </table>
         </div>
       </section>
-    </>
+    </div>
   )
 }

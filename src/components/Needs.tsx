@@ -16,7 +16,7 @@ export default function Needs({ source, title }: { source: string; title?: strin
   return (
     <div className="card needs fade-in">
       <div className="flex" style={{ alignItems: 'flex-start', gap: 14 }}>
-        <span className="icon-box" style={{ background: error ? 'rgba(255,77,94,0.15)' : '#1a1f37', color: error ? 'var(--red)' : 'var(--muted)', boxShadow: 'none' }}>
+        <span className="icon-box" style={{ background: error ? 'rgba(255,77,94,0.15)' : 'rgba(255,255,255,.05)', color: error ? 'var(--red)' : 'var(--muted)', boxShadow: 'none' }}>
           {error ? <AlertTriangle size={20} /> : <Link2Off size={20} />}
         </span>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -25,9 +25,9 @@ export default function Needs({ source, title }: { source: string; title?: strin
             <span className={`badge ${error ? 'b-critical' : 'b-muted'}`}>{error ? 'Bağlantı hatası' : `${req.phase}. aşama`}</span>
           </div>
           <p className="muted small" style={{ marginTop: 6, lineHeight: 1.55 }}>
-            <b style={{ color: '#dbe4f3' }}>Bağlanınca:</b> {req.gives}
+            <b style={{ color: '#d0d0d0' }}>Bağlanınca:</b> {req.gives}
           </p>
-          {error && conn?.message && <p className="small" style={{ marginTop: 8, color: '#ff8a95', lineHeight: 1.5 }}>{conn.message}</p>}
+          {error && conn?.message && <p className="small" style={{ marginTop: 8, color: '#FF9B7D', lineHeight: 1.5 }}>{conn.message}</p>}
           <div className="small" style={{ marginTop: 10 }}>
             <b>Gerekenler:</b>
             <ul className="needs-list">{req.needs.map((n) => <li key={n}>{n}</li>)}</ul>

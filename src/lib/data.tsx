@@ -6,6 +6,9 @@ import {
   type Recommendation, type Review, type ReviewCategory,
 } from '../data/sample'
 import { supabase, isDemo } from './supabase'
+import { useAuth } from './auth'
+import { demoPeople, DEMO_ME } from '../data/demo'
+import type { Person } from './types'
 
 // Panelin veri kaynağı.
 // Demo mod (Supabase ayarlı değil): örnek veriler.
@@ -35,6 +38,7 @@ interface DataState {
   connected: Record<string, boolean>
   hasStore: boolean
   connections: Connection[]
+  people: Person[]
   lastRun: { job: string; status: string; finished_at: string | null; message: string | null } | null
   reload: () => void
 }
@@ -56,6 +60,7 @@ const sample: DataState = {
   connected: allConnected,
   hasStore: true,
   connections: [],
+  people: demoPeople,
   lastRun: null,
   reload: () => {},
 }
@@ -79,7 +84,7 @@ const empty: DataState = {
 
 const DataContext = createContext<DataState>(sample)
 
-const colors = ['#0075ff', '#01b574', '#a855f7', '#ffa53d', '#2cd9ff', '#ff4d5e', '#f472b6', '#facc15']
+const colors = ['#FFFFFF', '#8FD3AE', '#E8C07A', '#D9D9D9', '#FF7A55', '#9A9A9A', '#BFE6CF', '#F2D9A8']
 
 export const formatLabels: Record<string, string> = {
   banner: 'Banner',
@@ -112,7 +117,7 @@ async function loadLive(): Promise<Omit<DataState, 'reload'>> {
 
   const results = await Promise.all([
     db.from('connections').select('source,status,last_sync_at,message'),
-    db.from('games').select('id,name,genre,platforms').eq('active', true).order('created_at'),
+    db.from('games').select('*').eq('active', true).order('created_at'),
     db.from('sync_runs').select('job,status,finished_at,message').order('started_at', { ascending: false }).limit(1),
     db.rpc('admob_by_day', { p_from: isoDay(60) }),
     db.rpc('admob_by_country', { p_from: cur.from, p_to: cur.to }),
@@ -125,11 +130,17 @@ async function loadLive(): Promise<Omit<DataState, 'reload'>> {
     db.from('builds').select('*').order('updated_at', { ascending: false }),
     db.from('recommendations').select('*').order('created_at', { ascending: false }).limit(100),
     db.from('ad_plans').select('game_id,content,created_at').order('created_at', { ascending: false }),
+    db.from('admins').select('*'),
   ])
-  // store_by_day 3. aşama SQL'i çalıştırılmadıysa yoksay; diğer hatalar gerçek hata
-  const err = results.find((r, i) => r.error && i !== 8)?.error
+  // store_by_day (3. aşama) ve yeni admin sütunları henüz kurulmadıysa yoksay; diğer hatalar gerçek hata
+  const err = results.find((r, i) => r.error && i !== 8 && i !== 14)?.error
   if (err) throw err
-  const [conns, gamesRes, runs, byDay, cNow, cPrev, uNow, uPrev, store, alertsRes, reviewsRes, buildsRes, recsRes, plansRes] = results
+  const [conns, gamesRes, runs, byDay, cNow, cPrev, uNow, uPrev, store, alertsRes, reviewsRes, buildsRes, recsRes, plansRes, adminsRes] = results
+  const people: Person[] = ((adminsRes.data ?? []) as Row[]).map((a) => ({
+    email: a.email as string,
+    name: (a.display_name as string) || (a.email as string).split('@')[0],
+    role: (a.role as string) || 'Stüdyo sahibi',
+  }))
 
   const connections = (conns.data ?? []) as Connection[]
   const connected = Object.fromEntries(connections.map((c) => [c.source, c.status === 'connected']))
@@ -140,6 +151,7 @@ async function loadLive(): Promise<Omit<DataState, 'reload'>> {
     genre: (g.genre as string) ?? '',
     platforms: ((g.platforms as Platform[]) ?? []).sort(),
     color: colors[i % colors.length],
+    goal: g.monthly_goal == null ? null : Number(g.monthly_goal),
   }))
 
   // AdMob ve mağaza verisini gün/oyun/platform bazında birleştir. Bugünün yarım verisi alınmaz.
@@ -284,6 +296,7 @@ async function loadLive(): Promise<Omit<DataState, 'reload'>> {
     connected,
     hasStore: Boolean(connected.google_play || connected.app_store),
     connections,
+    people,
     lastRun: (runs.data?.[0] as DataState['lastRun']) ?? null,
   }
 }
@@ -309,3 +322,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
 }
 
 export const useData = () => useContext(DataContext)
+
+// Kişi adları: e-posta → "Umut", 'assistant' → "Asistan"
+export function usePeople() {
+  const { people } = useData()
+  const { email } = useAuth()
+  const myEmail = isDemo ? DEMO_ME : email ?? ''
+  const nameOf = (e: string | null | undefined) => {
+    if (!e) return '—'
+    if (e === 'assistant') return 'Asistan'
+    return people.find((p) => p.email.toLowerCase() === e.toLowerCase())?.name ?? e.split('@')[0]
+  }
+  const me: Person = people.find((p) => p.email.toLowerCase() === myEmail.toLowerCase()) ?? { email: myEmail, name: myEmail.split('@')[0] || 'Sen', role: 'Stüdyo sahibi' }
+  const partner = people.find((p) => p.email.toLowerCase() !== myEmail.toLowerCase()) ?? null
+  return { people, me, partner, nameOf }
+}

@@ -1,10 +1,11 @@
-import { useState } from 'react'
-import { Link2, Link2Off, Clock, BellRing, Gamepad2, Plug } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Link2, Link2Off, Clock, BellRing, Gamepad2, Plug, UserRound } from 'lucide-react'
 import { platformLabel } from '../lib/format'
-import { useData } from '../lib/data'
+import { useData, usePeople } from '../lib/data'
+import { supabase } from '../lib/supabase'
 import { useStore } from '../lib/store'
 import { enablePush, pushConfigured, pushSupported } from '../lib/push'
-import { GameChip, SampleBanner, Toggle } from '../components/ui'
+import { GameChip, SampleBanner, Toggle, initials } from '../components/ui'
 import { requirements } from '../data/requirements'
 import Needs from '../components/Needs'
 
@@ -12,7 +13,14 @@ const sources = ['admob', 'google_play', 'app_store', 'gmail', 'claude', 'google
 
 export default function Settings() {
   const { toast } = useStore()
-  const { games, connections, lastRun, demo } = useData()
+  const { games, connections, lastRun, demo, reload } = useData()
+  const { me } = usePeople()
+  const [name, setName] = useState(me.name)
+  const [role, setRole] = useState(me.role)
+  useEffect(() => {
+    setName(me.name)
+    setRole(me.role)
+  }, [me.name, me.role])
   const conn = (id: string) => connections.find((c) => c.source === id)
   const when = (iso: string | null) => (iso ? new Date(iso).toLocaleString('tr-TR', { dateStyle: 'medium', timeStyle: 'short' }) : '')
   const [critical, setCritical] = useState(true)
@@ -23,20 +31,60 @@ export default function Settings() {
     toast(err ?? 'Bildirimler açıldı.', err ? 'warn' : 'ok')
   }
 
+  // Profil adı: menüde ve ana sayfadaki karşılamada görünür
+  const saveProfile = async () => {
+    if (demo || !supabase) return toast('Demo modda kaydedilmez.', 'info')
+    const { error } = await supabase.from('admins').update({ display_name: name.trim() || null, role: role.trim() || null }).eq('email', me.email)
+    if (error) return toast('Kaydedilemedi: ' + error.message + ' (features.sql çalıştırıldı mı?)', 'warn')
+    toast('Profil kaydedildi')
+    reload()
+  }
+
+  // Aylık gelir hedefi: Gelir › Oyun sağlığı halkası
+  const saveGoal = async (id: string, v: string) => {
+    if (demo || !supabase) return toast('Demo modda kaydedilmez.', 'info')
+    const goal = v.trim() === '' ? null : Number(v)
+    const { error } = await supabase.from('games').update({ monthly_goal: goal }).eq('id', id)
+    if (error) return toast('Kaydedilemedi: ' + error.message, 'warn')
+    toast('Hedef kaydedildi')
+    reload()
+  }
+
   return (
-    <>
+    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <div className="page-head">
+        <span className="eyebrow">Ayarlar</span>
+        <h1>Profil ve bağlantılar</h1>
+      </div>
       {!connections.some((c) => c.status === 'connected') && <SampleBanner>Henüz hiçbir hesap bağlı değil. Bağlantılar aşama aşama eklenecek.</SampleBanner>}
+
+      <section className="card">
+        <div className="card-title flex" style={{ gap: 8, marginBottom: 12 }}><UserRound size={16} /> Profil</div>
+        <div className="flex wrap" style={{ gap: 12, alignItems: 'flex-end' }}>
+          <span className="avatar" style={{ width: 44, height: 44, fontSize: 14 }}>{initials(name || me.name)}</span>
+          <div className="field" style={{ marginBottom: 0, flex: '1 1 180px' }}>
+            <label htmlFor="p-name">Görünen ad</label>
+            <input id="p-name" className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="ör. Umut" />
+          </div>
+          <div className="field" style={{ marginBottom: 0, flex: '1 1 180px' }}>
+            <label htmlFor="p-role">Rol</label>
+            <input id="p-role" className="input" value={role} onChange={(e) => setRole(e.target.value)} placeholder="ör. Stüdyo sahibi" />
+          </div>
+          <button type="button" className="btn btn-primary" onClick={saveProfile} disabled={name === me.name && role === me.role}>Kaydet</button>
+        </div>
+        <p className="muted small" style={{ marginTop: 10 }}>{me.email}</p>
+      </section>
 
       <div className="grid g-2">
         <section className="card">
-          <div className="card-title flex" style={{ marginBottom: 6 }}><Plug size={18} color="var(--primary)" /> Bağlı hesaplar</div>
+          <div className="card-title flex" style={{ marginBottom: 6 }}><Plug size={18} color="var(--muted)" /> Bağlı hesaplar</div>
           {sources.map((s) => {
             const c = conn(s.id)
             const ok = c?.status === 'connected'
             const bad = c?.status === 'error'
             return (
               <div className="row" key={s.id}>
-                <span className="icon-box sm" style={ok ? { width: 36, height: 36 } : { width: 36, height: 36, background: '#1a1f37', boxShadow: 'none', color: 'var(--muted)' }}>
+                <span className="icon-box sm" style={ok ? { width: 36, height: 36 } : { width: 36, height: 36, background: 'rgba(255,255,255,.05)', boxShadow: 'none', color: 'var(--muted)' }}>
                   {ok ? <Link2 size={15} /> : <Link2Off size={15} />}
                 </span>
                 <div className="grow">
@@ -53,7 +101,7 @@ export default function Settings() {
 
         <div className="grid" style={{ alignContent: 'start' }}>
           <section className="card">
-            <div className="card-title flex" style={{ marginBottom: 6 }}><Clock size={18} color="var(--primary)" /> Veri çekme</div>
+            <div className="card-title flex" style={{ marginBottom: 6 }}><Clock size={18} color="var(--muted)" /> Veri çekme</div>
             <div className="row">
               <div className="grow">
                 <b>Son veri çekme</b>
@@ -67,7 +115,7 @@ export default function Settings() {
           </section>
 
           <section className="card">
-            <div className="card-title flex" style={{ marginBottom: 6 }}><BellRing size={18} color="var(--primary)" /> Bildirimler</div>
+            <div className="card-title flex" style={{ marginBottom: 6 }}><BellRing size={18} color="var(--muted)" /> Bildirimler</div>
             <div className="row"><div className="grow"><b>Kritik uyarılarda bildir</b><div className="muted small">Politika ihlali, reddedilen build</div></div><Toggle on={critical} onChange={setCritical} /></div>
             <div className="row"><div className="grow"><b>Günün özeti hazır olunca bildir</b><div className="muted small">Her sabah</div></div><Toggle on={daily} onChange={setDaily} /></div>
             <div className="row">
@@ -84,17 +132,29 @@ export default function Settings() {
       </div>
 
       <section className="card">
-        <div className="card-title flex" style={{ marginBottom: 6 }}><Gamepad2 size={18} color="var(--primary)" /> Oyun listesi</div>
+        <div className="card-title flex" style={{ marginBottom: 6 }}><Gamepad2 size={18} color="var(--muted)" /> Oyun listesi</div>
         <div className="table-wrap">
           <table>
-            <thead><tr><th>Oyun</th><th>Tür</th><th>Platformlar</th><th>Durum</th></tr></thead>
+            <thead><tr><th>Oyun</th><th>Tür</th><th>Platformlar</th><th>Aylık hedef ($)</th></tr></thead>
             <tbody>
               {games.map((g) => (
                 <tr key={g.id}>
                   <td><GameChip id={g.id} /></td>
                   <td className="muted">{g.genre}</td>
-                  <td><div className="flex" style={{ gap: 6 }}>{g.platforms.map((p) => <span key={p} className="badge b-primary">{platformLabel(p)}</span>)}</div></td>
-                  <td><span className="badge b-ok">Aktif</span></td>
+                  <td><div className="flex" style={{ gap: 6 }}>{g.platforms.map((p) => <span key={p} className="chip">{platformLabel(p)}</span>)}</div></td>
+                  <td>
+                    <input
+                      className="input"
+                      style={{ width: 110, height: 32 }}
+                      type="number"
+                      min={0}
+                      defaultValue={g.goal ?? ''}
+                      key={g.id + String(g.goal)}
+                      placeholder="—"
+                      aria-label={`${g.name} aylık hedef`}
+                      onBlur={(e) => e.target.value !== String(g.goal ?? '') && saveGoal(g.id, e.target.value)}
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -111,6 +171,6 @@ export default function Settings() {
           </div>
         </>
       )}
-    </>
+    </div>
   )
 }

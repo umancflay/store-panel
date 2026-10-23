@@ -1,0 +1,120 @@
+// Panel özelliklerinin veritabanı satır tipleri (supabase/features.sql ile aynı)
+
+export type TaskStatus = 'open' | 'doing' | 'done'
+export type TaskLevel = 'critical' | 'medium' | 'low'
+
+export interface Task {
+  id: number
+  title: string
+  status: TaskStatus
+  level: TaskLevel
+  game_id: string | null
+  assignee: string | null
+  due_date: string | null
+  tags: string[]
+  subtasks: { title: string; done: boolean }[]
+  notes: string | null
+  advice: string | null
+  source: string | null
+  plan_node_id: number | null
+  history: { what: string; at: string }[]
+  created_by: string | null
+  created_at: string
+  updated_at?: string
+}
+
+export interface Note {
+  id: number
+  title: string
+  folder: string
+  tag: string | null
+  body: string
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface Plan {
+  id: number
+  name: string
+  target_date: string | null
+  game_id: string | null
+  created_at?: string
+}
+
+export type NodeStatus = 'wait' | 'active' | 'done'
+
+export interface PlanNode {
+  id: number
+  plan_id: number
+  title: string
+  sub: string | null
+  status: NodeStatus
+  assignee: string | null
+  start_date: string | null
+  duration_days: number
+  depends_on: number[]
+}
+
+export type EventKind = 'deadline' | 'release' | 'event' | 'ad'
+
+export interface CalEvent {
+  id: number
+  date: string
+  title: string
+  kind: EventKind
+  game_id: string | null
+  note: string | null
+}
+
+export type Trigger = 'crash_rate' | 'anr_rate' | 'rating' | 'fill_rate' | 'policy_mail' | 'rejected' | 'bad_review' | 'weekly_report'
+
+export interface Automation {
+  id: number
+  name: string
+  enabled: boolean
+  trigger: Trigger
+  threshold: number | null
+  actions: string[]
+  runs: number
+  last_run_at: string | null
+}
+
+export interface Message {
+  id: number
+  channel: string
+  author: string
+  text: string
+  created_at: string
+}
+
+export interface Decision {
+  id: number
+  question: string
+  votes: Record<string, 'yes' | 'no' | 'thinking'>
+  status: 'open' | 'closed'
+  created_by: string | null
+  created_at: string
+}
+
+export interface AssistantQuestion {
+  id: number
+  question: string
+  answer: string | null
+  status: 'pending' | 'answered' | 'failed'
+  asked_by: string | null
+  created_at: string
+}
+
+export interface Person {
+  email: string
+  name: string
+  role: string
+}
+
+export const ASSISTANT = 'assistant'
+export const levelLabel: Record<TaskLevel, string> = { critical: 'Kritik', medium: 'Orta', low: 'Düşük' }
+export const statusLabel: Record<TaskStatus, string> = { open: 'Açık', doing: 'Devam ediyor', done: 'Bitti' }
+export const eventColor: Record<EventKind, string> = { deadline: '#FF7A55', release: '#8FD3AE', event: '#D9D9D9', ad: '#E8C07A' }
+export const eventLabel: Record<EventKind, string> = { deadline: 'Son tarih', release: 'Sürüm', event: 'Etkinlik', ad: 'Reklam' }
+export const taskCode = (id: number) => 'PG-' + String(id % 10000).padStart(4, '0')

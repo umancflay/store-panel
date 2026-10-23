@@ -5,7 +5,14 @@ import { StoreProvider } from './lib/store'
 import { DataProvider } from './lib/data'
 import Layout from './components/Layout'
 import Login from './pages/Login'
-import Overview from './pages/Overview'
+import Welcome from './pages/Welcome'
+import Komuta from './pages/Komuta'
+import Tasks from './pages/Tasks'
+import Notes from './pages/Notes'
+import Calendar from './pages/Calendar'
+import Plan from './pages/Plan'
+import Shared from './pages/Shared'
+import Automations from './pages/Automations'
 import Alerts from './pages/Alerts'
 import { GameDetail, GamesList } from './pages/Games'
 import Reviews from './pages/Reviews'
@@ -23,7 +30,14 @@ function Gate() {
       <StoreProvider>
         <Routes>
           <Route element={<Layout />}>
-            <Route index element={<Overview />} />
+            <Route index element={<Welcome />} />
+            <Route path="komuta" element={<Komuta />} />
+            <Route path="gorevler" element={<Tasks />} />
+            <Route path="plan" element={<Plan />} />
+            <Route path="ortak" element={<Shared />} />
+            <Route path="otomasyon" element={<Automations />} />
+            <Route path="notlar" element={<Notes />} />
+            <Route path="takvim" element={<Calendar />} />
             <Route path="uyarilar" element={<Alerts />} />
             <Route path="oyunlar" element={<GamesList />} />
             <Route path="oyunlar/:id" element={<GameDetail />} />

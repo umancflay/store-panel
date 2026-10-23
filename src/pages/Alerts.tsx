@@ -81,7 +81,7 @@ function AlertCard({ alert: a }: { alert: Alert }) {
   return (
     <div className={`card alert-card ${a.level} ${a.status}`}>
       <div className="alert-top" onClick={() => setOpen(!open)}>
-        {game ? <GameLogo id={game.id} size={40} /> : <span className="game-logo" style={{ width: 40, height: 40, background: '#1a1f37' }}>⚙</span>}
+        {game ? <GameLogo id={game.id} size={40} /> : <span className="game-logo" style={{ width: 40, height: 40, background: 'rgba(255,255,255,.05)' }}>⚙</span>}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="alert-meta">
             <span className={`badge b-${a.level}`}>{levelLabel[a.level]}</span>
@@ -103,12 +103,12 @@ function AlertCard({ alert: a }: { alert: Alert }) {
       {open && (
         <div className="fix">
           <div className="inner">
-            <h4><Sparkles size={15} color="var(--primary)" /> Nasıl düzeltilir <span className="ai-tag">Claude</span></h4>
+            <h4><Sparkles size={15} color="var(--green)" /> Nasıl düzeltilir <span className="ai-tag">Claude</span></h4>
             <ol className="steps">{a.howToFix.map((s) => <li key={s}>{s}</li>)}</ol>
           </div>
           {a.unity && a.unity.length > 0 && (
             <div className="inner">
-              <h4><Box size={15} color="var(--purple)" /> Unity tarafında</h4>
+              <h4><Box size={15} color="var(--silver)" /> Unity tarafında</h4>
               <ol className="steps unity">{a.unity.map((s) => <li key={s}>{s}</li>)}</ol>
             </div>
           )}

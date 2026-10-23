@@ -9,6 +9,7 @@ export interface Game {
   genre: string
   platforms: Platform[]
   color: string
+  goal?: number | null // aylık gelir hedefi (USD)
 }
 
 export interface DailyRow {
@@ -28,9 +29,9 @@ export interface DailyRow {
 }
 
 export const sampleGames: Game[] = [
-  { id: 'salgin', name: 'Salgın', genre: 'Hastane yönetimi / strateji', platforms: ['android', 'ios'], color: '#0075ff' },
-  { id: 'tasinma-kaosu', name: 'Taşınma Kaosu', genre: 'Co-op nakliyat', platforms: ['android', 'ios'], color: '#01b574' },
-  { id: 'dropshipping', name: 'Dropshipping', genre: 'İşletme simülasyonu', platforms: ['android'], color: '#a855f7' },
+  { id: 'salgin', name: 'Salgın', genre: 'Hastane yönetimi / strateji', platforms: ['android', 'ios'], color: '#FFFFFF' },
+  { id: 'tasinma-kaosu', name: 'Taşınma Kaosu', genre: 'Co-op nakliyat', platforms: ['android', 'ios'], color: '#8FD3AE' },
+  { id: 'dropshipping', name: 'Dropshipping', genre: 'İşletme simülasyonu', platforms: ['android'], color: '#E8C07A' },
 ]
 
 // Şu an panelde kullanılan oyun listesi (örnek ya da Supabase'den gelen).
