@@ -28,7 +28,17 @@ async function api(path, { raw = false, allow404 = false } = {}) {
     headers: { Authorization: `Bearer ${jwt()}`, Accept: raw ? 'application/a-gzip' : 'application/json' },
   })
   if (allow404 && res.status === 404) return null
-  if (!res.ok) throw new Error(`${path.split('?')[0]}: ${res.status} ${(await res.text()).slice(0, 200)}`)
+  if (!res.ok) {
+    // Apple hata ayrıntısını "detail" alanında verir; kısa ve okunur göster
+    const text = await res.text()
+    let detail = text.slice(0, 200)
+    try {
+      detail = JSON.parse(text).errors?.map((e) => e.detail ?? e.title).join(' / ') || detail
+    } catch {
+      /* JSON değil */
+    }
+    throw new Error(`${path.split('?')[0]}: ${res.status} ${detail}`)
+  }
   return raw ? Buffer.from(await res.arrayBuffer()) : res.json()
 }
 
@@ -61,12 +71,19 @@ async function sales(appsBySku, appsById, link, days) {
   if (!vendor) return 0
   const rates = await usdRates()
   const rows = new Map()
+  let reportVersion = '1_1'
   for (let i = days; i >= 1; i--) {
     const date = ymd(new Date(Date.now() - i * 86400000))
-    const gz = await api(
-      `/salesReports?filter[frequency]=DAILY&filter[reportType]=SALES&filter[reportSubType]=SUMMARY&filter[vendorNumber]=${vendor}&filter[reportDate]=${date}&filter[version]=1_1`,
-      { raw: true, allow404: true },
-    )
+    // Rapor sürümü: önce 1_1, Apple kabul etmezse 1_0
+    const url = (v) => `/salesReports?filter[frequency]=DAILY&filter[reportType]=SALES&filter[reportSubType]=SUMMARY&filter[vendorNumber]=${vendor}&filter[reportDate]=${date}&filter[version]=${v}`
+    let gz
+    try {
+      gz = await api(url(reportVersion), { raw: true, allow404: true })
+    } catch (e) {
+      if (reportVersion !== '1_1' || !String(e.message).includes(' 400 ')) throw e
+      reportVersion = '1_0'
+      gz = await api(url(reportVersion), { raw: true, allow404: true })
+    }
     if (!gz) continue // o gün satış/indirme yok ya da rapor henüz hazır değil
     const [head, ...lines] = zlib.gunzipSync(gz).toString('utf8').trim().split('\n')
     const cols = head.split('\t')
@@ -181,7 +198,7 @@ export async function collectAppStore({ light = false } = {}) {
       const appsById = new Map(apps.map((a) => [a.id, a]))
       await sales(appsBySku, appsById, link, existing.length ? 4 : 30)
     } catch (e) {
-      notes.push(`satış raporu: ${String(e.message).slice(0, 150)}`)
+      notes.push(`satış raporu: ${String(e.message).slice(0, 300)}`)
     }
   }
 
