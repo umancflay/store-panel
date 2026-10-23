@@ -135,8 +135,7 @@ p { margin: 0; }
 .stat-label { font-size: 12px; color: var(--muted); }
 .stat-value { font-size: 30px; font-weight: 300; letter-spacing: -.5px; margin-top: 26px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .stat .icon-box { position: absolute; right: 14px; top: 14px; }
-.stat-spark { position: absolute; right: 10px; top: 18px; width: 150px; height: 60px; pointer-events: none; }
-.stat-spark::before { content: ''; position: absolute; inset: 0; border-radius: 16px; background: linear-gradient(90deg, rgba(255,255,255,.02), rgba(255,255,255,.2), rgba(255,255,255,.04)); filter: blur(10px); }
+.card > .stat-spark { position: absolute; right: 16px; top: 14px; width: 120px; height: 40px; pointer-events: none; opacity: .9; }
 .delta { font-size: 10px; font-weight: 400; padding: 3px 9px; border-radius: 999px; background: rgba(255,255,255,.08); color: #d8d8d8; display: inline-flex; align-items: center; gap: 2px; letter-spacing: 0; }
 .delta.up { color: var(--green-fg); background: rgba(143,211,174,.12); }
 .delta.down { color: var(--orange-fg); background: rgba(255,122,85,.12); }
@@ -558,7 +557,7 @@ tbody tr:hover { background: rgba(255,255,255,.025); }
   .card { padding: 16px; border-radius: 22px; }
   .stat { min-height: 104px; padding: 14px; }
   .stat-value { font-size: 24px; margin-top: 22px; }
-  .stat-spark { width: 96px; opacity: .7; }
+  .card > .stat-spark { display: none; }
   .mini-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .hero h2 { font-size: 24px; }
   .hero-orb { opacity: .3; }

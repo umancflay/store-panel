@@ -96,9 +96,9 @@ export function StatCard(props: {
   const v = useCountUp(props.value ?? 0)
   return (
     <div className="card stat fade-in">
-      {props.spark && props.spark.length > 1 && (
+      {props.spark && props.spark.length > 1 && Math.max(...props.spark) > Math.min(...props.spark) && (
         <div className="stat-spark">
-          <Sparkline values={props.spark} />
+          <Sparkline values={props.spark} width={120} height={40} />
         </div>
       )}
       <span className="stat-label">{props.label}</span>
