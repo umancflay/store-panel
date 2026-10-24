@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import { useData, usePeople } from '../lib/data'
 import { useStore } from '../lib/store'
-import { useRows } from '../lib/rows'
+import { useRows, useInsight } from '../lib/rows'
 import { demoNodes, demoTasks } from '../data/demo'
 import type { PlanNode, Task } from '../lib/types'
 import { periodRows, totals } from '../lib/metrics'
@@ -16,6 +16,9 @@ export default function Welcome() {
   const { me } = usePeople()
   const { rows: tasks } = useRows<Task>('tasks', demoTasks)
   const { rows: nodes } = useRows<PlanNode>('plan_nodes', demoNodes)
+  const summary = useInsight<{ headline: string; bullets: string[]; focus: string; date: string }>('daily_summary')
+  const today = new Date().toISOString().slice(0, 10)
+  const fresh = summary && summary.created_at.slice(0, 10) === today ? summary.content : null
 
   const y = totals(periodRows(daily, 1).cur)
   const criticalTasks = tasks.filter((t) => t.level === 'critical' && t.status !== 'done').length
@@ -37,7 +40,7 @@ export default function Welcome() {
           <span>{me.name}.</span>
         </h1>
         <p className="welcome-sub">
-          {critical > 0
+          {fresh ? `${fresh.headline} ${fresh.focus ? `Bugün ilk iş: ${fresh.focus}` : ''}` : critical > 0
             ? `Bugün ${critical} kritik iş seni bekliyor. Önce onlara bakmanı öneririm; geri kalan her şey yolunda görünüyor.`
             : 'Bugün kritik bir iş yok. Panelde her şey sakin; plana ve yeni fikirlere vakit ayırabilirsin.'}
         </p>

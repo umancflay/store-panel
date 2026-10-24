@@ -19,7 +19,7 @@ Unity oyunlarım için yönetim paneli. App Store Connect, Google Play Console v
 | 2 | AdMob bağlantısı ve günlük veri çekme | ✅ Bitti |
 | 3 | Google Play ve App Store Connect | ✅ Bitti |
 | 3+ | Yeni tasarım ve çalışma sayfaları: Komuta, Görevler, Plan, Ortak plan, Otomasyon, Notlar, Takvim | ✅ Bitti |
-| 4 | Gmail'den politika uyarıları, Claude analizi, telefon bildirimleri | ⏳ |
+| 4 | Gmail'den politika uyarıları, Claude analizi, telefon bildirimleri | ✅ Bitti (kurulum aşağıda) |
 | 5 | Reklam planları ve onay sistemi | ⏳ |
 | 6 | Reklam platformu bağlantıları | ⏳ |
 | 7 | Otomatik düzeltme ve yayınlama (onaylı): Claude sorunu çözer, Unity build alır, mağazaya yükler | ⏳ |
@@ -307,6 +307,140 @@ Anahtarları girdikten sonra **Actions › Veri topla › Run workflow** ile hem
 
 ---
 
+## Kurulum (4. aşama): Gmail, Claude ve telefon bildirimleri
+
+Bu aşamadan sonra:
+
+- **Gmail:** Play Console, AdMob ve App Store'dan gelen politika ve inceleme mailleri 6 saatte bir okunur, **Uyarılar** sayfasına düşer. Mailde son tarih yazıyorsa o da alınır. Aynı mail iki kez eklenmez.
+- **Claude:** Her sabah günün özetini yazar (Ana sayfada görünür), uyarılara adım adım çözüm ekler, yorumları gruplar ve cevap taslağı hazırlar, Asistan'daki soruları cevaplar, görevlere öneri yazar. Sorular 6 saatte bir de cevaplanır.
+- **Telefon bildirimi:** Kritik bir uyarı açılınca bildirimi açtığın telefonlara bildirim gider. İstersen her sabah günün özeti de gelir.
+
+> 🔒 **Yapay zeka sadece önerir.** Claude'a hiçbir araç verilmez: komut çalıştıramaz, dosya okuyamaz, internete çıkamaz. Sadece panelin hazırladığı özeti görür ve metin yazar. Para harcayan ya da mağazada bir şey değiştiren hiçbir işlem yapılmaz. Yorum cevap taslakları mağazaya **gönderilmez**; sen kopyalayıp yapıştırırsın (tek tıkla gönderme 7. aşamada, onayınla gelecek).
+>
+> Kodda hiçbir anahtar yok. Her şey GitHub Secrets'ta.
+
+Adımları sırayla yap. Toplam 20-30 dakika sürer.
+
+### Adım 1: Veritabanı eklerini çalıştır
+
+1. Supabase'de **SQL Editor › New query**'ye gir.
+2. [`supabase/phase4.sql`](supabase/phase4.sql) dosyasının tamamını yapıştır.
+3. **Run**'a bas. "Success" görmelisin. (Tekrar çalıştırılabilir.)
+
+### Adım 2: Gmail API'yi aç
+
+1. [console.cloud.google.com](https://console.cloud.google.com) adresine gir. Üstte **store-panel** projesinin seçili olduğundan emin ol.
+2. [Gmail API sayfasına](https://console.cloud.google.com/apis/library/gmail.googleapis.com) git ve **Enable**'a bas.
+3. Sol menüden **Google Auth Platform › Data Access**'e gir.
+4. **Add or remove scopes**'a tıkla. Arama kutusuna `gmail.readonly` yaz, çıkan satırı işaretle ve **Update**'e, sonra **Save**'e bas.
+
+> `gmail.readonly` sadece okuma iznidir. Panel mail silemez, gönderemez, etiket değiştiremez. Sadece Google Play, AdMob ve Apple'dan gelen mailleri arar.
+
+### Adım 3: Google refresh token'ını Gmail izniyle yenile
+
+2. aşamadaki token sadece AdMob iznini taşıyor. Gmail için bir kez daha üretmen gerekiyor.
+
+1. Bilgisayarında proje klasöründe bir terminal aç ve en son kodu çek:
+
+```bash
+git pull
+```
+
+2. Token üreticisini çalıştır:
+
+```bash
+node scripts/google-token.mjs
+```
+
+3. **Client ID** ve **Client secret**'ı yapıştır (2. aşamadakilerin aynısı).
+4. Tarayıcıda açılan ekranda **politika maillerinin geldiği** Google hesabını seç. AdMob hesabın da buysa daha iyi; değilse bir sonraki nota bak.
+5. "Google bu uygulamayı doğrulamadı" uyarısında **Gelişmiş › Store Panel'e git**'e tıkla.
+6. **İki izni de** (AdMob ve Gmail) işaretleyip onayla.
+7. Terminalde çıkan yeni refresh token'ı kopyala.
+8. GitHub'da **Settings › Secrets and variables › Actions**'a gir. `GOOGLE_REFRESH_TOKEN`'ın yanındaki kalem ikonuna bas, yeni değeri yapıştır ve **Update secret** de.
+
+> Token tek bir Google hesabına bağlıdır. AdMob ve mağaza mailleri **aynı** hesaptaysa sorun yok. Farklı hesaplardaysa: mail hesabında Gmail › Ayarlar › Yönlendirme ile `googleplay-noreply@google.com`, `admob-noreply@google.com` ve `email.apple.com`'dan gelen mailleri AdMob hesabına yönlendir.
+
+### Adım 4: Claude token'ını al
+
+Claude, Claude Pro ya da Max aboneliğinle çalışır. API anahtarı **kullanılmaz**, ek ücret çıkmaz (aboneliğinin kullanım limitinden düşer).
+
+1. Bilgisayarında [Node.js](https://nodejs.org) yüklü olsun. Claude Code'u kur:
+
+```bash
+npm install -g @anthropic-ai/claude-code
+```
+
+2. Token üret:
+
+```bash
+claude setup-token
+```
+
+3. Tarayıcıda Claude hesabınla giriş yap ve onay ver.
+4. Terminale dön. `sk-ant-oat…` ile başlayan uzun token'ı kopyala.
+5. GitHub'da **Settings › Secrets and variables › Actions › New repository secret**:
+   - **Name:** `CLAUDE_CODE_OAUTH_TOKEN`
+   - **Secret:** kopyaladığın token
+
+> İsteğe bağlı: Hangi Claude modelinin kullanılacağını seçmek için aynı sayfadaki **Variables** sekmesinde `CLAUDE_MODEL` adlı bir değişken aç (ör. `sonnet` ya da `opus`). Girmezsen `sonnet` kullanılır.
+
+### Adım 5: Bildirim anahtarlarını (VAPID) üret
+
+1. Proje klasöründe şunu çalıştır:
+
+```bash
+node scripts/vapid-keys.mjs
+```
+
+2. Ekranda iki değer çıkar. GitHub Secrets'a **dört** secret ekle:
+
+| Secret adı | Değer |
+|---|---|
+| `VAPID_PUBLIC_KEY` | Ekrandaki ilk değer (public) |
+| `VITE_VAPID_PUBLIC_KEY` | Aynı ilk değer (siteye gider, gizli değildir) |
+| `VAPID_PRIVATE_KEY` | Ekrandaki ikinci değer (**gizli**) |
+| `VAPID_SUBJECT` | `mailto:` ve kendi e-postan, ör. `mailto:umut@ornek.com` |
+
+> Anahtarları bir kez üret. Sonradan değiştirirsen telefonlardaki bildirim izni geçersiz olur ve her cihazda bildirimi yeniden açman gerekir.
+
+### Adım 6: Siteyi yeniden yayınla
+
+`VITE_VAPID_PUBLIC_KEY` siteye derleme sırasında girer. Bu yüzden siteyi bir kez yeniden yayınla:
+
+1. Repoda **Actions** sekmesine geç, soldan **Siteyi yayınla**'yı seç.
+2. **Run workflow › Run workflow**'a bas ve yeşil tiki bekle.
+
+### Adım 7: Telefonda bildirimleri aç
+
+1. iPhone'da siteyi **ana ekrana eklemiş** olmalısın (yukarıdaki "Telefonda ana ekrana ekleme" bölümü). iPhone'da bildirim sadece ana ekran uygulamasında çalışır.
+2. Ana ekrandaki ikondan paneli aç ve giriş yap.
+3. **Ayarlar › Bildirimler**'e gir, **Bu cihazda bildirimleri aç** satırında **Aç**'a bas ve izin ver.
+4. **Kritik uyarılarda bildir** açık kalsın. Her sabah özet istiyorsan **Günün özeti hazır olunca bildir**'i de aç.
+5. Bildirim almak istediğin her cihazda (arkadaşının telefonu dahil) bu adımları tekrarla.
+
+### Adım 8: İlk çalıştırma
+
+1. **Actions › Veri topla › Run workflow › Run workflow**'a bas.
+2. İş bitince **Ayarlar** sayfasında Gmail ve Claude'un yanında **Bağlı** yazmalı.
+3. Ana sayfada günün özeti, Uyarılar'da "nasıl düzeltilir" adımları, Yorumlar'da gruplar ve cevap taslakları görünür.
+
+> Hata alırsan **Actions**'ta kırmızı işe tıkla, **Çalıştır** adımını aç ve hatayı oku. Sık görülenler:
+> - **"Gmail izni yok"**: Adım 3'ü yapmamışsın ya da eski token hâlâ duruyor.
+> - **"Claude Code hata verdi … 401"**: `CLAUDE_CODE_OAUTH_TOKEN` yanlış ya da süresi dolmuş. Adım 4'ü tekrarla.
+> - Claude abonelik limitine takılırsa o çalışma atlanır, sorular sıradaki çalışmada cevaplanır. Panel çalışmaya devam eder.
+
+### Ne zaman ne çalışır
+
+| Zaman | İş |
+|---|---|
+| Her gün 08:00 | Tüm veriler + Gmail + uyarı kuralları + Claude'un tam analizi + bildirimler + günün özeti bildirimi |
+| Her gün 18:00 | Aynısı (günün özeti bildirimi hariç) |
+| 6 saatte bir | Mağaza durumları, Gmail, yeni uyarılara çözüm adımı, Asistan soruları, kritik uyarı bildirimi |
+| Üst çubuktaki güncelle düğmesi | Tüm iş, hemen |
+
+---
+
 ## Kurulum: Çalışma sayfaları (Görevler, Plan, Notlar …)
 
 Yeni sayfaların verisi Supabase'de durur. Bir kez kurman yeterli:
@@ -327,7 +461,7 @@ Yeni sayfaların verisi Supabase'de durur. Bir kez kurman yeterli:
 | Notlar | Klasörlü dokümanlar. `[ ] iş`, `[x] bitti`, `- madde` yazımı. Not göreve çevrilebilir. |
 | Takvim | Görev son tarihleri, politika son tarihleri, plan yayın tarihleri, kendi etkinliklerin ve sezon fırsatları (Black Friday, Cadılar Bayramı …) |
 | Gelir | Toplam gelir grafiği, oyun sağlığı halkaları, haftalık ritim ısı haritası, ülkeler, formatlar, oyuncu nabzı |
-| Asistan | Sorularını kaydeder; 4. aşamada Claude cevaplar. Onay bekleyen öneriler burada da görünür. |
+| Asistan | Sorularını kaydeder; Claude 6 saatte bir cevaplar. Onay bekleyen öneriler burada da görünür. |
 
 ---
 
@@ -378,7 +512,7 @@ Tarayıcıda `http://localhost:5173` adresini aç.
 - **Yapay zeka hiçbir şeyi onaysız uygulamaz.** Para harcayan ya da mağazada bir şeyi değiştiren her öneri "Onayını bekleyen öneriler" listesine düşer. Sen **Onayla** demeden hiçbir şey yapılmaz.
 - **Otomatik işler:** Veriler her gün 08:00 ve 18:00'de toplanır. Sorun düzelince (ör. çökme oranı eşiğin altına inince) ilgili uyarı ve görev kendiliğinden kapanır. Plana bağlı bir görev bitince plan adımı da biter ve sıradaki adım başlar. Panel açıkken yeni veri gelince sayfa kendini yeniler.
 - **Arama motorları siteyi indekslemez.** Bunu `noindex` etiketi ve `robots.txt` sağlar.
-- **Telefon bildirimleri** 4. aşamada açılacak. Altyapısı (service worker, abonelik tablosu) hazır.
+- **Telefon bildirimleri** sadece kritik uyarılar (ve istersen günün özeti) için gelir. Aynı uyarı için bir kez gönderilir.
 
 ## Klasör yapısı
 
@@ -393,6 +527,7 @@ supabase/
   admins.sql    Admin e-postaları
   phase2-admob.sql  AdMob özet fonksiyonları
   phase3-stores.sql Mağaza özet fonksiyonu
+  phase4.sql    Bildirim takibi, Gmail ve Claude bağlantı satırları
   features.sql  Görevler, notlar, planlar, takvim, otomasyonlar, sohbet
   functions/    "Şimdi güncelle" fonksiyonu
 scripts/
@@ -402,6 +537,10 @@ scripts/
   appstore.mjs  App Store Connect verisini çeker
   games.mjs     Uygulamaları paneldeki oyunlarla eşleştirir
   rules.mjs     Otomasyon kuralları: uyarı ve görev açar
+  gmail.mjs     Politika maillerini okur, uyarıya çevirir
+  ai.mjs        Claude analizi (özet, çözüm adımı, yorum, soru, görev önerisi)
+  push.mjs      Telefona bildirim (Web Push)
+  vapid-keys.mjs    Bildirim anahtarı üretici (bilgisayarında bir kez çalışır)
   google-token.mjs  Google refresh token üretici (bilgisayarında bir kez çalışır)
 .github/workflows/
   deploy.yml        Siteyi yayınlar

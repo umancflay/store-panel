@@ -71,7 +71,7 @@ export default function Assistant() {
             <div className="orb"><span /><span /><span /></div>
             <h1 style={{ fontSize: 30, fontWeight: 300, letterSpacing: -1 }}>Ne sormak istersin?</h1>
             <p className="muted small" style={{ maxWidth: 460, margin: '0 auto', lineHeight: 1.6 }}>
-              Gelir, yorumlar, çökmeler ve politika uyarıları hakkında sor. {claude ? 'Cevaplar birkaç dakika içinde gelir.' : 'Claude bağlanınca (4. aşama) sorularını sırayla cevaplar.'}
+              Gelir, yorumlar, çökmeler ve politika uyarıları hakkında sor. {claude ? 'Sorular her 6 saatte bir cevaplanır; beklemek istemezsen üst çubuktaki güncelle düğmesine bas.' : 'Claude bağlanınca (4. aşama) sorularını sırayla cevaplar.'}
             </p>
           </div>
 

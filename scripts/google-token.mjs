@@ -6,13 +6,18 @@
 // tarayıcıda Google izin ekranını açar, sonunda refresh token'ı ekrana yazar.
 // O değeri GitHub Secrets'a GOOGLE_REFRESH_TOKEN olarak gir. Başka hiçbir yere yapıştırma.
 //
-// 4. aşamada Gmail eklenince bu betik Gmail izniyle birlikte bir kez daha çalıştırılacak.
+// İzinler: AdMob raporlarını okuma + Gmail'i okuma (4. aşama, politika mailleri).
+// Gmail izni sadece okumadır: mail silemez, gönderemez, etiket değiştiremez.
+// 2. aşamada token ürettiysen 4. aşama için bu betiği bir kez daha çalıştır ve yeni token'ı gir.
 
 import http from 'node:http'
 import { createInterface } from 'node:readline/promises'
 import { exec } from 'node:child_process'
 
-const SCOPES = ['https://www.googleapis.com/auth/admob.readonly']
+const SCOPES = [
+  'https://www.googleapis.com/auth/admob.readonly',
+  'https://www.googleapis.com/auth/gmail.readonly',
+]
 
 const rl = createInterface({ input: process.stdin, output: process.stdout })
 const clientId = (process.env.GOOGLE_CLIENT_ID || (await rl.question('OAuth Client ID: '))).trim()

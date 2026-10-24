@@ -26,6 +26,29 @@ export default function Settings() {
   const [critical, setCritical] = useState(true)
   const [daily, setDaily] = useState(false)
 
+  // Bildirim tercihleri kişiye özel; telefon bildirimi gönderilirken bunlara bakılır
+  useEffect(() => {
+    if (demo || !supabase) return
+    supabase.from('user_settings').select('notify_critical,notify_daily').maybeSingle().then(({ data }) => {
+      if (!data) return
+      setCritical(data.notify_critical)
+      setDaily(data.notify_daily)
+    })
+  }, [demo])
+  const saveNotify = async (patch: { notify_critical?: boolean; notify_daily?: boolean }) => {
+    if (patch.notify_critical !== undefined) setCritical(patch.notify_critical)
+    if (patch.notify_daily !== undefined) setDaily(patch.notify_daily)
+    if (demo || !supabase) return
+    const { data: user } = await supabase.auth.getUser()
+    const { error } = await supabase.from('user_settings').upsert({
+      user_id: user.user?.id,
+      notify_critical: patch.notify_critical ?? critical,
+      notify_daily: patch.notify_daily ?? daily,
+      updated_at: new Date().toISOString(),
+    })
+    if (error) toast('Kaydedilemedi: ' + error.message, 'warn')
+  }
+
   const turnOnPush = async () => {
     const err = await enablePush()
     toast(err ?? 'Bildirimler açıldı.', err ? 'warn' : 'ok')
@@ -116,13 +139,13 @@ export default function Settings() {
 
           <section className="card">
             <div className="card-title flex" style={{ marginBottom: 6 }}><BellRing size={18} color="var(--muted)" /> Bildirimler</div>
-            <div className="row"><div className="grow"><b>Kritik uyarılarda bildir</b><div className="muted small">Politika ihlali, reddedilen build</div></div><Toggle on={critical} onChange={setCritical} /></div>
-            <div className="row"><div className="grow"><b>Günün özeti hazır olunca bildir</b><div className="muted small">Her sabah</div></div><Toggle on={daily} onChange={setDaily} /></div>
+            <div className="row"><div className="grow"><b>Kritik uyarılarda bildir</b><div className="muted small">Politika ihlali, reddedilen build</div></div><Toggle on={critical} onChange={(v) => saveNotify({ notify_critical: v })} /></div>
+            <div className="row"><div className="grow"><b>Günün özeti hazır olunca bildir</b><div className="muted small">Her sabah</div></div><Toggle on={daily} onChange={(v) => saveNotify({ notify_daily: v })} /></div>
             <div className="row">
               <div className="grow">
                 <b>Bu cihazda bildirimleri aç</b>
                 <div className="muted small">
-                  {!pushSupported ? 'Bu tarayıcı desteklemiyor (iPhone\'da önce ana ekrana ekle).' : pushConfigured ? 'Telefonuna bildirim gelir.' : 'Bildirim gönderimi 4. aşamada açılacak.'}
+                  {!pushSupported ? 'Bu tarayıcı desteklemiyor (iPhone\'da önce ana ekrana ekle).' : pushConfigured ? 'Telefonuna bildirim gelir.' : 'Bildirim anahtarı (VAPID) henüz girilmemiş. README › 4. aşama.'}
                 </div>
               </div>
               <button className="btn btn-primary" onClick={turnOnPush}>Aç</button>

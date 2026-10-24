@@ -252,6 +252,7 @@ async function loadLive(): Promise<Raw> {
     category: (r.ai_category as ReviewCategory) ?? null,
     version: (r.app_version as string) ?? '',
     reply: (r.store_reply as string) ?? null,
+    draft: r.reply_status === 'draft' ? ((r.reply_draft as string) ?? null) : null,
   }))
 
   // Her oyun/platform için en son build

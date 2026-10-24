@@ -1,5 +1,6 @@
 # Zamanlanmış veri toplama işleri.
-# AdMob (2. aşama), Google Play ve App Store (3. aşama) çalışıyor. Gmail + Claude (4. aşama) sonra eklenecek.
+# AdMob (2. aşama), Google Play ve App Store (3. aşama), Gmail + Claude + telefon bildirimi (4. aşama).
+# Claude, Claude Code CLI ile abonelik token'ıyla (CLAUDE_CODE_OAUTH_TOKEN) çalışır; API anahtarı kullanılmaz.
 # Her çalışma Supabase'deki sync_runs tablosuna kaydedilir.
 name: Veri topla
 
@@ -35,11 +36,19 @@ jobs:
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
       ASC_VENDOR_NUMBER: ${{ secrets.ASC_VENDOR_NUMBER }}
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL }}
+      VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+      VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+      VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Claude Code'u kur
+        if: env.CLAUDE_CODE_OAUTH_TOKEN != ''
+        run: npm install -g @anthropic-ai/claude-code
       - name: Hangi işin çalışacağını belirle
         id: which
         run: |

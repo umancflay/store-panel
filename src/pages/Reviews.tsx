@@ -1,11 +1,14 @@
 import { useState } from 'react'
-import { Sparkles, PenLine, Send, X, MessageCircleReply } from 'lucide-react'
+import { Sparkles, PenLine, Send, X, MessageCircleReply, Copy } from 'lucide-react'
 import { categoryLabels, reviewClusters, sampleReplyDraft, type Review, type ReviewCategory } from '../data/sample'
 import { dayLabel, platformLabel } from '../lib/format'
 import { useStore } from '../lib/store'
 import { useData } from '../lib/data'
 import { GameChip, SampleBanner, Stars } from '../components/ui'
 import Needs from '../components/Needs'
+import { useInsight } from '../lib/rows'
+
+type Cluster = { title: string; count: number; category: ReviewCategory; hint: string; game_id: string | null }
 
 const catClass: Record<ReviewCategory, string> = {
   crash: 'b-critical', bug: 'b-warning', ads: 'b-warning', performance: 'b-warning', suggestion: 'b-info', praise: 'b-ok',
@@ -17,6 +20,8 @@ export default function Reviews() {
   const [rating, setRating] = useState(0)
   const [cat, setCat] = useState<ReviewCategory | 'all'>('all')
   const { games, reviews, demo, connected, hasStore, loading } = useData()
+  const insight = useInsight<{ clusters: Cluster[] }>('review_clusters')
+  const clusters: Omit<Cluster, 'game_id'>[] = demo ? reviewClusters : insight?.content.clusters ?? []
 
   if (!demo && !hasStore) {
     return (
@@ -36,7 +41,7 @@ export default function Reviews() {
     <>
       <SampleBanner />
 
-      {demo ? (
+      {clusters.length > 0 ? (
         <section className="card">
           <div className="card-head">
             <div>
@@ -45,9 +50,9 @@ export default function Reviews() {
             </div>
           </div>
           <div className="grid g-3">
-            {reviewClusters.map((c) => (
+            {clusters.map((c) => (
               <div className="inner cluster" key={c.title}>
-                <div className={`cluster-count badge ${catClass[c.category]}`}>{c.count}</div>
+                <div className={`cluster-count badge ${catClass[c.category] ?? 'b-muted'}`}>{c.count}</div>
                 <div>
                   <b style={{ fontSize: 13, lineHeight: 1.4, display: 'block' }}>{c.title}</b>
                   <p className="muted small" style={{ marginTop: 6, lineHeight: 1.5 }}>{c.hint}</p>
@@ -57,7 +62,7 @@ export default function Reviews() {
           </div>
         </section>
       ) : (
-        !connected.claude && <Needs source="claude" title="Yorumların gruplanması ve cevap taslakları Claude bağlanınca gelecek" />
+        !demo && !connected.claude && <Needs source="claude" title="Yorumların gruplanması ve cevap taslakları Claude bağlanınca gelecek" />
       )}
 
       <section className="card">
@@ -110,6 +115,12 @@ function ReviewItem({ r, canDraft }: { r: Review; canDraft: boolean }) {
   const { toast } = useStore()
   const [draft, setDraft] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
+  const [saved, setSaved] = useState(r.draft ?? null)
+
+  const copy = async () => {
+    await navigator.clipboard.writeText(saved ?? '').catch(() => {})
+    toast('Taslak kopyalandı. Mağaza konsolunda yoruma cevap olarak yapıştırabilirsin.')
+  }
 
   return (
     <div className="review">
@@ -129,6 +140,16 @@ function ReviewItem({ r, canDraft }: { r: Review; canDraft: boolean }) {
         </div>
       )}
 
+      {!canDraft && saved && !r.reply && (
+        <div className="draft">
+          <span className="ai-tag" style={{ justifySelf: 'start' }}><Sparkles size={12} /> Claude taslağı · mağazaya gönderilmedi</span>
+          <textarea value={saved} onChange={(e) => setSaved(e.target.value)} />
+          <div className="flex wrap">
+            <button className="btn btn-primary" onClick={copy}><Copy size={14} /> Kopyala</button>
+            <span className="muted small">Mağazaya tek tıkla gönderme 7. aşamada, senin onayınla gelecek.</span>
+          </div>
+        </div>
+      )}
       {canDraft && draft === null && !r.reply && (
         <div><button className="btn" onClick={() => setDraft(sampleReplyDraft(r))}><PenLine size={14} /> Cevap taslağı yaz</button></div>
       )}

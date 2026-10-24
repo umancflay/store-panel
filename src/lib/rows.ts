@@ -119,3 +119,20 @@ export function useSetting<T>(key: string, fallback: T) {
   )
   return [value, save] as const
 }
+
+// Claude'un en son ürettiği çıktı (ai_insights tablosu): günün özeti, yorum grupları …
+export function useInsight<T>(kind: string) {
+  const [value, setValue] = useState<{ content: T; created_at: string } | null>(null)
+  useEffect(() => {
+    if (isDemo) return
+    supabase!
+      .from('ai_insights')
+      .select('content,created_at')
+      .eq('kind', kind)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => setValue((data as { content: T; created_at: string } | null) ?? null))
+  }, [kind])
+  return value
+}

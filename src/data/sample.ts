@@ -348,6 +348,7 @@ export interface Review {
   version: string
   title?: string | null
   reply?: string | null
+  draft?: string | null
 }
 
 export const reviews: Review[] = [
