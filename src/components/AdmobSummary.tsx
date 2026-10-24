@@ -1,7 +1,7 @@
 import { isoDay, type DailyRow } from '../data/sample'
 import { useData } from '../lib/data'
 import { byDay, periodRows, totals } from '../lib/metrics'
-import { int, money, money2, pct } from '../lib/format'
+import { int, money2, pct } from '../lib/format'
 import { curvePath, GameLogo } from './ui'
 
 // AdMob ana sayfasındaki özetin aynısı: bugün / dün / bu ay / geçen ay,
