@@ -20,9 +20,11 @@ const SENDERS = [
 
 // Konu ya da metinde bu ifadeler geçen mailler uyarı sayılır (Türkçe ve İngilizce)
 const CRITICAL = /\b(suspend|suspension|removed|removal|terminat|rejected|violat|disabled|askıya|kaldırıl|reddedil|ihlal|devre dışı|kapatıl)/i
-const WARNING = /\b(policy|politika|action required|işlem gerekli|deadline|son tarih|warning|uyarı|compliance|uyumlu|data safety|veri güvenliği|target api|hedef api|guideline|declaration|beyan|limited|sınırlı|out of compliance|not compliant)/i
-// Pazarlama ve bülten mailleri uyarı değildir
-const NOISE = /\b(newsletter|webinar|tips|ipuçları|digest|invoice|fatura|receipt|makbuz|welcome to|hoş geldin|sign-in|oturum açma|verification code|doğrulama kodu|payment|ödeme)/i
+const WARNING = /\b(policy|politika|action required|işlem gerekli|deadline|son tarih|warning|uyarı|compliance|uyumlu|data safety|veri güvenliği|target api|hedef api|guideline|declaration|beyan|limited|sınırlı|kısıtlama|restriction|out of compliance|not compliant)/i
+// İnceleme ve politika konulu mailler (konuya bakılır)
+const REVIEW = /(app review|review of your|submission|incelem|guideline|policy|politika|rejected|reddedil|action required|işlem gerekli)/i
+// Pazarlama, bülten, sözleşme, abonelik, TestFlight daveti ve hesap girişi mailleri uyarı değildir
+const NOISE = /\b(newsletter|webinar|tips|ipuçları|digest|invoice|fatura|receipt|makbuz|welcome to|hoş geldin|sign-in|oturum açma|verification code|doğrulama kodu|payment|ödeme|agreement|sözleşme|subscription|abonel|renewal|yenileme|invited you to test|testflight|api access|icloud|apple hesabı|apple account|accepted the|kabul ettiniz)/i
 
 const MONTHS = {
   january: 1, february: 2, march: 3, april: 4, may: 5, june: 6, july: 7, august: 8, september: 9, october: 10, november: 11, december: 12,
@@ -143,7 +145,13 @@ export async function collectGmail({ days = 30 } = {}) {
     const text = bodyText(msg.payload) || msg.snippet || ''
     const all = `${subject}\n${text}`
     if (NOISE.test(subject) && !CRITICAL.test(subject)) continue
-    const level = CRITICAL.test(all) ? 'critical' : WARNING.test(all) ? 'warning' : null
+    // Seviye konuya göre belirlenir: sözleşme gibi uzun metinlerde "terminate" geçmesi uyarı sayılmasın.
+    // Gövde sadece inceleme/politika konulu maillerde ağırlaştırır.
+    const level = CRITICAL.test(subject) || (REVIEW.test(subject) && CRITICAL.test(text))
+      ? 'critical'
+      : WARNING.test(subject) || REVIEW.test(subject)
+        ? 'warning'
+        : null
     if (!level) continue
     const source = sourceOf(from)
     const game = findGame(all)
