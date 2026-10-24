@@ -3,7 +3,7 @@
 // - Veri isteklerini (Supabase) asla önbelleğe almaz
 // - Web push bildirimlerini gösterir
 
-const CACHE = 'store-panel-v1'
+const CACHE = 'store-panel-v2'
 
 self.addEventListener('install', () => self.skipWaiting())
 
