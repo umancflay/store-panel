@@ -9,6 +9,7 @@
 import { db, dbReady, setConnection } from './db.mjs'
 import { googleReady } from './google.mjs'
 import { collectAdmob } from './admob.mjs'
+import { collectFx } from './fx.mjs'
 import { collectPlay, playReady } from './play.mjs'
 import { collectAppStore, appStoreReady } from './appstore.mjs'
 import { applyRules } from './rules.mjs'
@@ -45,7 +46,9 @@ async function step(name, source, ready, fn) {
 
 const light = job === 'policy_check'
 if (job === 'daily' || job === 'manual' || light) {
-  if (!light) await step('AdMob', 'admob', googleReady, collectAdmob)
+  // AdMob 6 saatlik kontrolde de çekilir: "bugün şimdiye kadar" kazanç güncel kalsın
+  await step('AdMob', 'admob', googleReady, collectAdmob)
+  await step('Dolar kuru', null, true, collectFx)
   await step('Google Play', 'google_play', playReady, () => collectPlay({ light }))
   await step('App Store', 'app_store', appStoreReady, () => collectAppStore({ light }))
   await step('Gmail', 'gmail', googleReady, () => collectGmail({ days: light ? 7 : 30 }))

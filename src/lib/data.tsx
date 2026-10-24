@@ -6,6 +6,7 @@ import {
   type Recommendation, type Review, type ReviewCategory,
 } from '../data/sample'
 import { supabase, isDemo } from './supabase'
+import { setCurrency, type Currency } from './format'
 import { useAuth } from './auth'
 import { demoPeople, DEMO_ME } from '../data/demo'
 import type { Person } from './types'
@@ -40,6 +41,13 @@ interface DataState {
   connections: Connection[]
   people: Person[]
   lastRun: { job: string; status: string; finished_at: string | null; message: string | null } | null
+  // Bugünün yarım (şimdiye kadarki) AdMob verisi; grafiklere girmez
+  today: DailyRow[]
+  // Günlük dolar/TL kuru (tarih → 1 USD kaç TL)
+  fx: Record<string, number>
+  // Ekranda gösterilen para birimi (Ayarlar'dan değişir)
+  currency: Currency
+  setCurrencyPref: (c: Currency) => void
   // Gizlenenler dahil tüm oyunlar (Ayarlar › Oyun listesi için)
   allGames: Game[]
   reload: () => void
@@ -66,6 +74,10 @@ const sample: DataState = {
   people: demoPeople,
   lastRun: null,
   allGames: sampleGames,
+  today: [],
+  fx: {},
+  currency: 'USD',
+  setCurrencyPref: () => {},
   reload: () => {},
   setGameHidden: async () => {},
 }
@@ -90,7 +102,7 @@ const empty: DataState = {
 const DataContext = createContext<DataState>(sample)
 
 // Yüklenen ham veri (gizli oyunlar dahil); ekrana gitmeden önce gizli oyunlar süzülür
-type Raw = Omit<DataState, 'reload' | 'setGameHidden' | 'allGames'>
+type Raw = Omit<DataState, 'reload' | 'setGameHidden' | 'allGames' | 'currency' | 'setCurrencyPref'>
 
 const colors = ['#FFFFFF', '#8FD3AE', '#E8C07A', '#D9D9D9', '#FF7A55', '#9A9A9A', '#BFE6CF', '#F2D9A8']
 
@@ -127,23 +139,25 @@ async function loadLive(): Promise<Raw> {
     db.from('connections').select('source,status,last_sync_at,message'),
     db.from('games').select('*').eq('active', true).order('created_at'),
     db.from('sync_runs').select('job,status,finished_at,message').order('started_at', { ascending: false }).limit(1),
-    db.rpc('admob_by_day', { p_from: isoDay(60) }),
+    db.rpc('admob_by_day', { p_from: isoDay(70) }),
     db.rpc('admob_by_country', { p_from: cur.from, p_to: cur.to }),
     db.rpc('admob_by_country', { p_from: prev.from, p_to: prev.to }),
     db.rpc('admob_by_unit', { p_from: cur.from, p_to: cur.to }),
     db.rpc('admob_by_unit', { p_from: prev.from, p_to: prev.to }),
-    db.rpc('store_by_day', { p_from: isoDay(60) }),
+    db.rpc('store_by_day', { p_from: isoDay(70) }),
     db.from('alerts').select('*').order('created_at', { ascending: false }).limit(200),
     db.from('reviews').select('*').order('created_at', { ascending: false }).limit(300),
     db.from('builds').select('*').order('updated_at', { ascending: false }),
     db.from('recommendations').select('*').order('created_at', { ascending: false }).limit(100),
     db.from('ad_plans').select('game_id,content,created_at').order('created_at', { ascending: false }),
     db.from('admins').select('*'),
+    db.from('app_settings').select('value').eq('key', 'fx_usd_try').maybeSingle(),
   ])
   // store_by_day (3. aşama) ve yeni admin sütunları henüz kurulmadıysa yoksay; diğer hatalar gerçek hata
-  const err = results.find((r, i) => r.error && i !== 8 && i !== 14)?.error
+  const err = results.find((r, i) => r.error && i !== 8 && i !== 14 && i !== 15)?.error
   if (err) throw err
-  const [conns, gamesRes, runs, byDay, cNow, cPrev, uNow, uPrev, store, alertsRes, reviewsRes, buildsRes, recsRes, plansRes, adminsRes] = results
+  const [conns, gamesRes, runs, byDay, cNow, cPrev, uNow, uPrev, store, alertsRes, reviewsRes, buildsRes, recsRes, plansRes, adminsRes, fxRes] = results
+  const fx = ((fxRes.data as { value?: Record<string, number> } | null)?.value ?? {}) as Record<string, number>
   const people: Person[] = ((adminsRes.data ?? []) as Row[]).map((a) => ({
     email: a.email as string,
     name: (a.display_name as string) || (a.email as string).split('@')[0],
@@ -166,8 +180,10 @@ async function loadLive(): Promise<Raw> {
     installsLabel: (g.installs_label as string) ?? null,
   }))
 
-  // AdMob ve mağaza verisini gün/oyun/platform bazında birleştir. Bugünün yarım verisi alınmaz.
+  // AdMob ve mağaza verisini gün/oyun/platform bazında birleştir.
+  // Bugünün yarım verisi grafiklere girmez; "bugün şimdiye kadar" için ayrı tutulur.
   const today = isoDay(0)
+  const todayRows: DailyRow[] = []
   const merged = new Map<string, DailyRow>()
   const rowFor = (date: string, gameId: string, platform: Platform) => {
     const k = `${date}|${gameId}|${platform}`
@@ -177,7 +193,10 @@ async function loadLive(): Promise<Raw> {
     return merged.get(k)!
   }
   for (const r of (byDay.data ?? []) as Row[]) {
-    if ((r.date as string) >= today) continue
+    if ((r.date as string) >= today) {
+      todayRows.push({ date: r.date as string, gameId: r.game_id as string, platform: r.platform as Platform, adRevenue: num(r.revenue), impressions: num(r.impressions), requests: num(r.requests), matched: num(r.matched), downloads: 0, iapRevenue: 0, crashRate: null, anrRate: null, rating: null })
+      continue
+    }
     Object.assign(rowFor(r.date as string, r.game_id as string, r.platform as Platform), {
       adRevenue: num(r.revenue), impressions: num(r.impressions), requests: num(r.requests), matched: num(r.matched),
     })
@@ -311,6 +330,8 @@ async function loadLive(): Promise<Raw> {
     connections,
     people,
     lastRun: (runs.data?.[0] as DataState['lastRun']) ?? null,
+    today: todayRows,
+    fx,
   }
 }
 
@@ -352,23 +373,51 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Gizlenen oyunlar ve onlara ait tüm veriler panelden çıkar
+  // Para birimi tercihi bu cihazda saklanır (varsayılan TL)
+  const [currency, setCur] = useState<Currency>(() => {
+    try {
+      return (localStorage.getItem('currency') as Currency) || 'TRY'
+    } catch {
+      return 'TRY'
+    }
+  })
+  const setCurrencyPref = (c: Currency) => {
+    setCur(c)
+    try {
+      localStorage.setItem('currency', c)
+    } catch {
+      /* tarayıcı izin vermiyorsa sadece bu oturumda */
+    }
+  }
+
+  // Gizlenen oyunlar ve onlara ait tüm veriler panelden çıkar; tutarlar seçilen para birimine çevrilir
   const view = useMemo(() => {
     const visible = new Set(state.games.filter((g) => !g.hidden).map((g) => g.id))
     const keep = (id: string | null) => id == null || visible.has(id)
+    // Her gün kendi kuruyla çevrilir (AdMob da öyle gösterir); kur yoksa USD kalır
+    const days = Object.keys(state.fx).sort()
+    const latest = days.length ? state.fx[days[days.length - 1]] : 0
+    const shown: Currency = currency === 'TRY' && latest ? 'TRY' : 'USD'
+    setCurrency(shown)
+    const rate = (date?: string) => (shown === 'USD' ? 1 : (date && state.fx[date]) || latest)
+    const conv = (r: DailyRow) => (shown === 'USD' ? r : { ...r, adRevenue: r.adRevenue * rate(r.date), iapRevenue: r.iapRevenue * rate(r.date) })
+    const k = rate()
     return {
       ...state,
+      currency: shown,
       allGames: state.games,
       games: state.games.filter((g) => !g.hidden),
-      daily: state.daily.filter((r) => keep(r.gameId)),
-      adUnits: state.adUnits.filter((u) => keep(u.gameId)),
+      daily: state.daily.filter((r) => keep(r.gameId)).map(conv),
+      today: state.today.filter((r) => keep(r.gameId)).map(conv),
+      countries: k === 1 ? state.countries : state.countries.map((c) => ({ ...c, revenue: c.revenue * k, ecpm: c.ecpm * k, ecpmPrev: c.ecpmPrev * k })),
+      adUnits: state.adUnits.filter((u) => keep(u.gameId)).map((u) => (k === 1 ? u : { ...u, revenue: u.revenue * k, ecpm: u.ecpm * k, ecpmPrev: u.ecpmPrev * k })),
       alerts: state.alerts.filter((a) => keep(a.gameId)),
       reviews: state.reviews.filter((r) => keep(r.gameId)),
       builds: state.builds.filter((b) => keep(b.gameId)),
       recs: state.recs.filter((r) => keep(r.gameId)),
       adPlans: state.adPlans.filter((p) => keep(p.gameId)),
     }
-  }, [state])
+  }, [state, currency])
 
   useEffect(() => setGames(view.allGames), [view.allGames])
 
@@ -383,7 +432,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <DataContext.Provider value={{ ...view, reload: () => setVersion((v) => v + 1), setGameHidden }}>
+    <DataContext.Provider value={{ ...view, reload: () => setVersion((v) => v + 1), setGameHidden, setCurrencyPref }}>
       {children}
     </DataContext.Provider>
   )

@@ -5,9 +5,10 @@ import { TrendingDown } from 'lucide-react'
 import { gameById, type AdUnit } from '../data/sample'
 import { useData } from '../lib/data'
 import { byDay, limits, periodRows, totals } from '../lib/metrics'
-import { change, dayLabel, int, money, money2, pct, short } from '../lib/format'
+import { change, currencySymbol, dayLabel, int, money, money2, pct, short } from '../lib/format'
 import { ChartTip, Delta, Donut, GameChip, GameLogo, Rings, SampleBanner, Seg, Sparkline, StatCard, useCountUp } from '../components/ui'
 import Needs from '../components/Needs'
+import AdmobSummary from '../components/AdmobSummary'
 
 type View = 'game' | 'country' | 'format' | 'unit'
 const formatColors = ['#FFFFFF', '#8FD3AE', '#E8C07A', '#8A8A8A', '#D9D9D9']
@@ -95,6 +96,8 @@ export default function Revenue() {
         </div>
       </div>
 
+      {connected.admob || demo ? <AdmobSummary /> : null}
+
       <div className="card">
         <div className="flex wrap" style={{ gap: 18, fontSize: 11, marginBottom: 10 }}>
           <span className="flex muted" style={{ gap: 6 }}><span className="dot" style={{ background: '#fff' }} /> AdMob reklam</span>
@@ -109,7 +112,7 @@ export default function Revenue() {
               </defs>
               <CartesianGrid stroke="rgba(255,255,255,0.05)" vertical={false} />
               <XAxis dataKey="date" tickFormatter={dayLabel} tick={{ fill: '#8a8a8a', fontSize: 11 }} axisLine={false} tickLine={false} minTickGap={30} />
-              <YAxis tick={{ fill: '#8a8a8a', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => '$' + v} />
+              <YAxis tick={{ fill: '#8a8a8a', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => currencySymbol() + short(v)} />
               <Tooltip content={<ChartTip fmt={money2} />} />
               <Area type="monotone" dataKey="ad" name="AdMob" stroke="#fff" strokeWidth={1.8} fill="url(#gAd)" stackId="1" />
               <Area type="monotone" dataKey="iap" name="Satın alma" stroke="#8FD3AE" strokeWidth={1.8} fill="url(#gIap)" stackId="1" />

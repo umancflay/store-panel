@@ -7,7 +7,7 @@ import Needs from '../components/Needs'
 import { useData } from '../lib/data'
 import { useStore } from '../lib/store'
 import { byDay, limits, periodRows, totals, type Range } from '../lib/metrics'
-import { change, dayLabel, int, money, money2, orDash, pct, platformLabel, short } from '../lib/format'
+import { change, currencySymbol, dayLabel, int, money, money2, orDash, pct, platformLabel, short } from '../lib/format'
 import { ChartTip, GameLogo, RangePicker, SampleBanner, Seg, StatCard, Stars } from '../components/ui'
 
 export function GamesList() {
@@ -182,7 +182,7 @@ export function GameDetail() {
                 </defs>
                 <CartesianGrid stroke="rgba(255,255,255,0.06)" strokeDasharray="5 5" vertical={false} />
                 <XAxis dataKey="date" tickFormatter={dayLabel} tick={{ fill: '#8a8a8a', fontSize: 11 }} axisLine={false} tickLine={false} minTickGap={30} />
-                <YAxis tick={{ fill: '#8a8a8a', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => '$' + short(v)} />
+                <YAxis tick={{ fill: '#8a8a8a', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => currencySymbol() + short(v)} />
                 <Tooltip content={<ChartTip fmt={money2} />} />
                 <Area type="monotone" dataKey="ad" name="Reklam" stroke={game.color} strokeWidth={2.5} fill="url(#gd1)" />
                 {showStore && <Area type="monotone" dataKey="iap" name="Uygulama içi" stroke="#8FD3AE" strokeWidth={2} fill="transparent" />}

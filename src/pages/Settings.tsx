@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link2, Link2Off, Clock, BellRing, Gamepad2, Plug, UserRound } from 'lucide-react'
-import { platformLabel } from '../lib/format'
+import { currencySymbol, platformLabel } from '../lib/format'
 import { useData, usePeople } from '../lib/data'
 import { supabase } from '../lib/supabase'
 import { useStore } from '../lib/store'
 import { enablePush, pushConfigured, pushSupported } from '../lib/push'
-import { GameChip, SampleBanner, Toggle, initials } from '../components/ui'
+import { GameChip, SampleBanner, Seg, Toggle, initials } from '../components/ui'
 import { requirements } from '../data/requirements'
 import Needs from '../components/Needs'
 
@@ -13,7 +13,7 @@ const sources = ['admob', 'google_play', 'app_store', 'gmail', 'claude', 'google
 
 export default function Settings() {
   const { toast } = useStore()
-  const { allGames, connections, lastRun, demo, reload, setGameHidden } = useData()
+  const { allGames, connections, lastRun, demo, reload, setGameHidden, currency, setCurrencyPref, fx } = useData()
   const { me } = usePeople()
   const [name, setName] = useState(me.name)
   const [role, setRole] = useState(me.role)
@@ -138,6 +138,21 @@ export default function Settings() {
           </section>
 
           <section className="card">
+            <div className="card-title" style={{ marginBottom: 6 }}>Para birimi</div>
+            <div className="row">
+              <div className="grow">
+                <b>Tutarları göster</b>
+                <div className="muted small">
+                  {Object.keys(fx).length
+                    ? `Her gün kendi kuruyla çevrilir · son kur 1 $ = ${Object.entries(fx).sort(([a], [b]) => b.localeCompare(a))[0][1].toFixed(2).replace('.', ',')} ₺`
+                    : 'Kur bilgisi bir sonraki veri toplamada gelir; o zamana kadar dolar gösterilir.'}
+                </div>
+              </div>
+              <Seg value={currency} onChange={setCurrencyPref} options={[{ value: 'TRY', label: '₺ TL' }, { value: 'USD', label: '$ USD' }]} />
+            </div>
+          </section>
+
+          <section className="card">
             <div className="card-title flex" style={{ marginBottom: 6 }}><BellRing size={18} color="var(--muted)" /> Bildirimler</div>
             <div className="row"><div className="grow"><b>Kritik uyarılarda bildir</b><div className="muted small">Politika ihlali, reddedilen build</div></div><Toggle on={critical} onChange={(v) => saveNotify({ notify_critical: v })} /></div>
             <div className="row"><div className="grow"><b>Günün özeti hazır olunca bildir</b><div className="muted small">Her sabah</div></div><Toggle on={daily} onChange={(v) => saveNotify({ notify_daily: v })} /></div>
@@ -158,7 +173,7 @@ export default function Settings() {
         <div className="card-title flex" style={{ marginBottom: 6 }}><Gamepad2 size={18} color="var(--muted)" /> Oyun listesi</div>
         <div className="table-wrap">
           <table>
-            <thead><tr><th>Oyun</th><th>Platformlar</th><th>Aylık hedef ($)</th><th>Panelde göster</th></tr></thead>
+            <thead><tr><th>Oyun</th><th>Platformlar</th><th>Aylık hedef ({currencySymbol()})</th><th>Panelde göster</th></tr></thead>
             <tbody>
               {allGames.map((g) => (
                 <tr key={g.id} style={{ opacity: g.hidden ? 0.5 : 1 }}>
