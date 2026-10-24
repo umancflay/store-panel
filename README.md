@@ -331,8 +331,8 @@ Adımları sırayla yap. Toplam 20-30 dakika sürer.
 
 1. [console.cloud.google.com](https://console.cloud.google.com) adresine gir. Üstte **store-panel** projesinin seçili olduğundan emin ol.
 2. [Gmail API sayfasına](https://console.cloud.google.com/apis/library/gmail.googleapis.com) git ve **Enable**'a bas.
-3. Sol menüden **Google Auth Platform › Data Access**'e gir.
-4. **Add or remove scopes**'a tıkla. Arama kutusuna `gmail.readonly` yaz, çıkan satırı işaretle ve **Update**'e, sonra **Save**'e bas.
+
+> **Data Access** sayfasına Gmail iznini **ekleme**. Gmail "kısıtlı izin" sayılır; oraya eklersen Google video ve gerekçe ile doğrulama başvurusu ister. Kendi hesabın için gerek yok: izin, Adım 3'te token üretirken istenir ve "doğrulanmamış uygulama" uyarısını geçmen yeterli olur.
 
 > `gmail.readonly` sadece okuma iznidir. Panel mail silemez, gönderemez, etiket değiştiremez. Sadece Google Play, AdMob ve Apple'dan gelen mailleri arar.
 
