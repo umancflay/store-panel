@@ -70,5 +70,15 @@ if (!json.refresh_token) {
   process.exit(1)
 }
 
-console.log('\n✅ Başarılı! Aşağıdaki değeri GitHub Secrets\'a GOOGLE_REFRESH_TOKEN adıyla gir:\n')
+// Windows'ta token'ı panoya da kopyala: GitHub'daki secret kutusuna Ctrl+V yeter
+let copied = false
+if (process.platform === 'win32') {
+  try {
+    ;(await import('node:child_process')).execSync('clip', { input: json.refresh_token })
+    copied = true
+  } catch {
+    /* pano yoksa sadece ekrana yaz */
+  }
+}
+console.log('\n✅ Başarılı! Aşağıdaki değeri GitHub Secrets\'a GOOGLE_REFRESH_TOKEN adıyla gir' + (copied ? ' (panoya kopyalandı, Ctrl+V yeter)' : '') + ':\n')
 console.log(json.refresh_token + '\n')
