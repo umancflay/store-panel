@@ -195,7 +195,9 @@ function runClaude(prompt) {
   ]
   return new Promise((resolve, reject) => {
     // Claude'a sadece kendi token'ı geçer; Supabase, Google ve App Store anahtarları geçmez
-    const env = { PATH: process.env.PATH, HOME: process.env.HOME, CLAUDE_CODE_OAUTH_TOKEN: process.env.CLAUDE_CODE_OAUTH_TOKEN }
+    // Terminalden kopyalarken token satır sonuna bölünebiliyor: tüm boşlukları ve satır sonlarını at
+    const token = (process.env.CLAUDE_CODE_OAUTH_TOKEN ?? '').replace(/\s+/g, '')
+    const env = { PATH: process.env.PATH, HOME: process.env.HOME, CLAUDE_CODE_OAUTH_TOKEN: token }
     const child = spawn('claude', args, { env, stdio: ['pipe', 'pipe', 'pipe'] })
     let out = ''
     let err = ''
@@ -205,7 +207,16 @@ function runClaude(prompt) {
     child.on('error', (e) => reject(new Error(`Claude Code çalıştırılamadı: ${e.message}`)))
     child.on('close', (code) => {
       clearTimeout(timer)
-      if (code !== 0) return reject(new Error(`Claude Code hata verdi (${code}): ${(err || out).slice(0, 400)}`))
+      if (code !== 0) {
+        // JSON çıktısında asıl sebep "result" alanında yazar (ör. "Failed to authenticate …")
+        let why = (err || out).slice(0, 400)
+        try {
+          why = JSON.parse(out).result || why
+        } catch {
+          /* JSON değil */
+        }
+        return reject(new Error(`Claude Code hata verdi (${code}): ${why}`))
+      }
       resolve(out)
     })
     child.stdin.end(prompt)
