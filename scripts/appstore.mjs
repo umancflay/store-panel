@@ -16,7 +16,8 @@ const API = 'https://api.appstoreconnect.apple.com/v1'
 function jwt() {
   const now = Math.floor(Date.now() / 1000)
   const head = Buffer.from(JSON.stringify({ alg: 'ES256', kid: process.env.ASC_KEY_ID.trim(), typ: 'JWT' })).toString('base64url')
-  const body = Buffer.from(JSON.stringify({ iss: process.env.ASC_ISSUER_ID.trim(), iat: now, exp: now + 1200, aud: 'appstoreconnect-v1' })).toString('base64url')
+  const body = Buffer.from(JSON.stringify({ iss: process.env.ASC_ISSUER_ID.trim(), iat: now - 60, exp: now + 900, aud: 'appstoreconnect-v1' })).toString('base64url')
+  // Apple en fazla 20 dakikalık anahtar kabul eder; saat farkına karşı 15 dakika ve 1 dakika geriden başlat
   // GitHub Secrets'a .p8 dosyasının tamamı yapıştırılır; tek satıra dönüşmüşse düzelt
   const key = process.env.ASC_PRIVATE_KEY.trim().replace(/\\n/g, '\n')
   const sig = crypto.sign('sha256', Buffer.from(`${head}.${body}`), { key, dsaEncoding: 'ieee-p1363' }).toString('base64url')
@@ -24,9 +25,16 @@ function jwt() {
 }
 
 async function api(path, { raw = false, allow404 = false } = {}) {
-  const res = await fetch(path.startsWith('http') ? path : `${API}${path}`, {
-    headers: { Authorization: `Bearer ${jwt()}`, Accept: raw ? 'application/a-gzip' : 'application/json' },
-  })
+  const call = () =>
+    fetch(path.startsWith('http') ? path : `${API}${path}`, {
+      headers: { Authorization: `Bearer ${jwt()}`, Accept: raw ? 'application/a-gzip' : 'application/json' },
+    })
+  let res = await call()
+  // Apple ara sıra geçerli anahtarı da 401 ile reddediyor; birkaç saniye sonra bir kez daha dene
+  if (res.status === 401) {
+    await new Promise((r) => setTimeout(r, 3000))
+    res = await call()
+  }
   if (allow404 && res.status === 404) return null
   if (!res.ok) {
     // Apple hata ayrıntısını "detail" alanında verir; kısa ve okunur göster
