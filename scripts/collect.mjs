@@ -12,6 +12,7 @@ import { collectAdmob } from './admob.mjs'
 import { collectFx } from './fx.mjs'
 import { collectPlay, playReady } from './play.mjs'
 import { collectAppStore, appStoreReady } from './appstore.mjs'
+import { collectMeta, metaReady } from './meta.mjs'
 import { applyRules } from './rules.mjs'
 import { collectGmail } from './gmail.mjs'
 import { runAi, aiReady } from './ai.mjs'
@@ -51,6 +52,7 @@ if (job === 'daily' || job === 'manual' || light) {
   await step('Dolar kuru', null, true, collectFx)
   await step('Google Play', 'google_play', playReady, () => collectPlay({ light }))
   await step('App Store', 'app_store', appStoreReady, () => collectAppStore({ light }))
+  await step('Meta', 'meta', metaReady, () => collectMeta({ light }))
   await step('Gmail', 'gmail', googleReady, () => collectGmail({ days: light ? 7 : 30 }))
   if (!light) await step('Uyarı kuralları', null, true, applyRules)
   // Claude sadece öneri yazar (özet, çözüm adımı, cevap taslağı); hiçbir şeyi uygulamaz
