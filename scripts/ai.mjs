@@ -2,8 +2,8 @@
 // Giriş: CLAUDE_CODE_OAUTH_TOKEN (Claude aboneliğinin token'ı, "claude setup-token" ile üretilir). API anahtarı kullanılmaz.
 //
 // Ne yapar (Asistan sayfasındaki anahtarlar kapalıysa o kısım atlanır):
-//   - Günlük özet            → ai_insights (kind: daily_summary)
-//   - Uyarılara çözüm adımı  → alerts.how_to_fix (ve bulunamadıysa son tarih)
+//   - Günlük özet         → ai_insights (kind: daily_summary)
+//   - Uyarılara çözüm adımı   → alerts.how_to_fix (ve bulunamadıysa son tarih)
 //   - Yorumları gruplama     → reviews.ai_category, ai_insights (kind: review_clusters)
 //   - Cevap taslağı          → reviews.reply_draft (mağazaya GÖNDERİLMEZ, panelde onayını bekler)
 //   - Bekleyen sorular       → assistant_questions.answer
@@ -194,8 +194,6 @@ function runClaude(prompt) {
     '--model', process.env.CLAUDE_MODEL || 'sonnet',
   ]
   return new Promise((resolve, reject) => {
-    // Claude'a sadece kendi token'ı geçer; Supabase, Google ve App Store anahtarları geçmez
-    // Terminalden kopyalarken token satır sonuna bölünebiliyor: tüm boşlukları ve satır sonlarını at
     const token = (process.env.CLAUDE_CODE_OAUTH_TOKEN ?? '').replace(/\s+/g, '')
     const env = { PATH: process.env.PATH, HOME: process.env.HOME, CLAUDE_CODE_OAUTH_TOKEN: token }
     const child = spawn('claude', args, { env, stdio: ['pipe', 'pipe', 'pipe'] })
@@ -208,7 +206,6 @@ function runClaude(prompt) {
     child.on('close', (code) => {
       clearTimeout(timer)
       if (code !== 0) {
-        // JSON çıktısında asıl sebep "result" alanında yazar (ör. "Failed to authenticate …")
         let why = (err || out).slice(0, 400)
         try {
           why = JSON.parse(out).result || why
@@ -236,7 +233,6 @@ function parse(raw) {
 
 const validDate = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s))
 
-// light: 6 saatte bir çalışan hafif iş (sadece sorular ve yeni uyarılar)
 export async function runAi({ light = false } = {}) {
   const settings = await maybe('app_settings?select=value&key=eq.assistant')
   const caps = { daily_summary: true, fix_advice: true, review_analysis: true, answer_questions: true, ...(settings[0]?.value ?? {}) }
@@ -280,8 +276,13 @@ export async function runAi({ light = false } = {}) {
   try {
     result = parse(await runClaude(buildPrompt(ctx, want)))
   } catch (err) {
+    // Claude limiti veya benzeri bir hata olduğunda akışın kopmaması için yakalıyoruz
+    console.warn('Claude analizi atlandı, limit/hata:', err.message)
     await setConnection('claude', 'error', String(err.message).slice(0, 300))
-    throw err
+    
+    // Hata fırlatmak yerine güvenli çıkış yapıyoruz; böylece GitHub Actions diğer adımlara devam eder.
+    console.log('Claude adımı güvenle atlandı, diğer veri çekme işlemleri devam ediyor.')
+    return
   }
 
   const now = new Date().toISOString()
@@ -308,7 +309,6 @@ export async function runAi({ light = false } = {}) {
     if (!reviewIds.has(r.id) || !CATEGORIES.includes(r.category)) continue
     const orig = reviews.find((x) => x.id === r.id)
     const patch = { ai_category: r.category }
-    // Taslak sadece cevaplanmamış yorumlara; mağazaya gönderilmez, panelde onayını bekler
     if (r.reply_draft && !orig.store_reply && orig.reply_status === 'none') {
       patch.reply_draft = cut(r.reply_draft, 1000)
       patch.reply_status = 'draft'
