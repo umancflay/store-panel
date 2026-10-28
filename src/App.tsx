@@ -20,6 +20,8 @@ import Revenue from './pages/Revenue'
 import Ads from './pages/Ads'
 import Assistant from './pages/Assistant'
 import Settings from './pages/Settings'
+import Workspace from './pages/Workspace'
+import Files from './pages/Files'
 
 function Gate() {
   const { stage } = useAuth()
@@ -32,6 +34,8 @@ function Gate() {
           <Route element={<Layout />}>
             <Route index element={<Welcome />} />
             <Route path="komuta" element={<Komuta />} />
+            <Route path="calisma" element={<Workspace />} />
+            <Route path="dosyalar" element={<Files />} />
             <Route path="gorevler" element={<Tasks />} />
             <Route path="plan" element={<Plan />} />
             <Route path="ortak" element={<Shared />} />

@@ -9,6 +9,9 @@ import { finishNode } from '../lib/planSync'
 import { ASSISTANT, levelLabel, statusLabel, taskCode, type PlanNode, type Task, type TaskLevel, type TaskStatus } from '../lib/types'
 import { gameById } from '../data/sample'
 import { GameLogo, Modal, SampleBanner, initials, useIsMobile } from '../components/ui'
+import Attachments from '../components/Attachments'
+import Comments from '../components/Comments'
+import { logActivity } from '../lib/files'
 
 const cols: { id: TaskStatus; color: string }[] = [
   { id: 'open', color: '#D9D9D9' },
@@ -44,6 +47,7 @@ export default function Tasks() {
     const history = what ? [...t.history, { what, at: new Date().toISOString() }] : t.history
     try {
       await update(t.id, { ...patch, history, updated_at: new Date().toISOString() })
+      if (what) logActivity(me.email, `${taskCode(t.id)} ${t.title} · ${what}`, `/gorevler?id=${t.id}`).catch(() => {})
       // Plana bağlı görev bitince plan adımı da biter, sıradaki adım başlar
       if (patch.status === 'done' && t.plan_node_id) {
         const started = await finishNode(nodes.rows, t.plan_node_id, nodes.update)
@@ -151,6 +155,7 @@ export default function Tasks() {
           onAdd={async (t) => {
             try {
               const row = await insert({ ...t, created_by: me.email, history: [{ what: 'Elle oluşturuldu', at: new Date().toISOString() }] })
+              logActivity(me.email, `${taskCode(row.id)} ${row.title} görevini açtı`, `/gorevler?id=${row.id}`).catch(() => {})
               setAdding(false)
               select(row.id)
               toast('Görev eklendi')
@@ -248,7 +253,7 @@ function Detail({ t, onSave, onDelete, onClose }: { t: Task; onSave: (t: Task, p
           {(['open', 'doing', 'done'] as const).map((s) => <option key={s} value={s}>{statusLabel[s]}</option>)}
         </select>
         <span>Öncelik</span>
-        <select className="select" value={t.level} onChange={(e) => onSave(t, { level: e.target.value as TaskLevel })}>
+        <select className="select" value={t.level} onChange={(e) => onSave(t, { level: e.target.value as TaskLevel }, `Öncelik: ${levelLabel[e.target.value as TaskLevel]}`)}>
           {(['critical', 'medium', 'low'] as const).map((s) => <option key={s} value={s}>{levelLabel[s]}</option>)}
         </select>
         <span>Oyun</span>
@@ -263,7 +268,7 @@ function Detail({ t, onSave, onDelete, onClose }: { t: Task; onSave: (t: Task, p
           <option value={ASSISTANT}>Asistan</option>
         </select>
         <span>Son tarih</span>
-        <input className="input" type="date" value={t.due_date ?? ''} onChange={(e) => onSave(t, { due_date: e.target.value || null })} />
+        <input className="input" type="date" value={t.due_date ?? ''} onChange={(e) => onSave(t, { due_date: e.target.value || null }, `Son tarih: ${e.target.value ? trDate(e.target.value) : 'yok'}`)} />
         <span>Etiketler</span>
         <input
           className="input"
@@ -314,6 +319,10 @@ function Detail({ t, onSave, onDelete, onClose }: { t: Task; onSave: (t: Task, p
         <div className="card-sub" style={{ marginBottom: 8 }}>Notlar</div>
         <textarea className="textarea" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} onBlur={() => notes !== (t.notes ?? '') && onSave(t, { notes: notes || null })} placeholder="Bu görevle ilgili notlar" />
       </div>
+
+      <Attachments taskId={t.id} gameId={t.game_id} folder={t.tags[0]} label={t.title} />
+
+      <Comments taskId={t.id} label={t.title} />
 
       {t.history.length > 0 && (
         <div>

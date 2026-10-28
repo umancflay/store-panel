@@ -2,12 +2,13 @@ import { Component, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
   Home, Radar, Bot, KanbanSquare, Network, Users, Workflow, NotebookPen, CalendarDays, Wallet, Megaphone,
-  BellRing, Gamepad2, MessageSquareText, Settings, RefreshCw, LogOut, Menu, X, CheckCircle2, AlertTriangle, Info, ChevronDown,
+  BellRing, Gamepad2, MessageSquareText, LayoutDashboard, FolderOpen, Settings, RefreshCw, LogOut, Menu, X, CheckCircle2, AlertTriangle, Info, ChevronDown,
 } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { useStore } from '../lib/store'
 import { usePeople } from '../lib/data'
 import { Brand, initials } from './ui'
+import { usePresenceTracker } from '../lib/presence'
 
 // Menü grupları: günlük bakış, çalışma ve mağaza/gelir sayfaları
 type NavItem = { to: string; label: string; hint: string; icon: typeof Home }
@@ -24,11 +25,13 @@ export const navGroups: { title: string; items: NavItem[] }[] = [
   {
     title: 'Çalışma',
     items: [
+      { to: '/calisma', label: 'Çalışma alanı', hint: 'Ekip panosu', icon: LayoutDashboard },
       { to: '/gorevler', label: 'Görevler', hint: 'İş panosu', icon: KanbanSquare },
       { to: '/plan', label: 'Plan', hint: 'Çalışma sırası', icon: Network },
       { to: '/ortak', label: 'Ortak plan', hint: 'Birlikte çalış', icon: Users },
       { to: '/otomasyon', label: 'Otomasyon', hint: 'Kurallar', icon: Workflow },
       { to: '/notlar', label: 'Notlar', hint: 'Dokümanlar', icon: NotebookPen },
+      { to: '/dosyalar', label: 'Dosyalar', hint: 'Ortak klasör', icon: FolderOpen },
       { to: '/takvim', label: 'Takvim', hint: 'Tarihler', icon: CalendarDays },
     ],
   },
@@ -44,7 +47,7 @@ export const navGroups: { title: string; items: NavItem[] }[] = [
   },
 ]
 const links = navGroups.flatMap((g) => g.items)
-const mobileMain = ['/', '/komuta', '/gorevler', '/gelir']
+const mobileMain = ['/', '/calisma', '/gorevler', '/gelir']
 
 export default function Layout() {
   const { signOut } = useAuth()
@@ -54,6 +57,7 @@ export default function Layout() {
   const [sheet, setSheet] = useState(false)
   const loc = useLocation()
   const menuRef = useRef<HTMLDivElement>(null)
+  usePresenceTracker(me.email, loc.pathname)
 
   useEffect(() => {
     window.scrollTo(0, 0)

@@ -105,6 +105,17 @@ export const requirements: Record<string, Requirement> = {
     steps: ['Google Ads › Araçlar › API Merkezi\'nden geliştirici token\'ı başvurusu yap. Onay gelince 6. aşamada bağlanacak.'],
   },
   apple_ads: { id: 'apple_ads', name: 'Apple Ads', phase: 6, gives: 'Arama reklamı harcaması ve kurulumlar.', needs: ['Apple Ads hesabı', 'API erişimi (Apple Ads › Ayarlar › API)'], steps: ['6. aşamada bağlanacak.'] },
-  meta: { id: 'meta', name: 'Meta', phase: 6, gives: 'Facebook/Instagram reklam harcaması ve kurulumlar.', needs: ['Meta Business hesabı', 'Marketing API erişimi'], steps: ['6. aşamada bağlanacak.'] },
+  meta: {
+    id: 'meta', name: 'Meta', phase: 5, gives: 'Facebook/Instagram kampanyalarının harcaması, gösterim, tıklama ve kurulumları (sadece okuma).',
+    needs: ['Meta Business hesabı ve reklam hesabı', 'developers.facebook.com\'da bir uygulama (Marketing API)', 'ads_read izinli token'],
+    steps: [
+      'developers.facebook.com\'daki uygulamanı (ör. Voo Panel) işletmeye bağla: business.facebook.com › Ayarlar › Hesaplar › Uygulamalar › Ekle › Uygulama kimliğini bağla.',
+      'business.facebook.com › Ayarlar › Kullanıcılar › Sistem kullanıcıları › Ekle (rol: Admin değil, Çalışan yeterli).',
+      'Sistem kullanıcısına reklam hesabını ata: Varlık ata › Reklam hesapları › hesabın › "Kampanyaları görüntüle" (raporlar) izni.',
+      'Aynı ekranda Token oluştur › uygulamanı seç › süre: Hiçbir zaman › izin: ads_read › Oluştur.',
+      'GitHub › store-panel › Settings › Secrets › Actions: META_ACCESS_TOKEN = token, META_AD_ACCOUNT_ID = reklam hesabı numarası (act_ olmadan da olur).',
+      'Actions › Veri topla › Run workflow. Reklam sayfasında kampanyalar görünür.',
+    ],
+  },
   tiktok: { id: 'tiktok', name: 'TikTok', phase: 6, gives: 'TikTok reklam harcaması ve kurulumlar.', needs: ['TikTok for Business hesabı', 'Marketing API erişimi'], steps: ['6. aşamada bağlanacak.'] },
 }

@@ -34,6 +34,37 @@ export interface Note {
   updated_at: string
 }
 
+export interface FileRow {
+  id: number
+  name: string
+  path: string
+  size: number
+  mime: string | null
+  folder: string
+  game_id: string | null
+  task_id: number | null
+  note_id: number | null
+  uploaded_by: string | null
+  created_at: string
+}
+
+export interface Comment {
+  id: number
+  task_id: number | null
+  note_id: number | null
+  body: string
+  author: string | null
+  created_at: string
+}
+
+export interface Activity {
+  id: number
+  who: string | null
+  what: string
+  link: string | null
+  created_at: string
+}
+
 export interface Plan {
   id: number
   name: string

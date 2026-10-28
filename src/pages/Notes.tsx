@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Copy, Eye, ListTodo, PenLine, Plus, Search, Trash2 } from 'lucide-react'
 import { usePeople } from '../lib/data'
 import { useStore } from '../lib/store'
@@ -7,6 +7,9 @@ import { useRows, trDateTime } from '../lib/rows'
 import { demoNotes, demoTasks } from '../data/demo'
 import type { Note, Task } from '../lib/types'
 import { SampleBanner, useIsMobile } from '../components/ui'
+import Attachments from '../components/Attachments'
+import Comments from '../components/Comments'
+import { logActivity } from '../lib/files'
 
 // Notlar: klasörler, liste ve basit editör.
 // Not metni sade yazılır: "[ ] başlık" yapılacak iş, "[x] başlık" bitmiş iş, "- madde" alt madde.
@@ -17,7 +20,9 @@ export default function Notes() {
   const { me, nameOf } = usePeople()
   const mobile = useIsMobile()
   const [folder, setFolder] = useState<string | null>(null)
-  const [selId, setSelId] = useState<number | null>(null)
+  // Bağlantıyla gelinirse (/notlar?id=5) o not açılır
+  const [params] = useSearchParams()
+  const [selId, setSelId] = useState<number | null>(Number(params.get('id')) || null)
   const [edit, setEdit] = useState(false)
   const [q, setQ] = useState('')
   const [title, setTitle] = useState('')
@@ -48,6 +53,7 @@ export default function Notes() {
       const n = await insert({ title: 'Yeni not', folder: folder ?? 'Genel', tag: null, body: '[ ] İlk iş\n- ayrıntı', created_by: me.email, updated_at: new Date().toISOString() })
       setSelId(n.id)
       setEdit(true)
+      logActivity(me.email, 'Yeni not açtı', `/notlar?id=${n.id}`).catch(() => {})
     } catch (e) {
       toast('Not eklenemedi: ' + (e as Error).message, 'warn')
     }
@@ -152,6 +158,8 @@ export default function Notes() {
             )}
           </div>
         )}
+        <Attachments noteId={sel.id} folder={sel.folder} label={sel.title} />
+        <Comments noteId={sel.id} label={sel.title} />
       </div>
     </section>
   )

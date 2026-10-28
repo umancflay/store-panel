@@ -2,7 +2,7 @@
 // Anahtarlar ortam değişkeninden gelir (GitHub Secrets). Koda asla yazılmaz.
 //
 // İşler:
-//   daily / manual  → tüm veriler: AdMob, Google Play, App Store, Gmail + kurallar + Claude analizi + bildirim
+//   daily / manual  → tüm veriler: AdMob, Google Play, App Store, Meta reklam, Gmail + kurallar + Claude analizi + bildirim
 //   policy_check    → sürüm/inceleme durumları, yorumlar, Gmail politika mailleri, soruların cevabı + bildirim
 //   ad_plans        → reklam planları (5. aşama)
 
@@ -32,7 +32,8 @@ const notes = []
 const errors = []
 
 // Bir kaynak hata verse bile diğerleri çalışmaya devam eder
-async function step(name, source, ready, fn) {
+// soft: hata işi kırmızıya çevirmez (ör. Claude aboneliğinin limiti dolduğunda veriler yine güncellenir)
+async function step(name, source, ready, fn, { soft = false } = {}) {
   if (!ready) return notes.push(`${name}: anahtarlar girilmemiş, atlandı`)
   try {
     await fn()
@@ -40,7 +41,8 @@ async function step(name, source, ready, fn) {
   } catch (err) {
     console.error(`${name} hatası:`, err)
     const msg = `${name}: ${String(err.message ?? err).slice(0, 300)}`
-    errors.push(msg)
+    if (soft) notes.push(`${msg} (atlandı)`)
+    else errors.push(msg)
     if (source) await setConnection(source, 'error', msg).catch(() => {})
   }
 }
@@ -56,7 +58,7 @@ if (job === 'daily' || job === 'manual' || light) {
   await step('Gmail', 'gmail', googleReady, () => collectGmail({ days: light ? 7 : 30 }))
   if (!light) await step('Uyarı kuralları', null, true, applyRules)
   // Claude sadece öneri yazar (özet, çözüm adımı, cevap taslağı); hiçbir şeyi uygulamaz
-  await step('Claude analizi', 'claude', aiReady, () => runAi({ light }))
+  await step('Claude analizi', 'claude', aiReady, () => runAi({ light }), { soft: true })
   await step('Telefon bildirimi', 'push', pushReady, notifyCritical)
   if (job === 'daily') await step('Günün özeti bildirimi', null, pushReady, notifyDaily)
 }

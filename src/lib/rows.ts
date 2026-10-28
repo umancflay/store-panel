@@ -6,6 +6,7 @@ const demoCache = new Map<string, unknown[]>()
 
 // Bir Supabase tablosunu okuyup yazmak için ortak kanca (görevler, notlar, planlar …).
 // Gerçek modda değişiklik önce ekranda görünür, sonra veritabanına yazılır.
+// Ortağın yaptığı değişiklikler canlı gelir (Supabase Realtime, supabase/phase5.sql).
 // Demo modda sadece bu oturumda tutulur.
 export function useRows<T extends { id: number }>(
   table: string,
@@ -32,6 +33,32 @@ export function useRows<T extends { id: number }>(
   useEffect(() => {
     load()
   }, [load])
+
+  // Canlı: başka biri ekler, değiştirir ya da silerse listeye işle
+  useEffect(() => {
+    if (isDemo) return
+    const fits = (x: T) => !filter || String((x as Record<string, unknown>)[filter[0]]) === String(filter[1])
+    const ch = supabase!
+      .channel(`rows:${table}:${filterKey}:${Math.random().toString(36).slice(2)}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table }, (p) => {
+        if (p.eventType === 'DELETE') {
+          const id = (p.old as { id?: number }).id
+          setRows((r) => r.filter((x) => x.id !== id))
+          return
+        }
+        const row = p.new as T
+        setRows((r) => {
+          const rest = r.filter((x) => x.id !== row.id)
+          if (!fits(row)) return rest
+          return r.some((x) => x.id === row.id) ? r.map((x) => (x.id === row.id ? row : x)) : [...r, row]
+        })
+      })
+      .subscribe()
+    return () => {
+      supabase!.removeChannel(ch)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [table, filterKey])
 
   useEffect(() => {
     if (isDemo) demoCache.set(table, rows)
