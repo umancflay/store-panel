@@ -10,6 +10,7 @@ import { ASSISTANT, taskCode, type Release, type ReleaseCheck, type ReleaseStatu
 import { platformLabel } from '../lib/format'
 import { GameLogo, Modal, SampleBanner, Seg } from '../components/ui'
 import Select from '../components/Select'
+import { triggerWorkflow } from '../lib/trigger'
 
 // Sürüm çıkarma yardımcısı: her yeni sürüm için mağaza kontrol listesi, durum ve Claude'a yazdırılan sürüm notları.
 // Hiçbir şey mağazaya gönderilmez; liste sizin işaretlemeniz içindir.
@@ -94,6 +95,7 @@ export default function ReleasePage() {
         history: [{ what: 'Sürüm yardımcısından Claude\'a verildi', at: new Date().toISOString() }],
       })
       await save(r, { task_id: t.id })
+      triggerWorkflow('assistant.yml')
       toast('Claude yazıyor; 10-15 dakika içinde görevde, telefonuna bildirim gelir', 'info')
     } catch (err) {
       toast('Verilemedi: ' + (err as Error).message, 'warn')

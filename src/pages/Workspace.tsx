@@ -13,6 +13,7 @@ import { FileTile, useRemoveFile, useThumbs } from '../components/Attachments'
 import { GameLogo, SampleBanner, Seg, initials } from '../components/ui'
 import ClaudePlan from '../components/ClaudePlan'
 import Select from '../components/Select'
+import { triggerWorkflow } from '../lib/trigger'
 
 const levelRank = { critical: 0, medium: 1, low: 2 }
 const levelColor = { critical: '#FF7A55', medium: '#E8C07A', low: '#8FD3AE' }
@@ -74,6 +75,7 @@ export default function Workspace() {
       })
       logActivity(me.email, `${taskCode(row.id)} ${row.title} görevini açtı${assignee !== me.email ? ` → ${nameOf(assignee)}` : ''}`, `/gorevler?id=${row.id}`).catch(() => {})
       setTitle('')
+      if (assignee === ASSISTANT) triggerWorkflow('assistant.yml')
       toast(assignee === me.email ? 'Görev eklendi' : `Görev ${nameOf(assignee)} için eklendi${assignee === ASSISTANT ? '' : ', telefonuna bildirim gider'}`)
     } catch (err) {
       toast('Eklenemedi: ' + (err as Error).message, 'warn')

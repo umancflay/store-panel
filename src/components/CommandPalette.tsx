@@ -9,6 +9,7 @@ import { demoNotes, demoTasks } from '../data/demo'
 import { taskCode } from '../lib/types'
 import { navGroups } from './Layout'
 import { GameLogo } from './ui'
+import { triggerWorkflow } from '../lib/trigger'
 
 // Hızlı arama (Ctrl+K ya da üstteki büyüteç): sayfalar, oyunlar, görevler, notlar.
 // Yazdığın şeyle doğrudan "yeni görev aç" ya da "Claude'a sor" da yapılır.
@@ -93,6 +94,7 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
           if (!isDemo) {
             const { error } = await supabase!.from('assistant_questions').insert({ question: text, status: 'pending', asked_by: me.email } as never)
             if (error) return toast('Sorulamadı: ' + error.message, 'warn')
+            triggerWorkflow('assistant.yml')
           }
           nav('/asistan')
         },

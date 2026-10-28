@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { triggerWorkflow } from './trigger'
 
 // Web push aboneliği. Bildirimi GitHub Actions gönderir (4. aşamada bağlanacak).
 // VAPID public key herkese açıktır; private key sadece GitHub Secrets'ta durur.
@@ -23,6 +24,7 @@ export async function enablePush(): Promise<string | null> {
   const json = sub.toJSON()
   const { data: user } = await supabase.auth.getUser()
   const { error } = await supabase.from('push_subscriptions').upsert({ endpoint: json.endpoint, keys: json.keys, user_id: user.user?.id })
+  if (!error) triggerWorkflow('assistant.yml')
   return error ? error.message : null
 }
 

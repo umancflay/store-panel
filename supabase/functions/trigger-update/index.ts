@@ -1,8 +1,15 @@
-// "Şimdi güncelle" butonu bu fonksiyonu çağırır.
+// "Şimdi güncelle" butonu, Asistan ve Yayın Uzmanı bu fonksiyonu çağırır.
 // Fonksiyon önce çağıranın admin olduğunu (MFA dahil) kontrol eder,
-// sonra GitHub Actions'taki veri toplama işini başlatır.
+// sonra GitHub Actions'taki istenen işi başlatır (gövde: { workflow }, varsayılan veri toplama).
 // GitHub token'ı sadece Supabase secrets'ta durur (GH_DISPATCH_TOKEN).
 import { createClient } from 'npm:@supabase/supabase-js@2'
+
+// Sadece bu işler başlatılabilir; collect-data dışındakiler girdi almaz
+const ALLOWED: Record<string, Record<string, string> | undefined> = {
+  'collect-data.yml': { job: 'manual' },
+  'assistant.yml': undefined,
+  'expert.yml': undefined,
+}
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -26,14 +33,19 @@ Deno.serve(async (req) => {
   const token = Deno.env.get('GH_DISPATCH_TOKEN')
   if (!repo || !token) return json({ error: 'GH_REPO veya GH_DISPATCH_TOKEN ayarlanmamış' }, 500)
 
-  const res = await fetch(`https://api.github.com/repos/${repo}/actions/workflows/collect-data.yml/dispatches`, {
+  const body = await req.json().catch(() => ({}))
+  const workflow = typeof body?.workflow === 'string' ? body.workflow : 'collect-data.yml'
+  if (!(workflow in ALLOWED)) return json({ error: 'Bilinmeyen iş' }, 400)
+  const inputs = ALLOWED[workflow]
+
+  const res = await fetch(`https://api.github.com/repos/${repo}/actions/workflows/${workflow}/dispatches`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: 'application/vnd.github+json',
       'User-Agent': 'store-panel',
     },
-    body: JSON.stringify({ ref: 'main', inputs: { job: 'manual' } }),
+    body: JSON.stringify({ ref: 'main', ...(inputs ? { inputs } : {}) }),
   })
 
   if (!res.ok) return json({ error: `GitHub hatası: ${res.status}` }, 502)

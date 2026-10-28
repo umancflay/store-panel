@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import type { Alert, Recommendation } from '../data/sample'
 import { supabase } from './supabase'
 import { useData } from './data'
+import { triggerWorkflow } from './trigger'
 
 // Uygulama genelinde paylaşılan durum: uyarılar, onay bekleyen öneriler ve bildirim balonları.
 // Gerçek modda değişiklikler Supabase'e yazılır; demo modda sadece bu oturumda tutulur.
@@ -76,7 +77,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const triggerUpdate = async () => {
     if (!supabase) return toast('Demo modda veri çekme çalışmaz. README\'deki kurulumu tamamla.', 'warn')
     setUpdating(true)
-    const { error } = await supabase.functions.invoke('trigger-update')
+    const error = await triggerWorkflow('collect-data.yml')
     setUpdating(false)
     if (error) toast('Güncelleme başlatılamadı. README › Adım 11\'deki "Şimdi güncelle" kurulumu yapılmamış olabilir.', 'warn')
     else toast('Veri çekme başladı. Birkaç dakika içinde yenilenir.')

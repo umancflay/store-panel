@@ -7,6 +7,7 @@ import { logActivity } from '../lib/files'
 import { demoSuggestions, demoWorkPlan } from '../data/demo'
 import { ASSISTANT, taskCode, type Task, type WorkPlan, type WorkSuggestion } from '../lib/types'
 import { GameLogo, initials } from './ui'
+import { triggerWorkflow } from '../lib/trigger'
 
 const levelColor = { critical: '#FF7A55', medium: '#E8C07A', low: '#8FD3AE' }
 
@@ -36,6 +37,7 @@ export default function ClaudePlan({ tasks }: { tasks: ReturnType<typeof useRows
           logActivity(me.email, `${taskCode(row.id)} ${row.title} görevini Claude önerisinden açtı → ${nameOf(s.assignee)}`, `/gorevler?id=${row.id}`).catch(() => {})
         }
       }
+      if (accept && s.assignee === ASSISTANT) triggerWorkflow('assistant.yml')
       await sugg.update(s.id, { status: accept ? 'accepted' : 'dismissed', decided_by: me.email, decided_at: new Date().toISOString() })
       sugg.setRows((r) => r.filter((x) => x.id !== s.id))
       toast(accept ? (s.kind === 'assign' ? `${nameOf(s.assignee)} üstlendi` : 'Görev açıldı') : 'Öneri geçildi', accept ? 'ok' : 'info')
@@ -47,6 +49,7 @@ export default function ClaudePlan({ tasks }: { tasks: ReturnType<typeof useRows
   async function requestPlan() {
     try {
       await setReq({ requested_at: new Date().toISOString() })
+      triggerWorkflow('assistant.yml')
       toast(isDemo ? 'Demo: gerçek modda Claude 10 dakika içinde planlar' : 'Claude haftayı planlıyor, 10-15 dakika içinde burada ve telefonunda', 'info')
     } catch (err) {
       toast('İstenemedi: ' + (err as Error).message, 'warn')

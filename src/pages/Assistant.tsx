@@ -10,6 +10,7 @@ import { gameById } from '../data/sample'
 import { money } from '../lib/format'
 import { SampleBanner, Toggle, useIsMobile } from '../components/ui'
 import Needs from '../components/Needs'
+import { triggerWorkflow } from '../lib/trigger'
 
 const prompts = [
   'Bu hafta en çok gelir getiren oyun hangisi?',
@@ -55,6 +56,7 @@ export default function Assistant() {
     setText('')
     try {
       await qs.insert({ question: q.trim(), status: 'pending', answer: null, asked_by: me.email })
+      triggerWorkflow('assistant.yml')
       if (demo) toast('Demo: soru kaydedildi, cevap 4. aşamada gelir.', 'info')
     } catch (e) {
       toast('Soru kaydedilemedi: ' + (e as Error).message, 'warn')
