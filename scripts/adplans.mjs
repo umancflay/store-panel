@@ -93,7 +93,7 @@ export async function needsAdPlans() {
 export async function runAdPlans() {
   const [setting] = await db('app_settings?select=value&key=eq.ad_games')
   const ids = setting?.value?.games ?? DEFAULT_GAMES
-  const games = (await db('games?select=id,name,genre,installs,rating,android_package,ios_app_id')).filter((g) => ids.includes(g.id))
+  const games = (await db('games?select=id,name,genre,installs,ratings_count,android_package,ios_app_id')).filter((g) => ids.includes(g.id))
   if (!games.length) return console.log('Reklam planı: oyun seçilmemiş')
 
   const stats = await metrics(games)
@@ -111,7 +111,7 @@ export async function runAdPlans() {
         oyun: g.name,
         tur: g.genre,
         toplam_indirme: g.installs,
-        puan: g.rating,
+        puan_sayisi: g.ratings_count,
         magazalar: { android: Boolean(g.android_package), ios: Boolean(g.ios_app_id) },
         son_14_gun: stats.find((s) => s.game_id === g.id) ?? null,
         admob_gelir_ulkeler_usd: [...countries.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k, v]) => ({ ulke: k, gelir: r2(v) })),
