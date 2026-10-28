@@ -194,11 +194,11 @@ async function loadLive(): Promise<Raw> {
   }
   for (const r of (byDay.data ?? []) as Row[]) {
     if ((r.date as string) >= today) {
-      todayRows.push({ date: r.date as string, gameId: r.game_id as string, platform: r.platform as Platform, adRevenue: num(r.revenue), impressions: num(r.impressions), requests: num(r.requests), matched: num(r.matched), downloads: 0, iapRevenue: 0, crashRate: null, anrRate: null, rating: null })
+      todayRows.push({ date: r.date as string, gameId: r.game_id as string, platform: r.platform as Platform, adRevenue: num(r.revenue), adRevenueTry: r.has_try ? num(r.revenue_try) : null, impressions: num(r.impressions), requests: num(r.requests), matched: num(r.matched), downloads: 0, iapRevenue: 0, crashRate: null, anrRate: null, rating: null })
       continue
     }
     Object.assign(rowFor(r.date as string, r.game_id as string, r.platform as Platform), {
-      adRevenue: num(r.revenue), impressions: num(r.impressions), requests: num(r.requests), matched: num(r.matched),
+      adRevenue: num(r.revenue), adRevenueTry: r.has_try ? num(r.revenue_try) : null, impressions: num(r.impressions), requests: num(r.requests), matched: num(r.matched),
     })
   }
   for (const r of (store.data ?? []) as Row[]) {
@@ -208,6 +208,10 @@ async function loadLive(): Promise<Raw> {
     })
   }
   const daily = [...merged.values()].sort((a, b) => a.date.localeCompare(b.date))
+
+  // AdMob'un TL tutarı tüm satırlarda varsa onu kullan
+  const tryOf = (c: Row, p: Row | undefined) =>
+    c.has_try ? { revenue: num(c.revenue_try), ecpm: ecpm(num(c.revenue_try), num(c.impressions)), ecpmPrev: p?.has_try ? ecpm(num(p.revenue_try), num(p.impressions)) : null } : undefined
 
   const prevCountry = new Map(((cPrev.data ?? []) as Row[]).map((c) => [c.country, c]))
   const countries: Country[] = ((cNow.data ?? []) as Row[]).map((c) => {
@@ -219,6 +223,7 @@ async function loadLive(): Promise<Raw> {
       impressions: num(c.impressions),
       ecpm: ecpm(num(c.revenue), num(c.impressions)),
       ecpmPrev: p ? ecpm(num(p.revenue), num(p.impressions)) : 0,
+      try: tryOf(c, p),
     }
   })
 
@@ -237,6 +242,7 @@ async function loadLive(): Promise<Raw> {
       ecpmPrev: p ? ecpm(num(p.revenue), num(p.impressions)) : 0,
       fillRate: fill(num(u.matched), num(u.requests)),
       fillPrev: p ? fill(num(p.matched), num(p.requests)) : 0,
+      try: tryOf(u, p),
     }
   })
 
@@ -400,7 +406,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const shown: Currency = currency === 'TRY' && latest ? 'TRY' : 'USD'
     setCurrency(shown)
     const rate = (date?: string) => (shown === 'USD' ? 1 : (date && state.fx[date]) || latest)
-    const conv = (r: DailyRow) => (shown === 'USD' ? r : { ...r, adRevenue: r.adRevenue * rate(r.date), iapRevenue: r.iapRevenue * rate(r.date) })
+    const conv = (r: DailyRow) => (shown === 'USD' ? r : { ...r, adRevenue: r.adRevenueTry ?? r.adRevenue * rate(r.date), iapRevenue: r.iapRevenue * rate(r.date) })
     const k = rate()
     return {
       ...state,
@@ -409,8 +415,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       games: state.games.filter((g) => !g.hidden),
       daily: state.daily.filter((r) => keep(r.gameId)).map(conv),
       today: state.today.filter((r) => keep(r.gameId)).map(conv),
-      countries: k === 1 ? state.countries : state.countries.map((c) => ({ ...c, revenue: c.revenue * k, ecpm: c.ecpm * k, ecpmPrev: c.ecpmPrev * k })),
-      adUnits: state.adUnits.filter((u) => keep(u.gameId)).map((u) => (k === 1 ? u : { ...u, revenue: u.revenue * k, ecpm: u.ecpm * k, ecpmPrev: u.ecpmPrev * k })),
+      countries: shown === 'USD' ? state.countries : state.countries.map((c) => ({ ...c, revenue: c.try?.revenue ?? c.revenue * k, ecpm: c.try?.ecpm ?? c.ecpm * k, ecpmPrev: c.try?.ecpmPrev ?? c.ecpmPrev * k })),
+      adUnits: state.adUnits.filter((u) => keep(u.gameId)).map((u) => (shown === 'USD' ? u : { ...u, revenue: u.try?.revenue ?? u.revenue * k, ecpm: u.try?.ecpm ?? u.ecpm * k, ecpmPrev: u.try?.ecpmPrev ?? u.ecpmPrev * k })),
       alerts: state.alerts.filter((a) => keep(a.gameId)),
       reviews: state.reviews.filter((r) => keep(r.gameId)),
       builds: state.builds.filter((b) => keep(b.gameId)),

@@ -1,5 +1,6 @@
 // AdMob'dan günlük gelir verisini çekip Supabase'deki admob_daily tablosuna yazar.
-// Gelir her zaman USD olarak istenir.
+// Gelir USD olarak istenir; TL tutarı da AdMob'un kendi kuruyla ayrıca istenir (revenue_try),
+// böylece panel TL gösterirken AdMob ekranıyla kuruşu kuruşuna aynı olur.
 
 import { db, upsert, setConnection } from './db.mjs'
 import { googleApi } from './google.mjs'
@@ -16,17 +17,28 @@ export async function collectAdmob() {
   const pub = account[0].name // accounts/pub-123...
 
   // İlk çalıştırmada son 60 günü, sonra son 3 günü çek (AdMob son günleri sonradan düzeltebilir)
+  // TL tutarı olmayan eski satırlar varsa da 60 gün geriye git (bir kerelik doldurma)
   const existing = await db('admob_daily?select=date&limit=1')
-  const fromDays = existing.length > 0 ? 3 : 60
+  const missingTry = await db(`admob_daily?select=date&revenue_try=is.null&date=gte.${daysAgo(60).toISOString().slice(0, 10)}&limit=1`)
+  const fromDays = existing.length > 0 && missingTry.length === 0 ? 3 : 60
 
-  const report = await googleApi(`${API}/${pub}/networkReport:generate`, {
-    reportSpec: {
-      dateRange: { startDate: ymd(daysAgo(fromDays)), endDate: ymd(daysAgo(0)) },
-      dimensions: ['DATE', 'APP', 'AD_UNIT', 'COUNTRY', 'FORMAT', 'PLATFORM'],
-      metrics: ['AD_REQUESTS', 'MATCHED_REQUESTS', 'IMPRESSIONS', 'ESTIMATED_EARNINGS'],
-      localizationSettings: { currencyCode: 'USD' },
-    },
-  })
+  const DIMS = ['DATE', 'APP', 'AD_UNIT', 'COUNTRY', 'FORMAT', 'PLATFORM']
+  const generate = (currencyCode, metrics) =>
+    googleApi(`${API}/${pub}/networkReport:generate`, {
+      reportSpec: {
+        dateRange: { startDate: ymd(daysAgo(fromDays)), endDate: ymd(daysAgo(0)) },
+        dimensions: DIMS,
+        metrics,
+        localizationSettings: { currencyCode },
+      },
+    })
+  const report = await generate('USD', ['AD_REQUESTS', 'MATCHED_REQUESTS', 'IMPRESSIONS', 'ESTIMATED_EARNINGS'])
+  const reportTry = await generate('TRY', ['ESTIMATED_EARNINGS'])
+
+  const keyOf = (d) => DIMS.map((k) => d[k]?.value ?? '').join('|')
+  const tryByKey = new Map(
+    reportTry.filter((r) => r.row).map(({ row }) => [keyOf(row.dimensionValues), Number(row.metricValues.ESTIMATED_EARNINGS?.microsValue ?? 0) / 1e6]),
+  )
 
   const rows = report.filter((r) => r.row).map((r) => r.row)
   const gameIdFor = await gameMapper(rows)
@@ -45,6 +57,7 @@ export async function collectAdmob() {
       matched_requests: Number(m.MATCHED_REQUESTS?.integerValue ?? 0),
       impressions: Number(m.IMPRESSIONS?.integerValue ?? 0),
       revenue: Number(m.ESTIMATED_EARNINGS?.microsValue ?? 0) / 1e6,
+      revenue_try: tryByKey.get(keyOf(d)) ?? 0,
     }
   })
 

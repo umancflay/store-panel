@@ -22,6 +22,8 @@ export interface DailyRow {
   platform: Platform
   downloads: number
   adRevenue: number
+  // AdMob'un kendi kuruyla TL (varsa); panel TL gösterirken bunu kullanır
+  adRevenueTry?: number | null
   iapRevenue: number
   impressions: number
   requests: number
@@ -124,6 +126,8 @@ export interface AdUnit {
   ecpmPrev: number
   fillRate: number
   fillPrev: number
+  // AdMob'un kendi kuruyla TL karşılıkları (varsa)
+  try?: { revenue: number; ecpm: number; ecpmPrev: number | null }
 }
 
 export const sampleAdUnits: AdUnit[] = (() => {
@@ -164,6 +168,8 @@ export interface Country {
   ecpm: number
   ecpmPrev: number
   impressions: number
+  // AdMob'un kendi kuruyla TL karşılıkları (varsa)
+  try?: { revenue: number; ecpm: number; ecpmPrev: number | null }
 }
 
 export const sampleCountries: Country[] = [
