@@ -158,7 +158,7 @@ Küçük bir Unity mobil oyun stüdyosu (Voo Game Studio / Pixel Game) için tek
 - `notify_outbox`: bildirim kuyruğu. Görev başkasına atanınca ve görevine yorum gelince tetikleyiciler yazar;
 - `work_suggestions`: Claude'un haftalık iş bölümü önerileri (kabul / geç).
 
-`phase10-releases.sql` (⏳ çalıştırılacak): `releases` tablosu (sürüm çıkarma yardımcısı).
+`phase10-releases.sql` (✅ 29 Ekim 2026'da çalıştırıldı): `releases` tablosu (sürüm çıkarma yardımcısı).
 
 ### Ekip ve asistan (28 Ekim 2026)
 

@@ -5,7 +5,7 @@ name: Asistan
 
 on:
   schedule:
-    - cron: '*/10 * * * *'
+    - cron: '7-59/10 * * * *'   # 10 dakikada bir (:07, :17 …); tam dakikalar GitHub'da yoğun, atlanabiliyor
   workflow_dispatch:
 
 concurrency:
