@@ -3,7 +3,7 @@ import { FlaskConical } from 'lucide-react'
 import { gameById } from '../data/sample'
 import { rangeLabels, type Range } from '../lib/metrics'
 import { isDemo } from '../lib/supabase'
-import { platformLabel } from '../lib/format'
+import { pct, platformLabel } from '../lib/format'
 
 // Sayının 0'dan hedefe akarak gelmesi
 export function useCountUp(target: number, ms = 900) {
@@ -342,5 +342,26 @@ export function Brand({ compact = false }: { compact?: boolean }) {
         </span>
       )}
     </span>
+  )
+}
+
+// Yatay çubuk listesi: tek renk, değer ve pay yazıyla (renk tek başına anlam taşımaz)
+export function BarList({ items, fmt }: { items: { label: string; sub?: string; value: number; extra?: string }[]; fmt: (v: number) => string }) {
+  const max = Math.max(...items.map((i) => i.value), 0.0001)
+  const total = items.reduce((a, i) => a + i.value, 0) || 1
+  if (!items.length) return <div className="empty" style={{ padding: 18 }}>Henüz veri yok.</div>
+  return (
+    <div className="barlist">
+      {items.map((i) => (
+        <div key={i.label + (i.sub ?? '')} className="barlist-row" title={`${i.label}: ${fmt(i.value)}`}>
+          <div className="barlist-label">
+            <span>{i.label}{i.sub && <span className="muted"> · {i.sub}</span>}</span>
+            <span><b>{fmt(i.value)}</b> <span className="muted">{pct((i.value / total) * 100, 0)}</span></span>
+          </div>
+          <div className="barlist-track"><div className="barlist-fill" style={{ width: `${(i.value / max) * 100}%` }} /></div>
+          {i.extra && <div className="muted" style={{ fontSize: 10, marginTop: 3 }}>{i.extra}</div>}
+        </div>
+      ))}
+    </div>
   )
 }

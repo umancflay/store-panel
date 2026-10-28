@@ -2,6 +2,7 @@
 //   - Çökme ve ANR oranı (Play Developer Reporting API)
 //   - Son yorumlar ve sürüm durumu (Android Publisher API)
 //   - Günlük indirme ve puan (Play Console raporları, Cloud Storage; PLAY_REPORTS_BUCKET girildiyse)
+//   - Oyuncu kırılımları: ülke, dil, cihaz, Android sürümü, uygulama sürümü (aynı raporlar → play_breakdowns)
 // Giriş: Google Cloud servis hesabı (GOOGLE_PLAY_SA_JSON), Play Console'da kullanıcı olarak davet edilmiş olmalı.
 
 import crypto from 'node:crypto'
@@ -77,35 +78,58 @@ async function vitals(pkg, metricSet, metric) {
   })).filter((r) => !Number.isNaN(r.value))
 }
 
-// Play Console CSV raporları UTF-16 olarak gelir
+// Play Console CSV raporları UTF-16 olarak gelir. Cihaz adlarında virgül olabilir, tırnaklı alanları da okur.
 function parseCsv(buf) {
-  const text = buf[0] === 0xff && buf[1] === 0xfe ? buf.toString('utf16le').slice(1) : buf.toString('utf8')
+  const text = buf[0] === 0xff && buf[1] === 0xfe ? buf.toString('utf16le').slice(1) : buf.toString('utf8').replace(/^\uFEFF/, '')
+  const split = (line) => {
+    const out = []
+    let cur = ''
+    let quoted = false
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i]
+      if (quoted && ch === '"' && line[i + 1] === '"') (cur += '"'), i++
+      else if (ch === '"') quoted = !quoted
+      else if (ch === ',' && !quoted) out.push(cur), (cur = '')
+      else cur += ch
+    }
+    out.push(cur)
+    return out.map((v) => v.trim())
+  }
   const [head, ...lines] = text.trim().split(/\r?\n/)
-  const cols = head.split(',')
-  return lines.map((l) => Object.fromEntries(l.split(',').map((v, i) => [cols[i], v])))
+  const cols = split(head)
+  return lines.filter(Boolean).map((l) => Object.fromEntries(split(l).map((v, i) => [cols[i], v])))
 }
 
-async function installsAndRatings(pkg) {
-  const bucket = process.env.PLAY_REPORTS_BUCKET?.trim().replace(/^gs:\/\//, '').split('/')[0]
-  if (!bucket) return []
-  const months = [0, 1].map((i) => {
+const reportBucket = () => process.env.PLAY_REPORTS_BUCKET?.trim().replace(/^gs:\/\//, '').split('/')[0]
+
+// Bu ay ve geçen ay (yyyymm)
+const reportMonths = () =>
+  [0, 1].map((i) => {
     const d = new Date()
     d.setUTCDate(1)
     d.setUTCMonth(d.getUTCMonth() - i)
     return `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}`
   })
+
+// Kovadan bir rapor dosyası; o ay için rapor yoksa null
+async function reportFile(bucket, file) {
+  try {
+    return parseCsv(await api(`https://storage.googleapis.com/storage/v1/b/${bucket}/o/${encodeURIComponent(file)}?alt=media`, { raw: true }))
+  } catch (e) {
+    if (String(e.message).includes(': 404')) return null
+    if (String(e.message).includes(': 403')) throw new Error('rapor klasörüne erişim yok (Play Console izni 24 saate kadar sürebilir)')
+    throw e
+  }
+}
+
+async function installsAndRatings(pkg) {
+  const bucket = reportBucket()
+  if (!bucket) return []
   const byDate = new Map()
-  for (const m of months) {
+  for (const m of reportMonths()) {
     for (const [kind, file] of [['installs', `stats/installs/installs_${pkg}_${m}_overview.csv`], ['ratings', `stats/ratings/ratings_${pkg}_${m}_overview.csv`]]) {
-      let rows
-      try {
-        rows = parseCsv(await api(`https://storage.googleapis.com/storage/v1/b/${bucket}/o/${encodeURIComponent(file)}?alt=media`, { raw: true }))
-      } catch (e) {
-        if (String(e.message).includes(': 404')) continue // o ay için rapor yok
-        if (String(e.message).includes(': 403')) throw new Error('rapor klasörüne erişim yok (Play Console izni 24 saate kadar sürebilir)')
-        throw e
-      }
-      for (const r of rows) {
+      const rows = await reportFile(bucket, file)
+      for (const r of rows ?? []) {
         const e = byDate.get(r.Date) ?? { date: r.Date }
         if (kind === 'installs') e.downloads = Number(r['Daily User Installs'] ?? r['Install events'] ?? 0)
         else e.rating = Number(r['Total Average Rating']) || null
@@ -114,6 +138,59 @@ async function installsAndRatings(pkg) {
     }
   }
   return [...byDate.values()]
+}
+
+// Oyuncu kırılımları: rapor dosyasının adı → panelde boyut adı ve CSV'deki sütun
+const DIMENSIONS = [
+  ['overview', 'overview', null],
+  ['country', 'country', 'Country'],
+  ['language', 'language', 'Language'],
+  ['device', 'device', 'Device'],
+  ['os_version', 'os_version', 'Android OS Version'],
+  ['app_version', 'app_version', 'App Version Code'],
+]
+const KEEP = 50 // boyut ve ay başına en çok bu kadar anahtar (yüzlerce cihaz modeli tabloyu şişirmesin)
+
+const num = (v) => (v === undefined || v === '' ? null : Number(v) || 0)
+
+async function playerBreakdowns(pkg, gameId) {
+  const bucket = reportBucket()
+  if (!bucket) return []
+  const out = []
+  for (const m of reportMonths()) {
+    for (const [file, dimension, col] of DIMENSIONS) {
+      const rows = await reportFile(bucket, `stats/installs/installs_${pkg}_${m}_${file}.csv`)
+      if (!rows?.length) continue
+      // Sütun adı değişirse: tarih, paket ve sayı olmayan ilk sütun boyuttur
+      const keyCol = col && col in rows[0] ? col : col && Object.keys(rows[0]).find((c) => !['Date', 'Package Name'].includes(c) && !/Installs|Uninstalls|Upgrades|events/i.test(c))
+      const mapped = rows.map((r) => ({
+        game_id: gameId,
+        date: r.Date,
+        dimension,
+        key: (keyCol ? r[keyCol] : 'ALL') || 'Bilinmiyor',
+        installs: num(r['Daily User Installs']) ?? num(r['Install events']) ?? 0,
+        uninstalls: num(r['Daily User Uninstalls']) ?? num(r['Uninstall events']) ?? 0,
+        active_devices: num(r['Active Device Installs']),
+      }))
+      // Aynı gün aynı anahtar iki kez gelirse topla (ör. boş anahtarlar "Bilinmiyor"da birleşir)
+      const merged = new Map()
+      for (const r of mapped) {
+        const k = `${r.date}|${r.key}`
+        const a = merged.get(k)
+        if (!a) merged.set(k, r)
+        else {
+          a.installs += r.installs
+          a.uninstalls += r.uninstalls
+          a.active_devices = a.active_devices == null && r.active_devices == null ? null : (a.active_devices ?? 0) + (r.active_devices ?? 0)
+        }
+      }
+      const score = new Map()
+      for (const r of merged.values()) score.set(r.key, (score.get(r.key) ?? 0) + r.installs + (r.active_devices ?? 0))
+      const top = new Set([...score.entries()].sort((a, b) => b[1] - a[1]).slice(0, KEEP).map(([k]) => k))
+      out.push(...[...merged.values()].filter((r) => top.has(r.key) && /^\d{4}-\d{2}-\d{2}$/.test(r.date)))
+    }
+  }
+  return out
 }
 
 async function reviews(pkg, gameId) {
@@ -217,6 +294,10 @@ export async function collectPlay({ light = false } = {}) {
       const rows = await installsAndRatings(pkg)
       const withD = rows.filter((r) => r.downloads !== undefined)
       if (withD.length) await upsert('store_daily', withD.map((r) => ({ ...key, date: r.date, downloads: r.downloads, rating: r.rating ?? null })), 'date,game_id,platform,country')
+    })
+    await safe('oyuncular', async () => {
+      const rows = await playerBreakdowns(pkg, gameId)
+      if (rows.length) await upsert('play_breakdowns', rows.map((r) => ({ ...r, updated_at: new Date().toISOString() })), 'game_id,date,dimension,key')
     })
   }
 

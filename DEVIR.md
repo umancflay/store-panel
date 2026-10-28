@@ -82,7 +82,7 @@ Küçük bir Unity mobil oyun stüdyosu (Voo Game Studio / Pixel Game) için tek
 | Dosya | Durum |
 |---|---|
 | `admob.mjs` | ✅ Günlük gelir, istek, gösterim; ülke ve reklam birimi kırılımı. USD + TRY (`revenue_try`). TRY ilk çalışmada 60 gün geriye doldurulur |
-| `play.mjs` + `storepage.mjs` | ✅ Uygulama listesi, yorumlar, vitals. İkon, gerçek indirme sayısı ve puan mağaza sayfasından okunuyor. ❌ **Toplu raporlar (GCS) "rapor klasörüne erişim yok" hatası veriyor**; bkz. Bölüm 4 |
+| `play.mjs` + `storepage.mjs` | ✅ Uygulama listesi, yorumlar, vitals. İkon, gerçek indirme sayısı ve puan mağaza sayfasından okunuyor. Toplu raporlardan oyuncu kırılımı (ülke, dil, cihaz, Android sürümü, uygulama sürümü → `play_breakdowns`) kodu yazıldı. ⏳ **Toplu raporlar (GCS) "rapor klasörüne erişim yok" hatası veriyor**; bkz. Bölüm 4 |
 | `appstore.mjs` | ✅ Sürümler, inceleme durumu, yorumlar. JWT 15 dk, 401'de bir kez yeniden deneme |
 | `gmail.mjs` | ✅ Play/AdMob/Apple politika mailleri → `alerts`. Gürültü filtresi var (sözleşme, TestFlight vb. uyarı sayılmaz) |
 | `fx.mjs` | ✅ USD→TRY günlük kur |
@@ -150,6 +150,10 @@ Küçük bir Unity mobil oyun stüdyosu (Voo Game Studio / Pixel Game) için tek
 - `admob_daily.revenue_try`;
 - `admob_by_*` fonksiyonları yeniden kuruldu (`revenue_try`, `has_try` döner).
 
+`phase8-play-breakdowns.sql` (⏳ **henüz Supabase'de ÇALIŞTIRILMADI**):
+- `play_breakdowns` tablosu (game_id, date, dimension, key, installs, uninstalls, active_devices);
+- `play_breakdown_summary(game, from)` fonksiyonu: boyut başına en çok kurulum yapan 30 anahtar.
+
 ### Meta (Facebook/Instagram) kurulumu
 
 - **İşletme portföyü:** **Pixel Game** (business_id `415583563213815`). Business'a **Facebook profiliyle (Umut Ucar)** girilmeli. Instagram hesabıyla (voogamestudio) girilince uygulama/sistem kullanıcısı işlemleri engelleniyor.
@@ -170,8 +174,9 @@ Küçük bir Unity mobil oyun stüdyosu (Voo Game Studio / Pixel Game) için tek
 1. **Google Play toplu raporları (şu an başlanan iş).** Hedef: oyuncuların ülke, dil, cihaz, Android sürümü, uygulama sürümü bazında günlük kurulum/kaldırma/aktif cihaz verisini çekmek ve Claude'un buna göre öneri yapması.
    - Play Console › **Kullanıcılar ve izinler**'de `GOOGLE_PLAY_SA_JSON`'daki hizmet hesabına hesap düzeyinde **"Uygulama bilgilerini görüntüleme ve toplu raporları indirme"** izni verilecek. İzin 24 saate kadar yayılabilir.
    - Play Console › **Toplu raporları indir** sayfasındaki `gs://pubsite_prod_...` adresi `PLAY_REPORTS_BUCKET` secret'ı ile aynı olmalı.
-   - Sonra `play.mjs`'e `stats/installs/installs_<paket>_<yyyymm>_{country,device,os_version,language,app_version,overview}.csv` dosyalarını okuyacak kod yazılacak. CSV'ler **UTF-16** olabilir. Yeni tablo `play_breakdowns` (game_id, date, dimension, key, installs, uninstalls, active_devices) ve Oyunlar/Komuta sayfasına "oyuncular" bölümü eklenecek.
-   - Claude reklam planına bu veri bağlam olarak eklenecek.
+   - ✅ Kod hazır (28 Ekim 2026): `play.mjs › playerBreakdowns` CSV'leri okur (UTF-16, tırnaklı alan destekli; boyut ve ay başına en çok 50 anahtar), oyun sayfasında `components/Players.tsx` "Oyuncular" kartı, `adplans.mjs` Claude'a `play_oyunculari_son_30_gun` verir.
+   - ⏳ Kalan: `supabase/phase8-play-breakdowns.sql` Supabase'de çalıştırılacak; izin geçerli olunca bir "Veri topla" çalıştırıp `connections` (google_play) mesajında "oyuncular" hatası var mı bakılacak. CSV sütun adları gerçek dosyayla doğrulanmadı (Country, Language, Device, Android OS Version, App Version Code, Daily User Installs/Uninstalls, Active Device Installs varsayıldı).
+   - İsteğe bağlı: Komuta sayfasına da özet eklenebilir.
    - **Not:** Play yaş/cinsiyet vermez. Yaş/cinsiyet yalnızca Meta reklam kırılımlarından geliyor.
 2. **AdMob TL doğrulaması.** `revenue_try` kodu ve SQL'i canlıda. İlk otomatik çalışmadan sonra panel (Gelir, Komuta) ile AdMob ana sayfası karşılaştırılmalı; kuruşu kuruşuna tutmalı.
 3. **Meta "sonuç" sayımı.** Instagram profil ziyareti kampanyasında panel 161 "Bağlantı tıklaması" sayıyor; Reklam Yöneticisi 113 profil ziyareti diyor. `meta.mjs › resultOf` içinde profil ziyareti aksiyon tipinin adı yakalanmalı: bir çalışmada `actions` dizisini logla, doğru `action_type`'ı bul.

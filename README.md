@@ -274,7 +274,7 @@ Panel artık **sadece gerçek veri** gösterir. Bağlı olmayan bir kaynağın y
 
 ### Google Play Console
 
-Bağlanınca gelenler: çökme ve ANR oranı, yorumlar, sürüm durumu, günlük indirme ve puan. Çökme oranı Google'ın eşiğini aşınca otomatik uyarı da oluşur.
+Bağlanınca gelenler: çökme ve ANR oranı, yorumlar, sürüm durumu, günlük indirme ve puan, oyuncuların ülke / dil / cihaz / Android sürümü kırılımı (oyun sayfasında "Oyuncular"). Çökme oranı Google'ın eşiğini aşınca otomatik uyarı da oluşur.
 
 1. Google Cloud'da (`store-panel` projesi) **APIs & Services › Library**'ye gir. **Google Play Android Developer API** ve **Google Play Developer Reporting API**'yi bul, ikisini de **Enable** yap.
 2. **IAM & Admin › Service Accounts › Create service account**'a gir. Adı `store-panel-play` olsun. Rol seçmeden **Done** de.
@@ -287,6 +287,8 @@ Bağlanınca gelenler: çökme ve ANR oranı, yorumlar, sürüm durumu, günlük
    - `PLAY_REPORTS_BUCKET`: 6. adımda kopyaladığın `gs://` adresi.
 
 > Play Console izinlerinin devreye girmesi 24 saate kadar sürebilir.
+
+8. Oyuncu kırılımları için Supabase **SQL Editor**'da [`supabase/phase8-play-breakdowns.sql`](supabase/phase8-play-breakdowns.sql) dosyasını bir kez çalıştır.
 
 ### App Store Connect
 
@@ -529,6 +531,7 @@ supabase/
   phase3-stores.sql Mağaza özet fonksiyonu
   phase4.sql    Bildirim takibi, Gmail ve Claude bağlantı satırları
   features.sql  Görevler, notlar, planlar, takvim, otomasyonlar, sohbet
+  phase8-play-breakdowns.sql  Google Play oyuncu kırılımları (ülke, dil, cihaz …)
   functions/    "Şimdi güncelle" fonksiyonu
 scripts/
   collect.mjs   GitHub Actions'ta çalışan veri toplama betiği

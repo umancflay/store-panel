@@ -3,8 +3,8 @@ import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAx
 import { Users, MonitorSmartphone, Globe2, TrendingUp } from 'lucide-react'
 import { useData } from '../lib/data'
 import { supabase, isDemo } from '../lib/supabase'
-import { currencySymbol, dayLabel, int, money2, pct, short } from '../lib/format'
-import { GameLogo } from './ui'
+import { countryName, currencySymbol, dayLabel, int, money2, pct, short } from '../lib/format'
+import { BarList, GameLogo } from './ui'
 
 // Reklam panosu: Meta (ve ileride TikTok) kampanyalarının harcaması, sonuçları ve hedef kitlesi.
 // Veriler USD saklanır; ekranda seçili para birimine çevrilir. Kırılımlar (yaş, platform, ülke) son 30 gündür.
@@ -58,14 +58,6 @@ const placementName: Record<string, string> = {
   instream_video: 'Video arası', right_hand_column: 'Sağ sütun', threads_feed: 'Akış',
 }
 const pubName: Record<string, string> = { instagram: 'Instagram', facebook: 'Facebook', audience_network: 'Audience Network', messenger: 'Messenger', threads: 'Threads' }
-const regionNames = new Intl.DisplayNames(['tr'], { type: 'region' })
-const countryName = (c: string) => {
-  try {
-    return regionNames.of(c) ?? c
-  } catch {
-    return c
-  }
-}
 
 const iso = (d: Date) => d.toISOString().slice(0, 10)
 const daysAgo = (n: number) => iso(new Date(Date.now() - n * 86400000))
@@ -93,27 +85,6 @@ function Delta({ cur, prev, invert = false }: { cur: number; prev: number; inver
   const p = ((cur - prev) / prev) * 100
   const good = invert ? p <= 0 : p >= 0
   return <span className="small" style={{ color: good ? 'var(--green)' : 'var(--orange)' }}>{p >= 0 ? '▲' : '▼'} {pct(Math.abs(p))} <span className="muted">önceki döneme göre</span></span>
-}
-
-// Yatay çubuk listesi: tek renk, değer ve pay yazıyla (renk tek başına anlam taşımaz)
-function BarList({ items, fmt }: { items: { label: string; sub?: string; value: number; extra?: string }[]; fmt: (v: number) => string }) {
-  const max = Math.max(...items.map((i) => i.value), 0.0001)
-  const total = items.reduce((a, i) => a + i.value, 0) || 1
-  if (!items.length) return <div className="empty" style={{ padding: 18 }}>Henüz veri yok.</div>
-  return (
-    <div className="barlist">
-      {items.map((i) => (
-        <div key={i.label + (i.sub ?? '')} className="barlist-row" title={`${i.label}: ${fmt(i.value)}`}>
-          <div className="barlist-label">
-            <span>{i.label}{i.sub && <span className="muted"> · {i.sub}</span>}</span>
-            <span><b>{fmt(i.value)}</b> <span className="muted">{pct((i.value / total) * 100, 0)}</span></span>
-          </div>
-          <div className="barlist-track"><div className="barlist-fill" style={{ width: `${(i.value / max) * 100}%` }} /></div>
-          {i.extra && <div className="muted" style={{ fontSize: 10, marginTop: 3 }}>{i.extra}</div>}
-        </div>
-      ))}
-    </div>
-  )
 }
 
 function Tip({ active, payload, label, fmt, isDate }: { active?: boolean; payload?: { name: string; value: number; color: string }[]; label?: string; fmt: (v: number) => string; isDate?: boolean }) {

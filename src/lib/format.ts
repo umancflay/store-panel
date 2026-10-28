@@ -47,3 +47,13 @@ export const platformLabel = (p: string) => (p === 'ios' ? 'iOS' : 'Android')
 
 // Değer yoksa (kaynak bağlı değil ya da veri gelmedi) "—"
 export const orDash = (v: number | null | undefined, fmt: (n: number) => string) => (v == null ? '—' : fmt(v))
+
+// Ülke kodu → Türkçe ad ("TR" → "Türkiye")
+const regionNames = new Intl.DisplayNames(['tr'], { type: 'region' })
+export const countryName = (c: string) => {
+  try {
+    return regionNames.of(c) ?? c
+  } catch {
+    return c
+  }
+}

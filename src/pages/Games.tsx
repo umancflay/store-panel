@@ -4,6 +4,7 @@ import { Area, AreaChart, CartesianGrid, Line, LineChart, ReferenceLine, Respons
 import { ArrowLeft, Download, Wallet, Star, Bug, Package, EyeOff } from 'lucide-react'
 import { gameById, type Platform } from '../data/sample'
 import Needs from '../components/Needs'
+import Players from '../components/Players'
 import { useData } from '../lib/data'
 import { useStore } from '../lib/store'
 import { byDay, limits, periodRows, totals, type Range } from '../lib/metrics'
@@ -213,6 +214,8 @@ export function GameDetail() {
           )}
         </div>
       </section>
+
+      {game.platforms.includes('android') && platform !== 'ios' && (demo || connected.google_play) && <Players gameId={game.id} />}
 
       <section className="grid g-2">
         <div className="card">
