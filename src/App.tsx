@@ -22,6 +22,7 @@ import Assistant from './pages/Assistant'
 import Settings from './pages/Settings'
 import Workspace from './pages/Workspace'
 import Files from './pages/Files'
+import ReleasePage from './pages/Release'
 
 function Gate() {
   const { stage } = useAuth()
@@ -49,6 +50,7 @@ function Gate() {
             <Route path="gelir" element={<Revenue />} />
             <Route path="reklamlar" element={<Ads />} />
             <Route path="asistan" element={<Assistant />} />
+            <Route path="surum" element={<ReleasePage />} />
             <Route path="ayarlar" element={<Settings />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>

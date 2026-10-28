@@ -2,12 +2,13 @@ import { Component, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
   Home, Radar, Bot, KanbanSquare, Network, Users, Workflow, NotebookPen, CalendarDays, Wallet, Megaphone,
-  BellRing, Gamepad2, MessageSquareText, LayoutDashboard, FolderOpen, Settings, RefreshCw, LogOut, Menu, X, CheckCircle2, AlertTriangle, Info, ChevronDown,
+  BellRing, Gamepad2, MessageSquareText, LayoutDashboard, FolderOpen, Settings, RefreshCw, LogOut, Menu, X, CheckCircle2, AlertTriangle, Info, ChevronDown, Search, Rocket,
 } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { useStore } from '../lib/store'
 import { usePeople } from '../lib/data'
 import { refreshPush } from '../lib/push'
+import CommandPalette from './CommandPalette'
 import { Brand, initials } from './ui'
 import { usePresenceTracker } from '../lib/presence'
 
@@ -43,6 +44,7 @@ export const navGroups: { title: string; items: NavItem[] }[] = [
       { to: '/gelir', label: 'Gelir', hint: 'AdMob ve satış', icon: Wallet },
       { to: '/reklamlar', label: 'Reklam', hint: 'Kampanyalar', icon: Megaphone },
       { to: '/yorumlar', label: 'Yorumlar', hint: 'Oyuncular', icon: MessageSquareText },
+      { to: '/surum', label: 'Sürüm çıkar', hint: 'Mağaza kontrol listesi', icon: Rocket },
       { to: '/ayarlar', label: 'Ayarlar', hint: 'Profil ve bağlantılar', icon: Settings },
     ],
   },
@@ -56,9 +58,22 @@ export default function Layout() {
   const { me } = usePeople()
   const [menu, setMenu] = useState(false)
   const [sheet, setSheet] = useState(false)
+  const [cmd, setCmd] = useState(false)
   const loc = useLocation()
   const menuRef = useRef<HTMLDivElement>(null)
   usePresenceTracker(me.email, loc.pathname)
+
+  // Hızlı arama: Ctrl+K (Mac'te Cmd+K)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setCmd((v) => !v)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   // Telefon bildirim kaydını her açılışta tazele (izin verilmişse)
   useEffect(() => {
@@ -93,6 +108,8 @@ export default function Layout() {
       <div className="streak s1" />
       <div className="streak s2" />
       <div className="glow-pool" />
+      <div className="aurora a1" />
+      <div className="aurora a2" />
 
       <div className="frame">
         <div className="frame-inner">
@@ -129,6 +146,9 @@ export default function Layout() {
             </div>
 
             <div className="top-right">
+              <button type="button" className="icon-btn" onClick={() => setCmd(true)} title="Hızlı arama (Ctrl+K)" aria-label="Hızlı arama">
+                <Search size={15} />
+              </button>
               <button type="button" className="icon-btn" onClick={triggerUpdate} disabled={updating} title="Şimdi güncelle" aria-label="Şimdi güncelle">
                 <RefreshCw size={15} className={updating ? 'spin' : ''} />
               </button>
@@ -145,6 +165,7 @@ export default function Layout() {
             </div>
           </header>
 
+          <CommandPalette open={cmd} onClose={() => setCmd(false)} />
           <main className="main">
             <PageGuard key={loc.pathname}>
               <Outlet />

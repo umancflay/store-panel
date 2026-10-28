@@ -172,3 +172,26 @@ export interface WorkPlan {
   week_summary: string
   focus: { email: string; summary: string }[]
 }
+
+// Sürüm çıkarma yardımcısı (supabase/phase10-releases.sql)
+export type ReleaseStatus = 'prep' | 'review' | 'live'
+export interface ReleaseCheck {
+  id: string
+  group: string
+  title: string
+  done: boolean
+}
+export interface Release {
+  id: number
+  game_id: string | null
+  platform: 'android' | 'ios' | 'both'
+  version: string
+  status: ReleaseStatus
+  target_date: string | null
+  changes: string | null
+  checklist: ReleaseCheck[]
+  task_id: number | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}

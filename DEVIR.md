@@ -158,6 +158,8 @@ Küçük bir Unity mobil oyun stüdyosu (Voo Game Studio / Pixel Game) için tek
 - `notify_outbox`: bildirim kuyruğu. Görev başkasına atanınca ve görevine yorum gelince tetikleyiciler yazar;
 - `work_suggestions`: Claude'un haftalık iş bölümü önerileri (kabul / geç).
 
+`phase10-releases.sql` (⏳ çalıştırılacak): `releases` tablosu (sürüm çıkarma yardımcısı).
+
 ### Ekip ve asistan (28 Ekim 2026)
 
 - **Asistan işi** (`.github/workflows/assistant.yml` → `scripts/assistant.mjs`), 10 dakikada bir çalışır:
@@ -170,6 +172,9 @@ Küçük bir Unity mobil oyun stüdyosu (Voo Game Studio / Pixel Game) için tek
 - Tarayıcının açılır menüleri yerine `components/Select.tsx` kullanılıyor (`<Select>` + `<option>`, aynı yazım).
 - Paneldeki Claude varsayılan olarak `opus` kullanıyor (`CLAUDE_MODEL` değişkeniyle değiştirilebilir).
 - **Claude'a atanan görevler** (`scripts/assistanttasks.mjs`, Asistan işi içinde): `assignee = assistant` ve açık görevler (her seferde en çok 3). Sonuç göreve yorum (author `assistant`) olarak yazılır, görev açana geri atanır, `advice`'a tek cümle özet, etiket "Claude taslağı". Hiçbir şey yayınlanmaz.
+- **Sürüm çıkar** (`pages/Release.tsx`, `/surum`): oyun + sürüm başına mağaza kontrol listesi (şablon kodda), durum, "Bu sürümde ne değişti". "Claude'a yazdır" Claude'a görev açar; sürüm notunu oyuncuların dillerinde yazar.
+- **Hızlı arama** (`components/CommandPalette.tsx`): Ctrl+K ya da üstteki büyüteç. Sayfa/oyun/görev/not arar; yazılan metinle görev açar ya da Claude'a sorar.
+- **Görünüş**: renkli zemin ışıkları (`.aurora`), sayfa ve kart giriş animasyonları, kart hover parıltısı, oyun logosunda oyunun rengi (`--gc`). Hareket azaltma ayarına uyar.
 - **Telefon bildirimi kaydı** her açılışta tazelenir (`lib/push.ts › refreshPush`). Ayarlar › Bildirimler'de cihaz durumu ve "Test gönder" (kuyruğa yazar, 10 dk içinde gelir). 28 Ekim'de Apple bildirimi kabul ettiği hâlde kullanıcının telefonunda görünmedi; sebep kesinleşmedi (eski kayıt, Odak modu ya da izin olabilir).
 
 ### Meta (Facebook/Instagram) kurulumu

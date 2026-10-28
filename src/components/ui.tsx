@@ -222,7 +222,7 @@ export function initials(name: string) {
 export function GameLogo({ id, size = 30 }: { id: string; size?: number }) {
   const g = gameById(id)
   return (
-    <span className="game-logo" style={{ width: size, height: size, fontSize: size > 36 ? 14 : 11, borderRadius: Math.round(size * 0.28) }}>
+    <span className="game-logo" style={{ width: size, height: size, fontSize: size > 36 ? 14 : 11, borderRadius: Math.round(size * 0.28), ['--gc' as string]: g?.color }}>
       {g?.icon ? <img src={g.icon} alt="" loading="lazy" referrerPolicy="no-referrer" /> : initials(g?.name ?? id)}
     </span>
   )
