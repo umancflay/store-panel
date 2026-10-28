@@ -1,5 +1,6 @@
 // Meta (Facebook + Instagram) reklam verilerini çeker, campaigns tablosuna yazar.
-// GitHub Secrets: META_ACCESS_TOKEN (ads_read izinli token) ve META_AD_ACCOUNT_ID (act_ ile ya da olmadan).
+// GitHub Secrets: META_ACCESS_TOKEN (ads_read izinli token) ve META_AD_ACCOUNT_ID (act_ ile ya da olmadan;
+// birden fazla hesap virgülle ayrılır: "1507573837908002,1367381536942213").
 // Sadece okur: kampanya açmaz, bütçe değiştirmez, para harcamaz.
 // Harcama hesabın para biriminden USD'ye çevrilir (panel her şeyi USD saklar, ekranda TL'ye çevirir).
 
@@ -45,9 +46,25 @@ async function all(path, params) {
 }
 
 export async function collectMeta({ light = false } = {}) {
-  const raw = process.env.META_AD_ACCOUNT_ID.trim()
-  const act = raw.startsWith('act_') ? raw : `act_${raw}`
+  const ids = process.env.META_AD_ACCOUNT_ID.split(/[\s,]+/).filter(Boolean)
+  const notes = []
+  const failed = []
+  for (const raw of ids) {
+    const act = raw.startsWith('act_') ? raw : `act_${raw}`
+    try {
+      notes.push(await collectAccount(act, light))
+    } catch (err) {
+      failed.push(`${act}: ${err.message}`)
+    }
+  }
+  // Bir hesap okunamasa da diğerleri yazılır; hepsi okunamazsa hata
+  const msg = [...notes, ...failed].join(' · ').slice(0, 500)
+  await setConnection('meta', notes.length ? 'connected' : 'error', msg)
+  console.log(`Meta: ${msg}`)
+  if (!notes.length) throw new Error(failed.join(' · '))
+}
 
+async function collectAccount(act, light) {
   const account = await graph(act, { fields: 'name,currency,account_status' })
 
   // Hesap USD değilse harcamayı günün kuruyla USD'ye çevir (şimdilik TRY ve USD desteklenir)
@@ -111,7 +128,5 @@ export async function collectMeta({ light = false } = {}) {
   await upsert('campaigns', rows, 'platform,external_id,date')
 
   const spend = rows.reduce((a, r) => a + r.spend, 0)
-  const msg = `${account.name}: ${campaigns.length} kampanya, son ${days} gün ${rows.length} satır, $${spend.toFixed(2)} harcama`
-  await setConnection('meta', 'connected', msg)
-  console.log(`Meta: ${msg}`)
+  return `${account.name}: ${campaigns.length} kampanya, son ${days} gün $${spend.toFixed(2)} harcama`
 }

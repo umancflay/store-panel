@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Users, Globe2, Wallet, Clapperboard, Image, Target, Check, X, Link2Off, ShieldCheck, Sparkles, Video } from 'lucide-react'
+import { Users, Globe2, Wallet, Clapperboard, Image, Target, Check, X, Link2, Link2Off, ShieldCheck, Sparkles, Video } from 'lucide-react'
 import { adAccounts, gameById } from '../data/sample'
 import { useData } from '../lib/data'
 import Needs from '../components/Needs'
@@ -100,7 +100,7 @@ export default function Ads() {
         <div className="grid g-4">
           {adAccounts.map((a) => (
             <div className="account" key={a.id}>
-              <span className="icon-box sm" style={{ width: 38, height: 38, background: 'rgba(255,255,255,.05)', boxShadow: 'none', color: 'var(--muted)' }}><Link2Off size={16} /></span>
+              <span className="icon-box sm" style={{ width: 38, height: 38, background: 'rgba(255,255,255,.05)', boxShadow: 'none', color: connected[a.id] && !demo ? 'var(--green)' : 'var(--muted)' }}>{connected[a.id] && !demo ? <Link2 size={16} /> : <Link2Off size={16} />}</span>
               <div style={{ minWidth: 0 }}>
                 <b>{a.name}</b>
                 <div className="muted small">{(!demo && connections.find((c) => c.source === a.id)?.message) || a.note}</div>
