@@ -7,6 +7,7 @@ import { useData } from '../lib/data'
 import { GameChip, SampleBanner, Stars } from '../components/ui'
 import Needs from '../components/Needs'
 import { useInsight } from '../lib/rows'
+import Select from '../components/Select'
 
 type Cluster = { title: string; count: number; category: ReviewCategory; hint: string; game_id: string | null }
 
@@ -68,19 +69,19 @@ export default function Reviews() {
       <section className="card">
         <div className="flex between wrap" style={{ marginBottom: 14 }}>
           <div className="flex wrap">
-            <select className="select" value={game} onChange={(e) => setGame(e.target.value)}>
+            <Select className="select" value={game} onChange={(e) => setGame(e.target.value)}>
               <option value="all">Tüm oyunlar</option>
               {games.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
-            </select>
-            <select className="select" value={platform} onChange={(e) => setPlatform(e.target.value)}>
+            </Select>
+            <Select className="select" value={platform} onChange={(e) => setPlatform(e.target.value)}>
               <option value="all">Tüm platformlar</option>
               <option value="android">Android</option>
               <option value="ios">iOS</option>
-            </select>
-            <select className="select" value={rating} onChange={(e) => setRating(+e.target.value)}>
+            </Select>
+            <Select className="select" value={rating} onChange={(e) => setRating(+e.target.value)}>
               <option value={0}>Tüm puanlar</option>
               {[5, 4, 3, 2, 1].map((n) => <option key={n} value={n}>{'★'.repeat(n)}</option>)}
-            </select>
+            </Select>
           </div>
           {base.length > 0 && <span className="muted small">{base.length} yorum · ortalama ★ {avg.toFixed(1).replace('.', ',')}</span>}
         </div>

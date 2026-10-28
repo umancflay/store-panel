@@ -8,6 +8,7 @@ import { demoNodes, demoPlans, demoTasks } from '../data/demo'
 import { finishNode } from '../lib/planSync'
 import { ASSISTANT, type NodeStatus, type Plan as PlanT, type PlanNode, type Task } from '../lib/types'
 import { Modal, SampleBanner, initials, useIsMobile } from '../components/ui'
+import Select from '../components/Select'
 
 const W = 190
 const H = 104
@@ -274,14 +275,14 @@ export default function Plan() {
                   <span>Açıklama</span>
                   <input className="input" defaultValue={selected.sub ?? ''} key={'s' + selected.id} onBlur={(e) => e.target.value !== (selected.sub ?? '') && patch(selected, { sub: e.target.value || null })} />
                   <span>Durum</span>
-                  <select className="select" value={selected.status} onChange={(e) => patch(selected, { status: e.target.value as NodeStatus })}>
+                  <Select className="select" value={selected.status} onChange={(e) => patch(selected, { status: e.target.value as NodeStatus })}>
                     {(['wait', 'active', 'done'] as const).map((s) => <option key={s} value={s}>{statusText[s]}</option>)}
-                  </select>
+                  </Select>
                   <span>Sorumlu</span>
-                  <select className="select" value={selected.assignee ?? ''} onChange={(e) => patch(selected, { assignee: e.target.value || null })}>
+                  <Select className="select" value={selected.assignee ?? ''} onChange={(e) => patch(selected, { assignee: e.target.value || null })}>
                     {people.map((p) => <option key={p.email} value={p.email}>{p.name}</option>)}
                     <option value={ASSISTANT}>Asistan</option>
-                  </select>
+                  </Select>
                   <span>Başlangıç</span>
                   <input className="input" type="date" value={selected.start_date ?? ''} onChange={(e) => patch(selected, { start_date: e.target.value || null })} />
                   <span>Süre (gün)</span>
@@ -330,10 +331,10 @@ export default function Plan() {
               </div>
               <div className="field">
                 <label htmlFor="p-game">Oyun</label>
-                <select id="p-game" className="select" value={newPlan.game_id ?? ''} onChange={(e) => setNewPlan({ ...newPlan, game_id: e.target.value || null })}>
+                <Select id="p-game" className="select" value={newPlan.game_id ?? ''} onChange={(e) => setNewPlan({ ...newPlan, game_id: e.target.value || null })}>
                   <option value="">Genel</option>
                   {games.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
-                </select>
+                </Select>
               </div>
             </div>
             <div className="flex" style={{ gap: 8, justifyContent: 'flex-end' }}>

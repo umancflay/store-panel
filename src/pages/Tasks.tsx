@@ -12,6 +12,7 @@ import { GameLogo, Modal, SampleBanner, initials, useIsMobile } from '../compone
 import Attachments from '../components/Attachments'
 import Comments from '../components/Comments'
 import { logActivity } from '../lib/files'
+import Select from '../components/Select'
 
 const cols: { id: TaskStatus; color: string }[] = [
   { id: 'open', color: '#D9D9D9' },
@@ -249,24 +250,24 @@ function Detail({ t, onSave, onDelete, onClose }: { t: Task; onSave: (t: Task, p
       />
       <div className="kv">
         <span>Durum</span>
-        <select className="select" value={t.status} onChange={(e) => onSave(t, { status: e.target.value as TaskStatus }, `${statusLabel[t.status]} → ${statusLabel[e.target.value as TaskStatus]}`)}>
+        <Select className="select" value={t.status} onChange={(e) => onSave(t, { status: e.target.value as TaskStatus }, `${statusLabel[t.status]} → ${statusLabel[e.target.value as TaskStatus]}`)}>
           {(['open', 'doing', 'done'] as const).map((s) => <option key={s} value={s}>{statusLabel[s]}</option>)}
-        </select>
+        </Select>
         <span>Öncelik</span>
-        <select className="select" value={t.level} onChange={(e) => onSave(t, { level: e.target.value as TaskLevel }, `Öncelik: ${levelLabel[e.target.value as TaskLevel]}`)}>
+        <Select className="select" value={t.level} onChange={(e) => onSave(t, { level: e.target.value as TaskLevel }, `Öncelik: ${levelLabel[e.target.value as TaskLevel]}`)}>
           {(['critical', 'medium', 'low'] as const).map((s) => <option key={s} value={s}>{levelLabel[s]}</option>)}
-        </select>
+        </Select>
         <span>Oyun</span>
-        <select className="select" value={t.game_id ?? ''} onChange={(e) => onSave(t, { game_id: e.target.value || null })}>
+        <Select className="select" value={t.game_id ?? ''} onChange={(e) => onSave(t, { game_id: e.target.value || null })}>
           <option value="">Genel</option>
           {games.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
-        </select>
+        </Select>
         <span>Sorumlu</span>
-        <select className="select" value={t.assignee ?? ''} onChange={(e) => onSave(t, { assignee: e.target.value || null }, `Sorumlu: ${nameOf(e.target.value)}`)}>
+        <Select className="select" value={t.assignee ?? ''} onChange={(e) => onSave(t, { assignee: e.target.value || null }, `Sorumlu: ${nameOf(e.target.value)}`)}>
           <option value="">Kimse</option>
           {people.map((p) => <option key={p.email} value={p.email}>{p.name}</option>)}
           <option value={ASSISTANT}>Asistan</option>
-        </select>
+        </Select>
         <span>Son tarih</span>
         <input className="input" type="date" value={t.due_date ?? ''} onChange={(e) => onSave(t, { due_date: e.target.value || null }, `Son tarih: ${e.target.value ? trDate(e.target.value) : 'yok'}`)} />
         <span>Etiketler</span>
@@ -359,23 +360,23 @@ function AddTask({ onClose, onAdd }: { onClose: () => void; onAdd: (t: Partial<T
         <div className="grid g-2" style={{ gap: 10 }}>
           <div className="field">
             <label htmlFor="t-level">Öncelik</label>
-            <select id="t-level" className="select" value={f.level} onChange={(e) => setF({ ...f, level: e.target.value as TaskLevel })}>
+            <Select id="t-level" className="select" value={f.level} onChange={(e) => setF({ ...f, level: e.target.value as TaskLevel })}>
               {(['critical', 'medium', 'low'] as const).map((s) => <option key={s} value={s}>{levelLabel[s]}</option>)}
-            </select>
+            </Select>
           </div>
           <div className="field">
             <label htmlFor="t-game">Oyun</label>
-            <select id="t-game" className="select" value={f.game_id ?? ''} onChange={(e) => setF({ ...f, game_id: e.target.value || null })}>
+            <Select id="t-game" className="select" value={f.game_id ?? ''} onChange={(e) => setF({ ...f, game_id: e.target.value || null })}>
               <option value="">Genel</option>
               {games.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
-            </select>
+            </Select>
           </div>
           <div className="field">
             <label htmlFor="t-who">Sorumlu</label>
-            <select id="t-who" className="select" value={f.assignee ?? ''} onChange={(e) => setF({ ...f, assignee: e.target.value || null })}>
+            <Select id="t-who" className="select" value={f.assignee ?? ''} onChange={(e) => setF({ ...f, assignee: e.target.value || null })}>
               {people.map((p) => <option key={p.email} value={p.email}>{p.name}</option>)}
               <option value={ASSISTANT}>Asistan</option>
-            </select>
+            </Select>
           </div>
           <div className="field">
             <label htmlFor="t-due">Son tarih</label>

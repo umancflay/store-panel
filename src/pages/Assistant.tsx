@@ -93,7 +93,7 @@ export default function Assistant() {
                   ) : q.status === 'failed' ? (
                     <span style={{ color: 'var(--orange)' }}>Cevaplanamadı. {q.answer ?? ''}</span>
                   ) : (
-                    <span className="flex muted" style={{ gap: 8 }}><Clock size={13} /> {claude ? 'Cevap hazırlanıyor…' : 'Sırada — Claude bağlanınca cevaplanacak'}</span>
+                    <span className="flex muted" style={{ gap: 8 }}><Clock size={13} /> {claude ? 'Cevap hazırlanıyor… genelde 10-15 dakika içinde gelir, gelince telefonuna bildirim düşer.' : 'Sırada — Claude bağlanınca cevaplanacak'}</span>
                   )}
                 </div>
               </div>

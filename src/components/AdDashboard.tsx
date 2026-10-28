@@ -5,6 +5,7 @@ import { useData } from '../lib/data'
 import { supabase, isDemo } from '../lib/supabase'
 import { countryName, currencySymbol, dayLabel, int, money2, pct, short } from '../lib/format'
 import { BarList, GameLogo } from './ui'
+import Select from './Select'
 
 // Reklam panosu: Meta (ve ileride TikTok) kampanyalarının harcaması, sonuçları ve hedef kitlesi.
 // Veriler USD saklanır; ekranda seçili para birimine çevrilir. Kırılımlar (yaş, platform, ülke) son 30 gündür.
@@ -238,10 +239,10 @@ export default function AdDashboard() {
         <div className="seg">
           {[7, 30].map((d) => <button key={d} className={days === d ? 'on' : ''} onClick={() => setDays(d)}>Son {d} gün</button>)}
         </div>
-        <select className="select" style={{ width: 'auto', minWidth: 220 }} value={pick} onChange={(e) => setPick(e.target.value)} aria-label="Kampanya">
+        <Select className="select" style={{ width: 'auto', minWidth: 220 }} value={pick} onChange={(e) => setPick(e.target.value)} aria-label="Kampanya">
           <option value="all">Tüm kampanyalar</option>
           {campaignsAll.map((c) => <option key={c.external_id} value={c.external_id}>{c.name}</option>)}
-        </select>
+        </Select>
       </div>
 
       <section className="kpi-row">

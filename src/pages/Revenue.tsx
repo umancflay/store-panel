@@ -9,6 +9,7 @@ import { change, currencySymbol, dayLabel, int, money, money2, pct, short } from
 import { ChartTip, Delta, Donut, GameChip, GameLogo, Rings, SampleBanner, Seg, Sparkline, StatCard, useCountUp } from '../components/ui'
 import Needs from '../components/Needs'
 import AdmobSummary from '../components/AdmobSummary'
+import Select from '../components/Select'
 
 type View = 'game' | 'country' | 'format' | 'unit'
 const formatColors = ['#FFFFFF', '#8FD3AE', '#E8C07A', '#8A8A8A', '#D9D9D9']
@@ -88,10 +89,10 @@ export default function Revenue() {
           </p>
         </div>
         <div className="flex wrap" style={{ gap: 8 }}>
-          <select className="select" style={{ width: 'auto' }} value={game} onChange={(e) => setGame(e.target.value)} aria-label="Oyun">
+          <Select className="select" style={{ width: 'auto' }} value={game} onChange={(e) => setGame(e.target.value)} aria-label="Oyun">
             <option value="all">Tüm oyunlar</option>
             {games.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
-          </select>
+          </Select>
           <Seg value={range} onChange={setRange} options={[{ value: '7', label: '7 gün' }, { value: '30', label: '30 gün' }]} />
         </div>
       </div>

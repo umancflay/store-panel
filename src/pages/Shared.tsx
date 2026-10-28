@@ -8,6 +8,7 @@ import { useRows, addDays, daysBetween, today, trDate, trDateTime } from '../lib
 import { demoDecisions, demoMessages, demoNodes, demoPlans, demoTasks, DEMO_PARTNER } from '../data/demo'
 import { ASSISTANT, type Decision, type Message, type Plan, type PlanNode, type Task } from '../lib/types'
 import { SampleBanner, initials, Seg } from '../components/ui'
+import Select from '../components/Select'
 
 const DAYS = 42
 const laneColor = ['#FFFFFF', '#8FD3AE', '#E8C07A']
@@ -140,10 +141,10 @@ export default function Shared() {
             <div className="card-title">Zaman çizelgesi</div>
             <div className="card-sub">{trDate(start)} – {trDate(addDays(start, DAYS - 1))} · Plan adımları</div>
           </div>
-          <select className="select" style={{ width: 'auto' }} value={planFilter} onChange={(e) => setPlanFilter(e.target.value)} aria-label="Plan seç">
+          <Select className="select" style={{ width: 'auto' }} value={planFilter} onChange={(e) => setPlanFilter(e.target.value)} aria-label="Plan seç">
             <option value="all">Tüm planlar</option>
             {plans.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
+          </Select>
         </div>
         {shown.length === 0 ? (
           <div className="empty">Zaman çizelgesinde adım yok. <Link to="/plan" className="linkish">Plan sayfasında</Link> adım ekleyince burada görünür.</div>

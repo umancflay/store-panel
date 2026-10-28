@@ -150,3 +150,25 @@ export const statusLabel: Record<TaskStatus, string> = { open: 'Açık', doing: 
 export const eventColor: Record<EventKind, string> = { deadline: '#FF7A55', release: '#8FD3AE', event: '#D9D9D9', ad: '#E8C07A' }
 export const eventLabel: Record<EventKind, string> = { deadline: 'Son tarih', release: 'Sürüm', event: 'Etkinlik', ad: 'Reklam' }
 export const taskCode = (id: number) => 'PG-' + String(id % 10000).padStart(4, '0')
+
+// Claude'un haftalık iş bölümü önerisi (supabase/phase9-team.sql)
+export interface WorkSuggestion {
+  id: number
+  kind: 'new_task' | 'assign'
+  task_id: number | null
+  title: string
+  game_id: string | null
+  level: TaskLevel
+  assignee: string | null
+  due_date: string | null
+  why: string | null
+  status: 'pending' | 'accepted' | 'dismissed'
+  created_at: string
+  decided_by?: string | null
+  decided_at?: string | null
+}
+
+export interface WorkPlan {
+  week_summary: string
+  focus: { email: string; summary: string }[]
+}

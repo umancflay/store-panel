@@ -8,6 +8,7 @@ import type { Automation, Trigger } from '../lib/types'
 import { periodRows, totals } from '../lib/metrics'
 import { pct } from '../lib/format'
 import { SampleBanner, Toggle, useIsMobile } from '../components/ui'
+import Select from '../components/Select'
 
 // Tetikleyiciler: ne zaman çalışır, eşik ne demek
 const triggers: Record<Trigger, { label: string; cond: (t: number | null) => string; unit?: string; def: number | null; phase?: number }> = {
@@ -126,9 +127,9 @@ export default function Automations() {
             <div className="grid g-2" style={{ gap: 12, marginTop: 14 }}>
               <div className="field">
                 <label htmlFor="a-trig">Ne zaman</label>
-                <select id="a-trig" className="select" value={draft.trigger} onChange={(e) => { const t = e.target.value as Trigger; set({ trigger: t, threshold: triggers[t].def }) }}>
+                <Select id="a-trig" className="select" value={draft.trigger} onChange={(e) => { const t = e.target.value as Trigger; set({ trigger: t, threshold: triggers[t].def }) }}>
                   {(Object.keys(triggers) as Trigger[]).map((k) => <option key={k} value={k}>{triggers[k].label}{triggers[k].phase ? ` (${triggers[k].phase}. aşama)` : ''}</option>)}
-                </select>
+                </Select>
               </div>
               {tr.def != null && (
                 <div className="field">

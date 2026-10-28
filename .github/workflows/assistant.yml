@@ -1,0 +1,40 @@
+# Asistan: panelde sorulan soruları 10 dakikada bir cevaplar ve soranın telefonuna bildirir.
+# Bekleyen soru yoksa birkaç saniyede biter, Claude kurulmaz. Public repo olduğu için Actions dakikası ücretsiz.
+# Not: GitHub zamanlanmış işleri yoğunlukta birkaç dakika geciktirebilir.
+name: Asistan
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: assistant
+  cancel-in-progress: false
+
+jobs:
+  answer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL }}
+      VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+      VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+      VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Bekleyen soru var mı?
+        id: check
+        run: node scripts/assistant.mjs check
+      - name: Claude Code'u kur
+        if: steps.check.outputs.has == 'true'
+        run: npm install -g @anthropic-ai/claude-code
+      - name: Soruları cevapla
+        if: steps.check.outputs.has == 'true'
+        run: node scripts/assistant.mjs

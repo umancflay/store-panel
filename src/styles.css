@@ -654,3 +654,50 @@ tr.on td { background: rgba(143,211,174,.06); }
 @media (max-width: 1100px) { .kpi-row { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 900px) { .audience { grid-template-columns: 1fr; } }
 @media (max-width: 640px) { .kpi-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } .kpi-value { font-size: 22px; } }
+
+/* Açılır menü (components/Select.tsx) */
+.sel-btn { display: inline-flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer; text-align: left; min-width: 0; }
+.sel-btn .sel-value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sel-btn .sel-chev { flex: none; opacity: .6; transition: transform .2s; }
+.sel-btn.open { border-color: rgba(255,255,255,.4); background: rgba(255,255,255,.08); }
+.sel-btn.open .sel-chev { transform: rotate(180deg); }
+.sel-btn:disabled { opacity: .5; cursor: default; }
+.sel-menu {
+  position: fixed; z-index: 1000; overflow-y: auto; padding: 6px;
+  background: linear-gradient(170deg, #1f1f1f, #121212); border: 1px solid var(--line2); border-radius: 16px;
+  box-shadow: 0 18px 50px rgba(0,0,0,.6), var(--hl); animation: sel-in .14s ease-out;
+}
+.sel-menu.up { animation-name: sel-in-up; }
+@keyframes sel-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@keyframes sel-in-up { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.sel-opt {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 12px; border-radius: 10px;
+  font-size: 12px; color: var(--soft); cursor: pointer; white-space: nowrap;
+}
+.sel-opt[data-active="true"] { background: rgba(255,255,255,.07); color: #fff; }
+.sel-opt.on { color: var(--green-fg); }
+.sel-opt.off { opacity: .4; cursor: default; }
+@media (prefers-reduced-motion: reduce) { .sel-menu { animation: none; } .sel-btn .sel-chev { transition: none; } }
+
+/* Çalışma alanı: Bugün ve Claude'un haftalık planı */
+.icon-btn.sm { width: 28px; height: 28px; flex-shrink: 0; }
+.icon-btn.done { border-color: rgba(143,211,174,.35); color: var(--green-fg); }
+.icon-btn.done:hover { background: rgba(143,211,174,.15); }
+.today { background: var(--card2); }
+.cplan { position: relative; overflow: hidden; }
+.cplan::before { content: ''; position: absolute; inset: -40% -10% auto auto; width: 320px; height: 320px; border-radius: 50%; background: radial-gradient(circle, rgba(143,211,174,.10), transparent 70%); pointer-events: none; }
+.cplan-summary { font-size: 14px; line-height: 1.65; color: #e6e6e6; margin: 2px 0 14px; max-width: 900px; }
+.cplan-focus { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin-bottom: 8px; }
+.cplan-person { display: flex; gap: 10px; align-items: flex-start; padding: 12px; border-radius: 14px; background: var(--inner); border: 1px solid var(--line); }
+.cplan-person b { display: block; font-size: 12px; font-weight: 500; margin-bottom: 3px; }
+.cplan-person span:not(.avatar) { font-size: 12px; color: var(--soft); line-height: 1.55; }
+.cplan-list { margin-top: 10px; }
+.cplan-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); }
+.cplan-item .dot { width: 8px; height: 8px; border-radius: 99px; flex-shrink: 0; }
+.cplan-item .icon-btn { width: 28px; height: 28px; flex-shrink: 0; }
+@media (max-width: 560px) {
+  .cplan-item { flex-wrap: wrap; align-items: flex-start; }
+  .cplan-item .grow { flex: 1 1 0; }
+  .cplan-item .cplan-actions { flex-basis: 100%; justify-content: flex-end; }
+}
+.cplan-actions { display: flex; gap: 8px; align-items: center; }

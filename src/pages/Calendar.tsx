@@ -7,6 +7,7 @@ import { useRows, addDays, daysBetween, monthName, today, trDate } from '../lib/
 import { demoEvents, demoPlans, demoTasks } from '../data/demo'
 import { eventColor, eventLabel, type CalEvent, type EventKind, type Plan, type Task } from '../lib/types'
 import { Modal, SampleBanner, useIsMobile } from '../components/ui'
+import Select from '../components/Select'
 
 // Takvimde gösterilen tek tip kayıt: elle eklenen etkinlikler + görev son tarihleri +
 // politika uyarısı son tarihleri + plan hedef tarihleri + sezon fırsatları
@@ -245,17 +246,17 @@ export default function Calendar() {
               </div>
               <div className="field">
                 <label htmlFor="e-kind">Tür</label>
-                <select id="e-kind" className="select" value={editing.kind} onChange={(e) => setEditing({ ...editing, kind: e.target.value as EventKind })}>
+                <Select id="e-kind" className="select" value={editing.kind} onChange={(e) => setEditing({ ...editing, kind: e.target.value as EventKind })}>
                   {(Object.keys(eventLabel) as EventKind[]).map((k) => <option key={k} value={k}>{eventLabel[k]}</option>)}
-                </select>
+                </Select>
               </div>
             </div>
             <div className="field">
               <label htmlFor="e-game">Oyun</label>
-              <select id="e-game" className="select" value={editing.game_id ?? ''} onChange={(e) => setEditing({ ...editing, game_id: e.target.value || null })}>
+              <Select id="e-game" className="select" value={editing.game_id ?? ''} onChange={(e) => setEditing({ ...editing, game_id: e.target.value || null })}>
                 <option value="">Genel</option>
                 {games.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
-              </select>
+              </Select>
             </div>
             <div className="field">
               <label htmlFor="e-note">Not</label>

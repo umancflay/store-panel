@@ -115,6 +115,8 @@ export async function notifyCritical() {
 
 // Her sabah günün özeti hazır olunca "günün özetini bildir"i açanlara kısa bildirim
 export async function notifyDaily() {
+  // 08:00 ve 18:00 işlerinin ikisi de günlük; özet bildirimi sadece sabah gitsin (UTC 05:00 ≈ İstanbul 08:00)
+  if (new Date().getUTCHours() >= 10) return console.log('Bildirim: günün özeti sadece sabah gönderilir')
   const today = new Date().toISOString().slice(0, 10)
   const [summary] = await db(`ai_insights?kind=eq.daily_summary&created_at=gte.${today}&select=content&order=created_at.desc&limit=1`)
   if (!summary?.content?.headline) return console.log('Bildirim: bugünün özeti yok')
@@ -130,5 +132,62 @@ export async function notifyDaily() {
       console.error('Özet bildirimi gönderilemedi:', err.message)
     }
   }
+  await setConnection('push', 'connected', `Günün özeti ${sent}/${subs.length} cihaza gönderildi`)
   console.log(`Bildirim: günün özeti ${sent} cihaza gönderildi`)
+}
+
+// E-posta → kullanıcı kimliği (Supabase Auth). Bulunamazsa null döner: o zaman herkese gider (iki kişilik ekip).
+async function userIdsByEmail(emails) {
+  const url = process.env.SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  try {
+    const res = await fetch(`${url}/auth/v1/admin/users?per_page=200`, {
+      headers: { apikey: key, ...(key.startsWith('eyJ') ? { Authorization: `Bearer ${key}` } : {}) },
+    })
+    if (!res.ok) return null
+    const { users = [] } = await res.json()
+    const want = new Set(emails.filter(Boolean).map((e) => e.toLowerCase()))
+    return new Set(users.filter((u) => want.has((u.email ?? '').toLowerCase())).map((u) => u.id))
+  } catch {
+    return null
+  }
+}
+
+// Belirli kişilere (e-posta) ya da emails boşsa herkese bildirim. Gönderilen cihaz sayısını döndürür.
+export async function notifyPeople(emails, message) {
+  if (!pushReady) return 0
+  let subs = await db('push_subscriptions?select=endpoint,user_id,keys')
+  if (emails?.length) {
+    const ids = await userIdsByEmail(emails)
+    if (ids?.size) subs = subs.filter((s) => ids.has(s.user_id))
+  }
+  let sent = 0
+  for (const s of subs) {
+    try {
+      const r = await sendPush(s, message)
+      if (r === 'gone') await db(`push_subscriptions?endpoint=eq.${encodeURIComponent(s.endpoint)}`, 'DELETE', null, 'return=minimal')
+      else sent++
+    } catch (err) {
+      console.error('Bildirim gönderilemedi:', err.message)
+    }
+  }
+  console.log(`Bildirim "${message.title}": ${sent}/${subs.length} cihaz`)
+  return sent
+}
+
+// Bildirim kuyruğu (notify_outbox): görev atama, yorum gibi paneldeki olaylar. Asistan işi 10 dakikada bir boşaltır.
+// Bir günden eski bildirimler gönderilmeden kapatılır (telefona bayat bildirim yağmasın).
+export async function flushOutbox() {
+  let rows
+  try {
+    rows = await db('notify_outbox?sent_at=is.null&select=id,to_email,title,body,url,created_at&order=created_at&limit=50')
+  } catch {
+    return // phase9 SQL'i çalıştırılmamış
+  }
+  for (const r of rows) {
+    if (Date.now() - Date.parse(r.created_at) < 86400000) {
+      await notifyPeople(r.to_email ? [r.to_email] : [], { title: r.title, body: r.body ?? '', url: r.url ?? './#/' })
+    }
+    await db(`notify_outbox?id=eq.${r.id}`, 'PATCH', { sent_at: new Date().toISOString() }, 'return=minimal')
+  }
 }

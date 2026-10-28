@@ -154,6 +154,22 @@ Küçük bir Unity mobil oyun stüdyosu (Voo Game Studio / Pixel Game) için tek
 - `play_breakdowns` tablosu (game_id, date, dimension, key, installs, uninstalls, active_devices);
 - `play_breakdown_summary(game, from)` fonksiyonu: boyut başına en çok kurulum yapan 30 anahtar.
 
+`phase9-team.sql` (⏳ çalıştırılacak):
+- `notify_outbox`: bildirim kuyruğu. Görev başkasına atanınca ve görevine yorum gelince tetikleyiciler yazar;
+- `work_suggestions`: Claude'un haftalık iş bölümü önerileri (kabul / geç).
+
+### Ekip ve asistan (28 Ekim 2026)
+
+- **Asistan işi** (`.github/workflows/assistant.yml` → `scripts/assistant.mjs`), 10 dakikada bir çalışır:
+  - bildirim kuyruğunu telefona gönderir;
+  - bekleyen soruları cevaplar ve sorana bildirir;
+  - panelden "Haftayı planla" istendiyse iş planını hazırlar.
+  - Claude'a iş yoksa birkaç saniyede biter, Claude kurulmaz.
+- **Haftalık iş bölümü** (`scripts/workplan.mjs`): Pazartesi `ad_plans` işinde, son plan 7 günden eskiyse günlük işte ya da istek üzerine çalışır. Sonuç `ai_insights` (kind `work_plan`) ve `work_suggestions` tablolarına yazılır. Görev ancak panelde "Kabul" denince açılır.
+- **Çalışma sayfası** sadeleşti: Bugün sırada / ortak / Claude'un haftalık planı, altta sekmeli kart (Bu hafta, Ekip akışı, Son eklenenler).
+- Tarayıcının açılır menüleri yerine `components/Select.tsx` kullanılıyor (`<Select>` + `<option>`, aynı yazım).
+- Paneldeki Claude varsayılan olarak `opus` kullanıyor (`CLAUDE_MODEL` değişkeniyle değiştirilebilir).
+
 ### Meta (Facebook/Instagram) kurulumu
 
 - **İşletme portföyü:** **Pixel Game** (business_id `415583563213815`). Business'a **Facebook profiliyle (Umut Ucar)** girilmeli. Instagram hesabıyla (voogamestudio) girilince uygulama/sistem kullanıcısı işlemleri engelleniyor.

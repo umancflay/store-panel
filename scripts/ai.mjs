@@ -237,17 +237,19 @@ export function parse(raw) {
 const validDate = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s))
 
 // light: 6 saatte bir çalışan hafif iş (sadece sorular ve yeni uyarılar)
-export async function runAi({ light = false } = {}) {
+// questionsOnly: 10 dakikada bir çalışan asistan işi (sadece bekleyen sorular). Cevaplanan soruları döndürür.
+export async function runAi({ light = false, questionsOnly = false } = {}) {
+  if (questionsOnly) light = true
   const settings = await maybe('app_settings?select=value&key=eq.assistant')
   const caps = { daily_summary: true, fix_advice: true, review_analysis: true, answer_questions: true, ...(settings[0]?.value ?? {}) }
 
   const games = await db('games?select=id,name&active=eq.true&hidden=is.false')
   const name = (id) => games.find((g) => g.id === id)?.name ?? null
 
-  const alerts = caps.fix_advice
+  const alerts = caps.fix_advice && !questionsOnly
     ? await db('alerts?status=eq.open&how_to_fix=is.null&select=id,level,source,game_id,title,body,deadline&order=created_at.desc&limit=15')
     : []
-  const questions = caps.answer_questions ? await maybe('assistant_questions?status=eq.pending&select=id,question&order=created_at&limit=10') : []
+  const questions = caps.answer_questions ? await maybe('assistant_questions?status=eq.pending&select=id,question,asked_by&order=created_at&limit=10') : []
   const reviews = caps.review_analysis && !light
     ? await db(`reviews?created_at=gte.${day(30)}&select=id,game_id,platform,rating,title,body,language,ai_category,store_reply,reply_status&order=created_at.desc&limit=80`)
     : []
@@ -262,8 +264,9 @@ export async function runAi({ light = false } = {}) {
     tasks: tasks.length > 0,
   }
   if (!Object.values(want).some(Boolean)) {
-    await setConnection('claude', 'connected', 'Yapılacak analiz yoktu')
-    return console.log('Claude: yapılacak iş yok')
+    if (!questionsOnly) await setConnection('claude', 'connected', 'Yapılacak analiz yoktu')
+    console.log('Claude: yapılacak iş yok')
+    return []
   }
 
   const ctx = {
@@ -322,8 +325,10 @@ export async function runAi({ light = false } = {}) {
   }
 
   const questionIds = ids(questions)
+  const answered = []
   for (const q of result.answers ?? []) {
     if (!questionIds.has(q.id) || !q.answer?.trim()) continue
+    answered.push({ ...questions.find((x) => x.id === q.id), answer: q.answer })
     await db(`assistant_questions?id=eq.${q.id}`, 'PATCH', { answer: cut(q.answer, 3000), status: 'answered', answered_at: now }, 'return=minimal')
     written++
   }
@@ -335,6 +340,13 @@ export async function runAi({ light = false } = {}) {
     written++
   }
 
-  await setConnection('claude', 'connected', `${written} kayıt güncellendi`)
+  await setConnection('claude', 'connected', questionsOnly ? `${answered.length} soru cevaplandı` : `${written} kayıt güncellendi`)
   console.log(`Claude: ${written} kayıt güncellendi`)
+  return answered
+}
+
+// Asistan işi için ucuz ön kontrol: Claude'u kurmaya değer mi?
+export async function hasPendingQuestions() {
+  const rows = await maybe('assistant_questions?status=eq.pending&select=id&limit=1')
+  return rows.length > 0
 }

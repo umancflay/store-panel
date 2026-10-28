@@ -1,7 +1,7 @@
 // SADECE DEMO MOD için örnek görev/not/plan verileri (Supabase bağlı değilken).
 // Gerçek modda bu dosya kullanılmaz; panel yalnızca veritabanındaki gerçek kayıtları gösterir.
 
-import type { AssistantQuestion, Automation, CalEvent, Decision, Message, Note, Person, Plan, PlanNode, Task } from '../lib/types'
+import type { AssistantQuestion, Automation, CalEvent, Decision, Message, Note, Person, Plan, PlanNode, Task, WorkPlan, WorkSuggestion } from '../lib/types'
 import { addDays, today } from '../lib/rows'
 
 const t = today()
@@ -80,3 +80,18 @@ export const demoDecisions: Decision[] = [
 ]
 
 export const demoQuestions: AssistantQuestion[] = []
+
+// Claude'un haftalık iş bölümü (demo)
+export const demoWorkPlan: WorkPlan = {
+  week_summary: 'Bu hafta öncelik Salgın: Play politika formunun son tarihi yaklaşıyor ve çökme oranı eşiğin üstünde. Taşınma Kaosu\'nda 14 cevapsız yorum var; Claude taslakları hazırladı.',
+  focus: [
+    { email: DEMO_ME, summary: 'Salgın veri güvenliği formu ve çökme düzeltmesi. Son 30 günde politika işlerini sen bitirdin.' },
+    { email: DEMO_PARTNER, summary: 'Taşınma Kaosu mağaza görselleri ve yorum cevapları; tasarım işleri onda ilerliyor.' },
+  ],
+}
+
+export const demoSuggestions: WorkSuggestion[] = [
+  { id: 1, kind: 'new_task', task_id: null, title: 'Salgın: açılış çökmesini Android 12 cihazlarda dene', game_id: 'salgin', level: 'critical', assignee: DEMO_ME, due_date: addDays(t, 2), why: 'Çökme oranı %1,2; kodu en son sen değiştirdin.', status: 'pending', created_at: ago(0) },
+  { id: 2, kind: 'new_task', task_id: null, title: 'Taşınma Kaosu: 14 yorumun cevap taslağını gözden geçir', game_id: 'tasinma-kaosu', level: 'medium', assignee: DEMO_PARTNER, due_date: addDays(t, 3), why: 'Yorum cevaplarını son iki haftada o yönetti.', status: 'pending', created_at: ago(0) },
+  { id: 3, kind: 'new_task', task_id: null, title: 'Salgın mağaza açıklamasını Portekizceye çevir', game_id: 'salgin', level: 'low', assignee: 'assistant', due_date: addDays(t, 5), why: 'Kurulumların %18\'i Brezilya\'dan; metin işi, Claude yapabilir.', status: 'pending', created_at: ago(0) },
+]

@@ -7,6 +7,7 @@ import { fileKind, fileSize, type FileKind } from '../lib/files'
 import { taskCode, type FileRow } from '../lib/types'
 import { DropZone, FileTile, useRemoveFile, useThumbs, useUpload } from '../components/Attachments'
 import { SampleBanner } from '../components/ui'
+import Select from '../components/Select'
 
 const kinds: { id: FileKind | 'all'; label: string }[] = [
   { id: 'all', label: 'Hepsi' },
@@ -75,10 +76,10 @@ export default function Files() {
               <Search size={14} />
               <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Dosya ara" aria-label="Dosya ara" />
             </label>
-            <select className="select" style={{ width: 'auto' }} value={game} onChange={(e) => setGame(e.target.value)} aria-label="Oyun">
+            <Select className="select" style={{ width: 'auto' }} value={game} onChange={(e) => setGame(e.target.value)} aria-label="Oyun">
               <option value="">Tüm oyunlar</option>
               {games.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
-            </select>
+            </Select>
           </div>
           <div className="seg" style={{ alignSelf: 'flex-start' }}>
             {kinds.map((k) => <button key={k.id} className={kind === k.id ? 'on' : ''} onClick={() => setKind(k.id)}>{k.label}</button>)}
@@ -90,14 +91,14 @@ export default function Files() {
               <div key={f.id} className="fcell">
                 <FileTile f={f} thumb={thumbs[f.path]} onDelete={() => del(f)} />
                 <div className="flex wrap" style={{ gap: 6, padding: '0 4px' }}>
-                  <select
+                  <Select
                     className="select mini"
                     value={f.folder}
                     onChange={(e) => update(f.id, { folder: e.target.value })}
                     aria-label="Klasörü değiştir"
                   >
                     {[...new Set([f.folder, ...folders, 'Genel'])].map((x) => <option key={x}>{x}</option>)}
-                  </select>
+                  </Select>
                   {f.task_id && <Link className="chip" to={`/gorevler?id=${f.task_id}`}><ListTodo size={10} /> {taskCode(f.task_id)}</Link>}
                   {f.note_id && <Link className="chip" to={`/notlar?id=${f.note_id}`}><NotebookPen size={10} /> Not</Link>}
                   {f.game_id && <span className="chip">{games.find((g) => g.id === f.game_id)?.name ?? f.game_id}</span>}

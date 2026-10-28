@@ -6,6 +6,7 @@ import { dateLong, daysUntil } from '../lib/format'
 import { GameLogo, SampleBanner, Seg, levelLabel, sourceLabel } from '../components/ui'
 import { useData } from '../lib/data'
 import Needs from '../components/Needs'
+import Select from '../components/Select'
 
 type Filter = 'open' | 'critical' | 'resolved' | 'all'
 
@@ -41,12 +42,12 @@ export default function Alerts() {
             { value: 'all', label: 'Tümü' },
           ]}
         />
-        <select className="select" value={source} onChange={(e) => setSource(e.target.value as typeof source)}>
+        <Select className="select" value={source} onChange={(e) => setSource(e.target.value as typeof source)}>
           <option value="all">Tüm kaynaklar</option>
           <option value="play">Google Play</option>
           <option value="app_store">App Store</option>
           <option value="admob">AdMob</option>
-        </select>
+        </Select>
       </div>
 
       <div className="grid">
