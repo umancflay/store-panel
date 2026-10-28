@@ -169,6 +169,8 @@ Küçük bir Unity mobil oyun stüdyosu (Voo Game Studio / Pixel Game) için tek
 - **Çalışma sayfası** sadeleşti: Bugün sırada / ortak / Claude'un haftalık planı, altta sekmeli kart (Bu hafta, Ekip akışı, Son eklenenler).
 - Tarayıcının açılır menüleri yerine `components/Select.tsx` kullanılıyor (`<Select>` + `<option>`, aynı yazım).
 - Paneldeki Claude varsayılan olarak `opus` kullanıyor (`CLAUDE_MODEL` değişkeniyle değiştirilebilir).
+- **Claude'a atanan görevler** (`scripts/assistanttasks.mjs`, Asistan işi içinde): `assignee = assistant` ve açık görevler (her seferde en çok 3). Sonuç göreve yorum (author `assistant`) olarak yazılır, görev açana geri atanır, `advice`'a tek cümle özet, etiket "Claude taslağı". Hiçbir şey yayınlanmaz.
+- **Telefon bildirimi kaydı** her açılışta tazelenir (`lib/push.ts › refreshPush`). Ayarlar › Bildirimler'de cihaz durumu ve "Test gönder" (kuyruğa yazar, 10 dk içinde gelir). 28 Ekim'de Apple bildirimi kabul ettiği hâlde kullanıcının telefonunda görünmedi; sebep kesinleşmedi (eski kayıt, Odak modu ya da izin olabilir).
 
 ### Meta (Facebook/Instagram) kurulumu
 

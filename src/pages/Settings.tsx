@@ -4,7 +4,7 @@ import { currencySymbol, platformLabel } from '../lib/format'
 import { useData, usePeople } from '../lib/data'
 import { supabase } from '../lib/supabase'
 import { useStore } from '../lib/store'
-import { enablePush, pushConfigured, pushSupported } from '../lib/push'
+import { enablePush, pushConfigured, pushState, sendTestPush } from '../lib/push'
 import { GameChip, SampleBanner, Seg, Toggle, initials } from '../components/ui'
 import { requirements } from '../data/requirements'
 import Needs from '../components/Needs'
@@ -49,9 +49,25 @@ export default function Settings() {
     if (error) toast('Kaydedilemedi: ' + error.message, 'warn')
   }
 
+  // Bu cihazın bildirim durumu; "Test gönder" kuyruğa yazar, Asistan işi 10 dakika içinde gönderir
+  const [device, setDevice] = useState<Awaited<ReturnType<typeof pushState>>>('off')
+  useEffect(() => {
+    pushState().then(setDevice)
+  }, [])
   const turnOnPush = async () => {
     const err = await enablePush()
-    toast(err ?? 'Bildirimler açıldı.', err ? 'warn' : 'ok')
+    toast(err ?? 'Bildirimler açıldı, bu cihaz kaydedildi.', err ? 'warn' : 'ok')
+    pushState().then(setDevice)
+  }
+  const testPush = async () => {
+    const err = await sendTestPush(me.email)
+    toast(err ?? 'Test bildirimi sıraya alındı, 10 dakika içinde telefonuna gelir.', err ? 'warn' : 'info')
+  }
+  const deviceText = {
+    unsupported: 'Bu tarayıcı desteklemiyor. iPhone\'da Safari › Paylaş › Ana Ekrana Ekle, sonra paneli ana ekrandaki simgeden aç.',
+    denied: 'Bu cihazda bildirim izni kapalı. iPhone: Ayarlar › Bildirimler › Voo Panel › Bildirimlere İzin Ver.',
+    off: 'Bu cihaz kayıtlı değil. "Aç"a bas ve izin ver.',
+    on: 'Bu cihaz kayıtlı ✓ Bildirim gelmiyorsa "Test gönder"e bas; yine gelmezse iPhone\'da Odak / Rahatsız Etme kapalı mı bak.',
   }
 
   // Profil adı: menüde ve ana sayfadaki karşılamada görünür
@@ -160,10 +176,13 @@ export default function Settings() {
               <div className="grow">
                 <b>Bu cihazda bildirimleri aç</b>
                 <div className="muted small">
-                  {!pushSupported ? 'Bu tarayıcı desteklemiyor (iPhone\'da önce ana ekrana ekle).' : pushConfigured ? 'Telefonuna bildirim gelir.' : 'Bildirim anahtarı (VAPID) henüz girilmemiş. README › 4. aşama.'}
+                  {pushConfigured ? deviceText[device] : 'Bildirim anahtarı (VAPID) henüz girilmemiş. README › 4. aşama.'}
                 </div>
               </div>
-              <button className="btn btn-primary" onClick={turnOnPush}>Aç</button>
+              <div className="flex" style={{ gap: 6 }}>
+                {device === 'on' && <button className="btn sm" onClick={testPush}>Test gönder</button>}
+                <button className="btn btn-primary" onClick={turnOnPush}>{device === 'on' ? 'Yenile' : 'Aç'}</button>
+              </div>
             </div>
           </section>
         </div>

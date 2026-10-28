@@ -7,6 +7,7 @@ import {
 import { useAuth } from '../lib/auth'
 import { useStore } from '../lib/store'
 import { usePeople } from '../lib/data'
+import { refreshPush } from '../lib/push'
 import { Brand, initials } from './ui'
 import { usePresenceTracker } from '../lib/presence'
 
@@ -58,6 +59,11 @@ export default function Layout() {
   const loc = useLocation()
   const menuRef = useRef<HTMLDivElement>(null)
   usePresenceTracker(me.email, loc.pathname)
+
+  // Telefon bildirim kaydını her açılışta tazele (izin verilmişse)
+  useEffect(() => {
+    refreshPush()
+  }, [])
 
   useEffect(() => {
     window.scrollTo(0, 0)
