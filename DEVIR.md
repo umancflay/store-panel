@@ -154,7 +154,7 @@ Küçük bir Unity mobil oyun stüdyosu (Voo Game Studio / Pixel Game) için tek
 - `play_breakdowns` tablosu (game_id, date, dimension, key, installs, uninstalls, active_devices);
 - `play_breakdown_summary(game, from)` fonksiyonu: boyut başına en çok kurulum yapan 30 anahtar.
 
-`phase9-team.sql` (⏳ çalıştırılacak):
+`phase9-team.sql` (✅ 28 Ekim 2026'da çalıştırıldı; Asistan #1 ile doğrulandı: soru 55 sn'de cevaplandı, bildirimler gitti, ilk haftalık plan 5 öneriyle çıktı):
 - `notify_outbox`: bildirim kuyruğu. Görev başkasına atanınca ve görevine yorum gelince tetikleyiciler yazar;
 - `work_suggestions`: Claude'un haftalık iş bölümü önerileri (kabul / geç).
 
