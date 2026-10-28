@@ -415,7 +415,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       reviews: state.reviews.filter((r) => keep(r.gameId)),
       builds: state.builds.filter((b) => keep(b.gameId)),
       recs: state.recs.filter((r) => keep(r.gameId)),
-      adPlans: state.adPlans.filter((p) => keep(p.gameId)),
+      // Claude bütçeyi USD yazar; ekranda seçili para birimine çevrilir
+      adPlans: state.adPlans.filter((p) => keep(p.gameId)).map((p) => (k === 1 ? p : { ...p, budget: { ...p.budget, daily: p.budget.daily * k } })),
     }
   }, [state, currency])
 
