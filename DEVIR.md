@@ -69,7 +69,7 @@ Küçük bir Unity mobil oyun stüdyosu (Voo Game Studio / Pixel Game) için tek
 - **Google (AdMob + Gmail):** `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`
 - **Google Play:** `GOOGLE_PLAY_SA_JSON`, `PLAY_REPORTS_BUCKET`
 - **App Store Connect:** `ASC_ISSUER_ID`, `ASC_KEY_ID`, `ASC_PRIVATE_KEY`, `ASC_VENDOR_NUMBER`
-- **Claude:** `CLAUDE_CODE_OAUTH_TOKEN` (isteğe bağlı değişken: `CLAUDE_MODEL`)
+- **Claude:** `CLAUDE_CODE_OAUTH_TOKEN` (isteğe bağlı değişken: `CLAUDE_MODEL`; girilmezse `opus`)
 - **Bildirim:** `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
 - **Meta:** `META_ACCESS_TOKEN`, `META_AD_ACCOUNT_ID` (= `1507573837908002,1367381536942213`, virgülle birden fazla hesap)
 

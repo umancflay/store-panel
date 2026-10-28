@@ -191,7 +191,7 @@ export function runClaude(prompt, schema = SCHEMA) {
     '--tools', '',
     '--no-session-persistence',
     '--append-system-prompt', SYSTEM,
-    '--model', process.env.CLAUDE_MODEL || 'sonnet',
+    '--model', process.env.CLAUDE_MODEL || 'opus', // varsayılan: en güçlü model (abonelikle, ek ücret yok)
   ]
   return new Promise((resolve, reject) => {
     // Claude'a sadece kendi token'ı geçer; Supabase, Google ve App Store anahtarları geçmez

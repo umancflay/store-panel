@@ -385,7 +385,7 @@ claude setup-token
    - **Name:** `CLAUDE_CODE_OAUTH_TOKEN`
    - **Secret:** kopyaladığın token
 
-> İsteğe bağlı: Hangi Claude modelinin kullanılacağını seçmek için aynı sayfadaki **Variables** sekmesinde `CLAUDE_MODEL` adlı bir değişken aç (ör. `sonnet` ya da `opus`). Girmezsen `sonnet` kullanılır.
+> İsteğe bağlı: Hangi Claude modelinin kullanılacağını seçmek için aynı sayfadaki **Variables** sekmesinde `CLAUDE_MODEL` adlı bir değişken aç (ör. `opus` ya da `sonnet`). Girmezsen `opus` kullanılır. Abonelik limiti dolarsa `sonnet` yazmak daha az harcar.
 
 ### Adım 5: Bildirim anahtarlarını (VAPID) üret
 
