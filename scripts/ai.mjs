@@ -45,7 +45,7 @@ async function maybe(path) {
 }
 
 // Son 14 günün oyun bazında özeti: bu hafta / geçen hafta
-async function metrics(games) {
+export async function metrics(games) {
   const admob = await all(`admob_daily?date=gte.${day(14)}&select=date,game_id,revenue,requests,matched_requests`)
   const store = await all(`store_daily?date=gte.${day(14)}&select=date,game_id,platform,downloads,iap_revenue,rating,crash_rate,anr_rate`)
   const week = (d) => (d >= day(7) ? 'now' : 'prev')
@@ -183,11 +183,11 @@ function buildPrompt(ctx, want) {
   return parts.join('\n')
 }
 
-function runClaude(prompt) {
+export function runClaude(prompt, schema = SCHEMA) {
   const args = [
     '-p',
     '--output-format', 'json',
-    '--json-schema', JSON.stringify(SCHEMA),
+    '--json-schema', JSON.stringify(schema),
     '--tools', '',
     '--no-session-persistence',
     '--append-system-prompt', SYSTEM,
@@ -223,7 +223,7 @@ function runClaude(prompt) {
   })
 }
 
-function parse(raw) {
+export function parse(raw) {
   const outer = JSON.parse(raw)
   if (outer.is_error) throw new Error(`Claude hatası: ${cut(outer.result, 300)}`)
   if (outer.structured_output && typeof outer.structured_output === 'object') return outer.structured_output

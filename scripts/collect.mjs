@@ -4,7 +4,7 @@
 // İşler:
 //   daily / manual  → tüm veriler: AdMob, Google Play, App Store, Meta reklam, Gmail + kurallar + Claude analizi + bildirim
 //   policy_check    → sürüm/inceleme durumları, yorumlar, Gmail politika mailleri, soruların cevabı + bildirim
-//   ad_plans        → reklam planları (5. aşama)
+//   ad_plans        → Meta verisi + Claude'un oyun başına reklam planı (haftalık)
 
 import { db, dbReady, setConnection } from './db.mjs'
 import { googleReady } from './google.mjs'
@@ -16,6 +16,7 @@ import { collectMeta, metaReady } from './meta.mjs'
 import { applyRules } from './rules.mjs'
 import { collectGmail } from './gmail.mjs'
 import { runAi, aiReady } from './ai.mjs'
+import { needsAdPlans, runAdPlans } from './adplans.mjs'
 import { notifyCritical, notifyDaily, pushReady } from './push.mjs'
 
 const job = process.argv[2] || 'manual'
@@ -61,8 +62,13 @@ if (job === 'daily' || job === 'manual' || light) {
   await step('Claude analizi', 'claude', aiReady, () => runAi({ light }), { soft: true })
   await step('Telefon bildirimi', 'push', pushReady, notifyCritical)
   if (job === 'daily') await step('Günün özeti bildirimi', null, pushReady, notifyDaily)
+  // Reklam planı haftada bir; ilk kurulumda ya da plan eskiyse günlük işte de hazırlanır
+  if (!light && (await needsAdPlans().catch(() => false))) await step('Reklam planı', 'claude', aiReady, runAdPlans, { soft: true })
 }
-// TODO 5. aşama: ad_plans
+if (job === 'ad_plans') {
+  await step('Meta', 'meta', metaReady, () => collectMeta({}))
+  await step('Reklam planı', 'claude', aiReady, runAdPlans, { soft: true })
+}
 
 await db(`sync_runs?id=eq.${run.id}`, 'PATCH', {
   status: errors.length ? 'failed' : 'success',

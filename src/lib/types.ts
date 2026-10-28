@@ -40,6 +40,7 @@ export interface FileRow {
   path: string
   size: number
   mime: string | null
+  parts: number // 50 MB üstü dosyalar parçalı saklanır
   folder: string
   game_id: string | null
   task_id: number | null

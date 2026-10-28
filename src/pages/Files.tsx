@@ -32,7 +32,7 @@ export default function Files() {
     .filter((f) => (!folder || f.folder === folder) && (kind === 'all' || fileKind(f) === kind) && (!game || f.game_id === game) && (!q || f.name.toLowerCase().includes(q.toLowerCase())))
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
   const target = folder ?? 'Genel'
-  const { upload, busy } = useUpload(insert, { folder: target, game_id: game || null }, `${target} klasörüne `, '/dosyalar')
+  const { upload, busy, progress } = useUpload(insert, { folder: target, game_id: game || null }, `${target} klasörüne `, '/dosyalar')
   const thumbs = useThumbs(list)
   const del = useRemoveFile(remove)
   const total = rows.reduce((a, f) => a + f.size, 0)
@@ -69,7 +69,7 @@ export default function Files() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
           <DropZone onFiles={upload} />
-          {busy > 0 && <div className="muted small">{busy} dosya yükleniyor…</div>}
+          {busy > 0 && <div className="muted small">{progress ?? `${busy} dosya yükleniyor…`}</div>}
           <div className="flex wrap" style={{ gap: 10 }}>
             <label className="search" style={{ flex: '1 1 200px' }}>
               <Search size={14} />

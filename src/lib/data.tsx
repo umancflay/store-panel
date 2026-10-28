@@ -310,7 +310,7 @@ async function loadLive(): Promise<Raw> {
   for (const p of (plansRes.data ?? []) as Row[]) {
     if (planSeen.has(p.game_id as string)) continue
     planSeen.add(p.game_id as string)
-    adPlans.push({ ...(p.content as AdPlan), gameId: p.game_id as string })
+    adPlans.push({ ...(p.content as AdPlan), gameId: p.game_id as string, createdAt: p.created_at as string })
   }
 
   return {

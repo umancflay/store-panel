@@ -431,7 +431,10 @@ export const dailySummary = {
 
 export interface AdPlan {
   gameId: string
-  audience: { age: string; interests: string[]; similarGames: string[] }
+  createdAt?: string
+  // Claude'un reklam verisinden çıkardıkları (rakamlarla)
+  learned?: string[]
+  audience: { age: string; gender?: string; interests: string[]; similarGames: string[] }
   countries: { tier: string; list: string[]; why: string }[]
   budget: { daily: number; days: number; stopRule: string; scaleRule: string }
   creatives: { type: 'Video' | 'Görsel'; idea: string }[]
