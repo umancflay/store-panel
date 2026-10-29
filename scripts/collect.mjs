@@ -14,6 +14,7 @@ import { collectPlay, playReady } from './play.mjs'
 import { collectAppStore, appStoreReady } from './appstore.mjs'
 import { collectMeta, metaReady } from './meta.mjs'
 import { applyRules } from './rules.mjs'
+import { applyGoals } from './goals.mjs'
 import { collectGmail } from './gmail.mjs'
 import { runAi, aiReady } from './ai.mjs'
 import { needsAdPlans, runAdPlans } from './adplans.mjs'
@@ -59,6 +60,8 @@ if (job === 'daily' || job === 'manual' || light) {
   await step('Meta', 'meta', metaReady, () => collectMeta({ light }))
   await step('Gmail', 'gmail', googleReady, () => collectGmail({ days: light ? 7 : 30 }))
   if (!light) await step('Uyarı kuralları', null, true, applyRules)
+  // Gelir hedefi ve ani düşüş: dünün verisi sabah işinde tamamlanmış olur
+  if (job === 'daily') await step('Gelir hedefi', null, true, applyGoals, { soft: true })
   // Claude sadece öneri yazar (özet, çözüm adımı, cevap taslağı); hiçbir şeyi uygulamaz
   await step('Claude analizi', 'claude', aiReady, () => runAi({ light }), { soft: true })
   await step('Telefon bildirimi', 'push', pushReady, notifyCritical)

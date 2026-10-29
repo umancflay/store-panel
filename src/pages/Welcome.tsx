@@ -8,6 +8,7 @@ import type { PlanNode, Task } from '../lib/types'
 import { periodRows, totals } from '../lib/metrics'
 import { int, money } from '../lib/format'
 import { SampleBanner } from '../components/ui'
+import { useGoal } from '../components/GoalCard'
 
 // Ana sayfa: büyük karşılama, günün özeti ve iki giriş düğmesi
 export default function Welcome() {
@@ -21,6 +22,7 @@ export default function Welcome() {
   const fresh = summary && summary.created_at.slice(0, 10) === today ? summary.content : null
 
   const y = totals(periodRows(daily, 1).cur)
+  const goal = useGoal()
   const criticalTasks = tasks.filter((t) => t.level === 'critical' && t.status !== 'done').length
   const criticalAlerts = alerts.filter((a) => a.level === 'critical' && a.status === 'open').length
   const critical = criticalTasks + criticalAlerts
@@ -68,10 +70,17 @@ export default function Welcome() {
           <span>Açık görev</span>
           <b>{openTasks}</b>
         </div>
-        <div>
-          <span>Plan ilerlemesi</span>
-          <b>{progress == null ? '—' : `%${progress}`}</b>
-        </div>
+        {goal.target > 0 ? (
+          <Link to="/gelir" className="welcome-goal">
+            <span>{goal.monthName} hedefi</span>
+            <b>%{Math.round(goal.ratio * 100)}</b>
+          </Link>
+        ) : (
+          <div>
+            <span>Plan ilerlemesi</span>
+            <b>{progress == null ? '—' : `%${progress}`}</b>
+          </div>
+        )}
       </div>
     </div>
   )

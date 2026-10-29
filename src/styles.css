@@ -853,3 +853,15 @@ tr.on td { background: rgba(143,211,174,.06); }
 .hub-tabs a:hover { color: #fff; }
 .hub-tabs a.on { background: #fff; color: #0a0a0a; }
 .hub-tabs .menu-badge { position: static; margin-left: 2px; }
+
+/* Aylık gelir hedefi */
+.goal-card { display: flex; flex-direction: column; gap: 14px; }
+.goal-edit { display: grid; gap: 8px; max-width: 360px; }
+.goal-bar { position: relative; height: 10px; border-radius: 999px; background: rgba(255,255,255,.06); }
+.goal-bar > i { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: linear-gradient(90deg, rgba(143,211,174,.5), var(--green)); box-shadow: 0 0 14px rgba(143,211,174,.45); transition: width .9s cubic-bezier(.2,.8,.2,1); }
+.goal-bar > b { position: absolute; top: -4px; width: 2px; height: 18px; margin-left: -1px; border-radius: 2px; background: var(--gold); box-shadow: 0 0 8px rgba(232,192,122,.6); }
+.goal-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.goal-stats span { display: block; font-size: 10px; color: var(--muted); }
+.goal-stats b { font-size: 18px; font-weight: 400; }
+@media (max-width: 640px) { .goal-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.welcome-goal { color: inherit; text-decoration: none; }
