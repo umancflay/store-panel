@@ -17,7 +17,7 @@ const PUBLISHER = 'https://androidpublisher.googleapis.com/androidpublisher/v3/a
 const b64url = (b) => Buffer.from(b).toString('base64url')
 
 let token = null
-async function saToken() {
+export async function saToken() {
   if (token) return token
   const sa = JSON.parse(process.env.GOOGLE_PLAY_SA_JSON)
   const now = Math.floor(Date.now() / 1000)
