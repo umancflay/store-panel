@@ -1,0 +1,12 @@
+{
+  "_aciklama": "Tarihli politika eşikleri. Her yeni Google duyurusunda buraya bir satır eklenir (kaynak bağlantısıyla). Kurallar bugünün tarihine göre geçerli olan son satırı kullanır.",
+  "targetSdk": [
+    { "from": "2025-08-31", "min": 35, "kaynak": "https://support.google.com/googleplay/android-developer/answer/11926878" },
+    { "from": "2026-08-31", "min": 36, "kaynak": "https://support.google.com/googleplay/android-developer/answer/11926878", "not": "2026 eşiği Google'ın resmi sayfasından doğrulanmalı" }
+  ],
+  "pageSize16k": [
+    { "from": "2025-11-01", "severity": "warn", "kaynak": "https://developer.android.com/guide/practices/page-sizes" },
+    { "from": "2026-06-01", "severity": "block", "not": "Google'ın verdiği ek süre 31 Mayıs 2026'da bitti" }
+  ],
+  "maxDownloadMb": 200
+}
