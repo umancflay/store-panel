@@ -997,6 +997,19 @@ tr.on td { background: rgba(143,211,174,.06); }
 .watch-line.bad { color: var(--orange-fg); }
 @media (prefers-reduced-motion: reduce) { .expert-hero::after, .build-card.tone-run::before { animation: none; } }
 
+/* Reklam hesapları bağlama */
+.adc-list { display: flex; flex-direction: column; gap: 10px; }
+.adc { padding: 14px; border-radius: 18px; background: rgba(255,255,255,.03); border: 1px solid var(--line2); display: flex; flex-direction: column; gap: 12px; }
+.adc.on { border-color: rgba(143,211,174,.35); background: linear-gradient(160deg, rgba(143,211,174,.07), rgba(255,255,255,.02)); }
+.adc-head { display: flex; align-items: center; gap: 12px; list-style: none; cursor: default; }
+details.adc > summary { cursor: pointer; }
+details.adc > summary::-webkit-details-marker { display: none; }
+.adc-ico { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0; background: rgba(255,255,255,.05); color: var(--muted); }
+.adc.on .adc-ico { background: rgba(143,211,174,.16); color: var(--green); }
+.adc-setup { display: flex; flex-direction: column; gap: 10px; }
+.adc-setup ol, .adc-steps { margin: 0; padding-left: 20px; font-size: 12px; line-height: 1.7; color: var(--soft); }
+.adc .btn.sm { align-self: flex-start; }
+
 /* Uzmana sor / öğret */
 .ask-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr); gap: 18px; align-items: start; }
 @media (max-width: 900px) { .ask-grid { grid-template-columns: 1fr; } }

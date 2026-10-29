@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Users, Globe2, Wallet, Clapperboard, Image, Target, Check, X, Link2, Link2Off, ShieldCheck, Sparkles, Video, Lightbulb } from 'lucide-react'
-import { adAccounts, gameById } from '../data/sample'
+import { Users, Globe2, Wallet, Clapperboard, Image, Target, Check, X, ShieldCheck, Sparkles, Video, Lightbulb } from 'lucide-react'
+import { gameById } from '../data/sample'
 import { useData } from '../lib/data'
 import Needs from '../components/Needs'
 import AdDashboard from '../components/AdDashboard'
+import AdConnect from '../components/AdConnect'
 import { money } from '../lib/format'
 import { useStore } from '../lib/store'
 import { trDateTime } from '../lib/rows'
@@ -12,7 +13,7 @@ import { GameLogo, SampleBanner } from '../components/ui'
 const fitClass = { Yüksek: 'b-ok', Orta: 'b-warning', Düşük: 'b-muted' }
 
 export default function Ads() {
-  const { adPlans, demo, connected, connections } = useData()
+  const { adPlans, demo, connected } = useData()
   // Sadece reklam planı hazırlanmış oyunlar seçilebilir
   const planGames = adPlans.map((p) => gameById(p.gameId)).filter((g): g is NonNullable<typeof g> => !!g)
   const [picked, setGameId] = useState<string | null>(null)
@@ -171,29 +172,7 @@ export default function Ads() {
         )}
       </section>
 
-      <section className="card">
-        <div className="card-head">
-          <div>
-            <div className="card-title">Reklam hesapları</div>
-            <div className="card-sub">Sadece okuma izniyle bağlanır: panel kampanya açmaz, bütçe değiştirmez. Ne gerektiği için Ayarlar sayfasına bak.</div>
-          </div>
-        </div>
-        <div className="grid g-4">
-          {adAccounts.map((a) => {
-            const on = connected[a.id] && !demo
-            return (
-              <div className="account" key={a.id}>
-                <span className="icon-box sm" style={{ width: 38, height: 38, background: 'rgba(255,255,255,.05)', boxShadow: 'none', color: on ? 'var(--green)' : 'var(--muted)' }}>{on ? <Link2 size={16} /> : <Link2Off size={16} />}</span>
-                <div style={{ minWidth: 0 }}>
-                  <b>{a.name}</b>
-                  <div className="muted small">{(!demo && connections.find((c) => c.source === a.id)?.message) || a.note}</div>
-                </div>
-                <span className={`badge ${on ? 'b-ok' : 'b-muted'}`} style={{ marginLeft: 'auto' }}>{on ? 'Bağlı' : 'Bağlı değil'}</span>
-              </div>
-            )
-          })}
-        </div>
-      </section>
+      <AdConnect />
     </div>
   )
 }
