@@ -3,7 +3,7 @@
 // Çıktı doğrulanır; uydurma sayı içeriyorsa ya da engelleyici sorunu atlıyorsa kullanılmaz (null → kural raporu gösterilir).
 
 const URL_ = process.env.OLLAMA_URL || 'http://127.0.0.1:11434'
-export const MODEL = process.env.EXPERT_MODEL || 'qwen2.5:7b-instruct'
+export const MODEL = process.env.EXPERT_MODEL || 'gemma3:12b'
 
 const SYSTEM = [
   'Sen bir mobil oyun stüdyosunun yayın uzmanısın. Kullanıcı kod bilmiyor; Türkçe, kısa ve adım adım konuş.',

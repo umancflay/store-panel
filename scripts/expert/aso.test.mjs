@@ -72,3 +72,12 @@ test('sürüm notu: model TR ve EN yazar', async () => {
   const n = await whatsNew('Yeni bölüm', { fetchImpl: fakeModel({ tr: '• Yeni bölüm eklendi!', en: '• New chapter added!' }) })
   assert.deepEqual(n, { tr: '• Yeni bölüm eklendi!', en: '• New chapter added!', ai: true })
 })
+
+test('başlık önerisi oyunun adını içermeli ve mevcut başlığı tekrar etmemeli', async () => {
+  const s = await suggest({
+    listing: { title: 'Salgın: Başhekim', shortDescription: 'Eski kısa' }, rivals: [], language: 'tr-TR',
+    fetchImpl: fakeModel({ titles: ['Salgın: Başhekim', "NV-9'u Durdurun", 'Salgın: Hastane Simülasyonu'], shorts: ['Eski kısa', 'Hastaları teşhis et, şehri kurtar'] }),
+  })
+  assert.deepEqual(s.titles, ['Salgın: Hastane Simülasyonu'])
+  assert.deepEqual(s.shorts, ['Hastaları teşhis et, şehri kurtar'])
+})

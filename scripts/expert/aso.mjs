@@ -162,8 +162,11 @@ export async function suggest({ listing, rivals, language, fetchImpl }) {
     'JSON döndür: {"titles": [3 başlık, her biri en fazla 30 karakter, oyunun adı korunur], "shorts": [3 kısa açıklama, her biri en fazla 80 karakter], "intro": "uzun açıklama için 2-3 cümlelik giriş paragrafı, en fazla 400 karakter"}',
   ].join('\n'), 'Sen mobil oyunlar için Google Play mağaza sayfası (ASO) uzmanısın. "best, #1, free, new, top" gibi iddia kelimeleri ve emoji kullanma. Oyunun adını değiştirme. Abartma, oyunda olmayan özellik uydurma.', { fetchImpl })
   if (!out) return null
-  const titles = clean(out.titles, LIMITS.title)
-  const shorts = clean(out.shorts, LIMITS.short)
+  // Başlık önerisi oyunun adını (mevcut başlığın ilk kelimesi) içermeli; mevcut metni tekrar etmemeli
+  const name = (listing?.title ?? '').split(/[:\-–|]/)[0].trim().toLocaleLowerCase('tr')
+  const same = (a, b) => a.toLocaleLowerCase('tr') === String(b ?? '').trim().toLocaleLowerCase('tr')
+  const titles = clean(out.titles, LIMITS.title).filter((t) => (!name || t.toLocaleLowerCase('tr').includes(name)) && !same(t, listing?.title))
+  const shorts = clean(out.shorts, LIMITS.short).filter((s) => !same(s, listing?.shortDescription))
   const intro = typeof out.intro === 'string' && out.intro.length <= 600 && !PROMO.test(out.intro) ? out.intro.trim() : null
   return titles.length || shorts.length || intro ? { titles, shorts, intro } : null
 }

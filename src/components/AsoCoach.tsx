@@ -109,7 +109,7 @@ export default function AsoCoach({ gameId, gameName }: { gameId: string; gameNam
             <div><span>Başlık</span><b>{r.listing.title.length}/30</b><small>{r.listing.title}</small></div>
             <div><span>Kısa açıklama</span><b>{r.listing.short.length}/80</b><small>{r.listing.short}</small></div>
             <div><span>Uzun açıklama</span><b>{r.listing.fullLength}</b><small>{med('descLength') != null ? `rakiplerde ~${med('descLength')}` : 'karakter'}</small></div>
-            <div><span><ImageIcon size={11} /> Ekran görüntüsü</span><b>{r.images.phone}</b><small>{med('screenshots') != null ? `rakiplerde ~${med('screenshots')}` : 'telefon'}</small></div>
+            <div><span><ImageIcon size={11} /> Ekran görüntüsü</span><b>{r.images.phone}</b><small>{med('screenshots') != null ? `rakiplerde ~${med('screenshots')} (tüm cihazlar)` : 'telefon'}</small></div>
             <div><span><Film size={11} /> Video</span><b>{r.listing.video ? 'Var' : 'Yok'}</b><small>{r.rivals?.length ? `${r.rivals.filter((x) => x.video).length}/${r.rivals.length} rakipte var` : ''}</small></div>
             <div><span>Diller</span><b>{r.languages?.length ?? 0}</b><small>{r.languages?.join(', ')}</small></div>
           </div>

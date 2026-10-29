@@ -164,7 +164,7 @@ Küçük bir Unity mobil oyun stüdyosu (Voo Game Studio / Pixel Game) için tek
 
 - Tasarım: `docs/superpowers/specs/2026-10-29-yayin-uzmani-design.md`, plan: `docs/superpowers/plans/2026-10-29-yayin-uzmani-faz1.md`.
 - Kod: `scripts/expert.mjs` (giriş), `scripts/expert/` (bundle, rules, report, llm, publish, pipeline), `uzman/` (kurallar, eşikler, SDK izleri), `.github/workflows/expert.yml`, panel `/yayin` (`pages/Expert.tsx`, `components/BuildCard.tsx`). Testler: `npm test` (37 test).
-- Claude kullanmaz; model Ollama + `qwen2.5:7b-instruct`, çıktı doğrulanır, geçmezse kural raporu gösterilir.
+- Claude kullanmaz; model Ollama + `gemma3:12b` (29 Ekim'de Qwen 7B'den geçildi: Türkçesi bozuktu), çıktı doğrulanır, geçmezse kural raporu gösterilir.
 - Akış: uploaded → inspecting → blocked | ready → internal (Play dahili test, onaysız) → awaiting_approval → (panelde Onayla) → live (%10). Yayındayken %50 / herkese aç / durdur düğmeleri.
 - ✅ 29 Ekim 2026: `phase11-expert.sql` çalıştırıldı, `trigger-update` Edge Function ilk kez kuruldu (panelden anında başlatma çalışıyor). İlk gerçek AAB (RengiYakala, yanlışlıkla Salgın seçilmiş) uçtan uca işlendi: yanlış paket ve test reklam kimliği yakalandı, Play'e gitmedi.
 - ⏳ `targetSdk` 2026 eşiği (36) resmi sayfadan doğrulanmalı. Fonksiyonun "Verify JWT with legacy secret" ayarı açık; çalışıyor, dokunulmadı.
