@@ -1,0 +1,64 @@
+# Yayın Uzmanı: panele bırakılan build'i inceler, raporlar, dahili teste yükler; onaylanan yayın eylemlerini uygular.
+# Claude kullanmaz: kurallar + stüdyonun kendi açık kaynak modeli (Ollama). Public repo olduğu için ücretsiz.
+# Panel olay anında başlatır (Supabase Edge Function); zamanlama sadece yedek.
+name: Yayın Uzmanı
+
+on:
+  schedule:
+    - cron: '5-59/15 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: expert
+  cancel-in-progress: false
+
+jobs:
+  expert:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      GOOGLE_PLAY_SA_JSON: ${{ secrets.GOOGLE_PLAY_SA_JSON }}
+      VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+      VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+      VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
+      EXPERT_MODEL: ${{ vars.EXPERT_MODEL || 'qwen2.5:7b-instruct' }}
+      BUNDLETOOL: ${{ github.workspace }}/.tools/bundletool.jar
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Yapılacak iş var mı?
+        id: check
+        run: node scripts/expert.mjs check
+
+      - name: Araçları hazırla (bundletool, aapt2)
+        if: steps.check.outputs.has == 'true'
+        run: |
+          mkdir -p .tools
+          curl -sSL -o .tools/bundletool.jar https://github.com/google/bundletool/releases/download/1.17.2/bundletool-all-1.17.2.jar
+          AAPT2=$(ls -d "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          echo "AAPT2=$AAPT2" >> "$GITHUB_ENV"
+          java -version
+
+      - name: Model önbelleği
+        if: steps.check.outputs.has == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.ollama/models
+          key: ollama-${{ env.EXPERT_MODEL }}
+
+      - name: Kendi modelini başlat (Ollama)
+        if: steps.check.outputs.has == 'true'
+        continue-on-error: true   # model açılamazsa kural raporu yine yazılır
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+          (ollama serve > /tmp/ollama.log 2>&1 &)
+          for i in $(seq 1 30); do curl -s http://127.0.0.1:11434/api/tags > /dev/null && break; sleep 1; done
+          ollama pull "$EXPERT_MODEL"
+
+      - name: Yayın Uzmanı
+        if: steps.check.outputs.has == 'true'
+        run: node scripts/expert.mjs
