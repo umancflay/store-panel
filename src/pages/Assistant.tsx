@@ -44,12 +44,13 @@ export default function Assistant() {
   const pending = recs.filter((r) => r.status === 'pending')
   const claude = !!connected.claude
 
-  // Yeni soru eklenince sohbetin sonuna kaydır (sayfa ilk açılışta zıplamasın)
-  const count = useRef(qs.rows.length)
+  // Yeni soru eklenince sohbetin sonuna kaydır. İlk yükleme sayılmaz: eski sorular gelince sayfa aşağı kaymasın.
+  const count = useRef<number | null>(null)
   useEffect(() => {
-    if (qs.rows.length > count.current) end.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    if (qs.loading) return
+    if (count.current !== null && qs.rows.length > count.current) end.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
     count.current = qs.rows.length
-  }, [qs.rows.length])
+  }, [qs.rows.length, qs.loading])
 
   async function ask(q: string) {
     if (!q.trim()) return
