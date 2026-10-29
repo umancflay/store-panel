@@ -5,6 +5,7 @@ import { useData } from '../lib/data'
 import Needs from '../components/Needs'
 import AdDashboard from '../components/AdDashboard'
 import AdConnect from '../components/AdConnect'
+import AdTrends from '../components/AdTrends'
 import { money } from '../lib/format'
 import { useStore } from '../lib/store'
 import { trDateTime } from '../lib/rows'
@@ -30,18 +31,20 @@ export default function Ads() {
       <div className="page-head">
         <span className="eyebrow">Reklam</span>
         <h1>Reklam panosu</h1>
-        <p>Harcama, sonuçlar ve reklamına tepki veren kitle. Claude bu veriden oyun başına plan çıkarır; para harcayan her adım senin “Onayla” demeni bekler.</p>
+        <p>Platform seç, sonra oyun. Para harcayan her adım senin onayını bekler.</p>
       </div>
 
       <AdDashboard />
+
+      <AdTrends />
 
       <section className="card plan-hero">
         <div className="card-head">
           <div>
             <div className="card-title flex" style={{ gap: 8 }}><Sparkles size={16} color="var(--green)" /> Claude'un reklam planı</div>
             <div className="card-sub">
-              Reklam verilerine, AdMob'un ülke gelirine ve mağaza rakamlarına bakarak hazırlanır · haftada bir güncellenir
-              {plan?.createdAt && <> · son: {trDateTime(plan.createdAt)}</>}
+              Haftalık · reklam, AdMob ve mağaza verisinden
+              {plan?.createdAt && <> · {trDateTime(plan.createdAt)}</>}
             </div>
           </div>
         </div>
@@ -140,7 +143,7 @@ export default function Ads() {
         <div className="card-head">
           <div>
             <div className="card-title flex"><ShieldCheck size={18} color="var(--green)" /> Onayını bekleyen öneriler</div>
-            <div className="card-sub">Para harcayan ya da ayar değiştiren hiçbir şey sen onaylamadan uygulanmaz.</div>
+            <div className="card-sub">Sen onaylamadan hiçbiri uygulanmaz</div>
           </div>
           {pending.length > 0 && <span className="badge b-warning">{pending.length} bekliyor</span>}
         </div>

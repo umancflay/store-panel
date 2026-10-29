@@ -1,6 +1,7 @@
-# Asistan: panelde sorulan soruları 10 dakikada bir cevaplar ve soranın telefonuna bildirir.
+# Asistan: panelde sorulan soruları cevaplar ve soranın telefonuna bildirir. Soru sorulunca panel bu işi hemen başlatır
+# (Supabase "trigger-update"); 10 dakikalık zamanlama sadece yedek. Sohbet hızlı model ile cevaplanır (CLAUDE_FAST_MODEL).
 # Bekleyen soru yoksa birkaç saniyede biter, Claude kurulmaz. Public repo olduğu için Actions dakikası ücretsiz.
-# Not: GitHub zamanlanmış işleri yoğunlukta birkaç dakika geciktirebilir.
+# Reklam trendleri (internette araştırma, uzun sürer) ayrı işte paralel çalışır; sohbeti bekletmez.
 name: Asistan
 
 on:
@@ -8,24 +9,28 @@ on:
     - cron: '7-59/10 * * * *'   # 10 dakikada bir (:07, :17 …); tam dakikalar GitHub'da yoğun, atlanabiliyor
   workflow_dispatch:
 
-concurrency:
-  group: assistant
-  cancel-in-progress: false
+env:
+  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+  CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+  CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL }}
+  CLAUDE_FAST_MODEL: ${{ vars.CLAUDE_FAST_MODEL }}
 
 jobs:
   answer:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    concurrency:
+      group: assistant
+      cancel-in-progress: false
     env:
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-      CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL }}
       VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
       VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
       VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -34,7 +39,30 @@ jobs:
         run: node scripts/assistant.mjs check
       - name: Claude Code'u kur
         if: steps.check.outputs.has == 'true'
-        run: npm install -g @anthropic-ai/claude-code
+        run: npm install -g --no-audit --no-fund @anthropic-ai/claude-code
       - name: Soruları cevapla
         if: steps.check.outputs.has == 'true'
         run: node scripts/assistant.mjs
+
+  trends:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    concurrency:
+      group: adtrends
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Reklam trendleri gerekli mi?
+        id: check
+        run: node scripts/assistant.mjs trends-check
+      - name: Claude Code'u kur
+        if: steps.check.outputs.has == 'true'
+        run: npm install -g --no-audit --no-fund @anthropic-ai/claude-code
+      - name: Trendleri araştır
+        if: steps.check.outputs.has == 'true'
+        run: node scripts/assistant.mjs trends

@@ -38,6 +38,51 @@ const sevIcon = { block: <AlertOctagon size={15} />, warn: <AlertTriangle size={
 const sevLabel = { block: 'Engelleyici', warn: 'Uyarı', info: 'Bilgi' }
 const tone = (s: BuildStatus) => (s === 'blocked' || s === 'failed' ? 'bad' : s === 'live' || s === 'ready' || s === 'internal' ? 'ok' : s === 'awaiting_approval' ? 'wait' : 'run')
 
+// Mağaza incelemesi tahmini: Google / Apple inceleyicisinin bakacağı üç şey tek bakışta.
+// Kurallar (teknik ret sebepleri), cihazda deneme (çökme = kesin ret) ve sonuçtaki karar.
+function StoreVerdict({ b }: { b: StoreBuild }) {
+  const r = b.report!
+  const ios = b.platform === 'ios'
+  const store = ios ? 'App Store' : 'Google Play'
+  const blocks = r.findings.filter((f) => f.severity === 'block')
+  const warns = r.findings.filter((f) => f.severity === 'warn')
+  const d = r.device
+  const crashed = d?.outcome === 'FAILURE'
+  const tested = d?.outcome === 'SUCCESS'
+  const tiles: { tone: 'ok' | 'warn' | 'bad'; title: string; text: string }[] = [
+    blocks.length
+      ? { tone: 'bad', title: `Teknik kontrol: ${blocks.length} ret sebebi`, text: blocks.slice(0, 2).map((f) => f.title).join(' · ') }
+      : warns.length
+        ? { tone: 'warn', title: `Teknik kontrol: ${warns.length} risk`, text: warns.slice(0, 2).map((f) => f.title).join(' · ') }
+        : { tone: 'ok', title: 'Teknik kontrol temiz', text: `${store} kurallarının hepsi geçti` },
+  ]
+  if (!ios) {
+    tiles.push(crashed
+      ? { tone: 'bad', title: 'Cihazda çöktü', text: 'İnceleyici açtığında çökerse kesin ret' }
+      : tested
+        ? { tone: 'ok', title: 'Cihazda sorunsuz', text: d?.name ?? 'Sanal telefonda açıldı ve oynandı' }
+        : { tone: 'warn', title: 'Cihazda denenmedi', text: 'Aşağıdan hızlı cihaz testi başlat' })
+  }
+  const bad = blocks.length > 0 || crashed
+  const risky = !bad && (warns.length > 0 || (!ios && !tested))
+  tiles.push(bad
+    ? { tone: 'bad', title: `${store}: büyük ihtimalle reddedilir`, text: 'Kırmızı maddeleri düzeltip yeni build yükle' }
+    : risky
+      ? { tone: 'warn', title: `${store}: onaylanabilir, risk var`, text: 'Sarı maddelere göz at' }
+      : { tone: 'ok', title: `${store}: onaylanmaya hazır`, text: 'Bilinen bir ret sebebi yok' })
+  const icon = { ok: <CheckCircle2 size={18} color="var(--green)" />, warn: <AlertTriangle size={18} color="#E8C07A" />, bad: <XCircle size={18} color="var(--orange)" /> }
+  return (
+    <div className="verdicts" aria-label="Mağaza incelemesi tahmini">
+      {tiles.map((t) => (
+        <div key={t.title} className={`verdict ${t.tone}`}>
+          {icon[t.tone]}
+          <div><b>{t.title}</b><span>{t.text}</span></div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function FindingRow({ f }: { f: Finding }) {
   const [open, setOpen] = useState(f.severity === 'block')
   return (
@@ -205,6 +250,8 @@ export default function BuildCard({
           })()}
         </div>
       )}
+
+      {r && <StoreVerdict b={b} />}
 
       {r && (
         <div className={`build-body${ios ? ' one' : ''}`}>

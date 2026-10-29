@@ -57,10 +57,8 @@ export const navGroups: { title: string; items: NavItem[] }[] = [
         to: '/oyunlar', label: 'Oyunlar', hint: 'Mağazalar ve yorumlar', icon: Gamepad2,
         tabs: [tab('/oyunlar', 'Oyunlar', 'Mağazalar', Gamepad2), tab('/yorumlar', 'Yorumlar', 'Oyuncular', MessageSquareText)],
       },
-      {
-        to: '/gelir', label: 'Gelir', hint: 'AdMob, satış, reklam', icon: Wallet,
-        tabs: [tab('/gelir', 'Gelir', 'AdMob ve satış', Wallet), tab('/reklamlar', 'Reklam', 'Kampanyalar', Megaphone)],
-      },
+      { to: '/gelir', label: 'Gelir', hint: 'AdMob ve satış', icon: Wallet },
+      { to: '/reklamlar', label: 'Reklam', hint: 'Kampanyalar ve trendler', icon: Megaphone },
       { to: '/yayin', label: 'Yayın Uzmanı', hint: 'Build, test, yayın', icon: Rocket },
       { to: '/ayarlar', label: 'Ayarlar', hint: 'Profil ve bağlantılar', icon: Settings },
     ],
@@ -70,7 +68,7 @@ export const navGroups: { title: string; items: NavItem[] }[] = [
 export const allPages: Page[] = navGroups.flatMap((g) => g.items.flatMap((i) => i.tabs ?? [i]))
 const links = navGroups.flatMap((g) => g.items)
 const pathsOf = (n: NavItem) => (n.tabs ?? [n]).map((t) => t.to)
-const mobileMain = ['/', '/calisma', '/gelir', '/yayin']
+const mobileMain = ['/', '/gelir', '/reklamlar', '/yayin']
 
 export default function Layout() {
   const { signOut } = useAuth()

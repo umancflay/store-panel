@@ -9,9 +9,24 @@ import { aiReady, hasPendingQuestions, runAi } from './ai.mjs'
 import { flushOutbox, notifyPeople } from './push.mjs'
 import { runWorkPlan, workPlanRequested } from './workplan.mjs'
 import { hasAssistantTasks, runAssistantTasks } from './assistanttasks.mjs'
+import { markTrendsStarted, runAdTrends, trendsDue } from './adtrends.mjs'
 
 if (!dbReady) {
   console.log('SUPABASE_URL veya SUPABASE_SERVICE_ROLE_KEY tanımlı değil; iş atlandı.')
+  process.exit(0)
+}
+
+// Reklam trendleri ayrı adımda (ayrı iş) çalışır: uzun sürer, sohbet cevaplarını bekletmesin
+if (process.argv[2] === 'trends-check') {
+  const due = aiReady && (await trendsDue())
+  if (due) await markTrendsStarted()
+  if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `has=${due}
+`)
+  console.log(due ? 'Reklam trendleri araştırılacak' : 'Reklam trendleri güncel')
+  process.exit(0)
+}
+if (process.argv[2] === 'trends') {
+  await runAdTrends()
   process.exit(0)
 }
 

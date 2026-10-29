@@ -1027,3 +1027,32 @@ details.adc > summary::-webkit-details-marker { display: none; }
 .lesson-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
 .lesson { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,.03); border: 1px solid var(--line); font-size: 12px; line-height: 1.5; }
 .lesson .plat { margin-top: 1px; flex-shrink: 0; }
+
+/* Reklam: platform sekmeleri ve oyun çipleri */
+.ad-tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.ad-tab { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 8px; align-items: center; text-align: left; padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.03); color: #fff; font: 500 12px var(--font); cursor: pointer; transition: background .18s, border-color .18s, transform .18s; }
+.ad-tab:hover { background: rgba(255,255,255,.06); transform: translateY(-1px); }
+.ad-tab.on { border-color: rgba(143,211,174,.55); background: rgba(143,211,174,.08); }
+.ad-dot { width: 9px; height: 9px; border-radius: 50%; grid-row: 1 / span 2; }
+.ad-tab-name { font-weight: 600; }
+.ad-tab-val { grid-column: 2; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.chip-btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px 5px 6px; border-radius: 999px; border: 1px solid rgba(255,255,255,.08); background: transparent; color: var(--muted); font: 500 11px var(--font); cursor: pointer; transition: background .18s, color .18s; }
+.chip-btn:first-child { padding-left: 12px; }
+.chip-btn:hover { color: #fff; }
+.chip-btn.on { background: #fff; color: #0a0a0a; border-color: #fff; }
+
+/* Reklam trendleri */
+.trend-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.trend { display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: 14px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); }
+.trend b { font-size: 13px; }
+.trend p { margin: 0; font-size: 12px; line-height: 1.55; color: #cfcfcf; }
+.trend .trend-why { color: var(--muted); font-size: 11px; }
+
+/* Yayın Uzmanı: mağaza kararı */
+.verdicts { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+.verdict { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.03); }
+.verdict.ok { border-color: rgba(143,211,174,.4); }
+.verdict.bad { border-color: rgba(217,89,38,.5); background: rgba(217,89,38,.06); }
+.verdict.warn { border-color: rgba(232,192,122,.45); }
+.verdict b { display: block; font-size: 13px; }
+.verdict span { font-size: 11px; color: var(--muted); line-height: 1.5; }

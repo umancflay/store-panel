@@ -5,9 +5,10 @@ import { useData } from '../lib/data'
 import { supabase, isDemo } from '../lib/supabase'
 import { countryName, currencySymbol, dayLabel, int, localIso, money2, pct, short } from '../lib/format'
 import { BarList, GameLogo } from './ui'
+import { gameById } from '../data/sample'
 import Select from './Select'
 
-// Reklam panosu: Meta (ve ileride TikTok) kampanyalarının harcaması, sonuçları ve hedef kitlesi.
+// Reklam panosu: platform sekmeleri (Google Ads, Meta …) ve altında oyun seçimi; harcama, sonuçlar ve hedef kitle.
 // Veriler USD saklanır; ekranda seçili para birimine çevrilir. Kırılımlar (yaş, platform, ülke) son 30 gündür.
 
 interface CampaignDay {
@@ -53,7 +54,8 @@ const statusText: Record<string, [string, string]> = {
   ARCHIVED: ['Arşivde', 'b-muted'],
   DELETED: ['Silindi', 'b-muted'],
 }
-const platformName: Record<string, string> = { meta: 'Meta', tiktok: 'TikTok', google_ads: 'Google Ads', apple_ads: 'Apple Ads' }
+export const platformName: Record<string, string> = { meta: 'Meta', tiktok: 'TikTok', google_ads: 'Google Ads', apple_ads: 'Apple Ads', unity_ads: 'Unity Ads' }
+const platformColor: Record<string, string> = { meta: '#3987e5', google_ads: '#E8C07A', tiktok: '#d95926', apple_ads: '#c8c8c8', unity_ads: '#8FD3AE' }
 const placementName: Record<string, string> = {
   feed: 'Akış', instagram_stories: 'Hikâyeler', instagram_reels: 'Reels', instagram_explore: 'Keşfet', instagram_explore_grid_home: 'Keşfet',
   instagram_profile_feed: 'Profil akışı', facebook_reels: 'Reels', facebook_stories: 'Hikâyeler', marketplace: 'Marketplace',
@@ -106,26 +108,38 @@ export default function AdDashboard() {
   const { rows, breakdowns, loading } = useAdData()
   const [days, setDays] = useState(30)
   const [pick, setPick] = useState('all')
+  const [plat, setPlat] = useState('all')
+  const [game, setGame] = useState('all')
 
   const dates = Object.keys(fx).sort()
   const latest = dates.length ? fx[dates[dates.length - 1]] : 1
   const rate = (d?: string) => (currency === 'TRY' ? (d && fx[d]) || latest : 1)
 
+  // Platform sekmesi ve oyun seçimi: önce platform, sonra o platformdaki oyun
+  const platforms = useMemo(() => [...new Set(rows.map((r) => r.platform))].sort(), [rows])
+  const inPlat = rows.filter((r) => plat === 'all' || r.platform === plat)
+  const gamesHere = [...new Set(inPlat.map((r) => r.game_id).filter((g): g is string => !!g))]
+  const base = inPlat.filter((r) => game === 'all' || r.game_id === game)
+  const baseIds = new Set(base.map((r) => r.external_id))
+  const spendOf = (list: CampaignDay[]) => list.filter((r) => r.date >= daysAgo(days - 1)).reduce((a, r) => a + Number(r.spend) * rate(r.date), 0)
+  const choosePlat = (p: string) => { setPlat(p); setGame('all'); setPick('all') }
+  const chooseGame = (g: string) => { setGame(g); setPick('all') }
+
   const campaignsAll = useMemo(() => {
     const m = new Map<string, CampaignDay>()
-    for (const r of rows) {
+    for (const r of base) {
       const k = `${r.platform}:${r.external_id}`
       const a = m.get(k)
       if (!a || r.date > a.date) m.set(k, r)
     }
     return [...m.values()]
-  }, [rows])
+  }, [base]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const inPick = (r: { external_id?: string; campaign_id?: string }) => pick === 'all' || (r.external_id ?? r.campaign_id) === pick
   const start = daysAgo(days - 1)
   const prevStart = daysAgo(days * 2 - 1)
-  const cur = rows.filter((r) => r.date >= start && inPick(r))
-  const prev = rows.filter((r) => r.date >= prevStart && r.date < start && inPick(r))
+  const cur = base.filter((r) => r.date >= start && inPick(r))
+  const prev = base.filter((r) => r.date >= prevStart && r.date < start && inPick(r))
 
   const sum = (list: CampaignDay[]) =>
     list.reduce(
@@ -154,7 +168,7 @@ export default function AdDashboard() {
   }, [cur, days]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Kırılımlar (son 30 gün)
-  const bd = breakdowns.filter(inPick)
+  const bd = breakdowns.filter((b) => baseIds.has(b.campaign_id) && inPick(b))
   const ageMap = new Map<string, { age: string; Erkek: number; Kadın: number; spend: number }>()
   for (const b of bd.filter((b) => b.dimension === 'age_gender')) {
     const [age, gender] = b.key.split('|')
@@ -236,6 +250,24 @@ export default function AdDashboard() {
 
   return (
     <>
+      <div className="ad-tabs" role="tablist" aria-label="Reklam platformu">
+        {['all', ...platforms].map((pl) => (
+          <button key={pl} type="button" role="tab" aria-selected={plat === pl} className={`ad-tab ${plat === pl ? 'on' : ''}`} onClick={() => choosePlat(pl)}>
+            <span className="ad-dot" style={{ background: pl === 'all' ? 'var(--green)' : platformColor[pl] ?? '#888' }} />
+            <span className="ad-tab-name">{pl === 'all' ? 'Tüm platformlar' : platformName[pl] ?? pl}</span>
+            <span className="ad-tab-val">{money2(spendOf(pl === 'all' ? rows : rows.filter((r) => r.platform === pl)))}</span>
+          </button>
+        ))}
+      </div>
+      {gamesHere.length > 0 && (
+        <div className="flex wrap" style={{ gap: 6 }}>
+          <button type="button" className={`chip-btn ${game === 'all' ? 'on' : ''}`} onClick={() => chooseGame('all')}>Tüm oyunlar</button>
+          {gamesHere.map((g) => (
+            <button key={g} type="button" className={`chip-btn ${game === g ? 'on' : ''}`} onClick={() => chooseGame(g)}><GameLogo id={g} size={18} /> {gameById(g)?.name ?? g}</button>
+          ))}
+        </div>
+      )}
+
       <div className="flex wrap between" style={{ gap: 10 }}>
         <div className="seg">
           {[7, 30].map((d) => <button key={d} className={days === d ? 'on' : ''} onClick={() => setDays(d)}>Son {d} gün</button>)}
@@ -274,7 +306,7 @@ export default function AdDashboard() {
         </div>
         <div className="card">
           <div className="card-title flex" style={{ gap: 8 }}><TrendingUp size={16} /> Günlük {resultLabel.toLowerCase()}</div>
-          <div className="card-sub">Son {days} gün · Meta'nın saydığı sonuçlar</div>
+          <div className="card-sub">Son {days} gün · platformun saydığı sonuçlar</div>
           <div style={{ height: 220, marginTop: 10 }}>
             <ResponsiveContainer>
               <BarChart data={daily} margin={{ left: -18, right: 4, top: 6 }} barCategoryGap={2}>
@@ -289,16 +321,14 @@ export default function AdDashboard() {
         </div>
       </section>
 
-      <section className="card">
+      {ages.length > 0 && <section className="card">
         <div className="card-head">
           <div>
             <div className="card-title flex" style={{ gap: 8 }}><Users size={16} /> Hedef kitle: reklamına kim tepki veriyor?</div>
             <div className="card-sub">Son 30 gün · yaş ve cinsiyete göre {metricName}</div>
           </div>
         </div>
-        {ages.length === 0 ? (
-          <div className="empty" style={{ padding: 18 }}>Kırılım verisi bir sonraki günlük toplamada gelecek.</div>
-        ) : (
+        {(
           <div className="audience">
             <div style={{ height: 240 }}>
               <ResponsiveContainer>
@@ -332,13 +362,12 @@ export default function AdDashboard() {
                   <span>Kadın {pct(agTotal ? 100 - (male / agTotal) * 100 : 0, 0)} <span className="dot" style={{ background: FEMALE }} /></span>
                 </div>
               </div>
-              <p className="muted small" style={{ lineHeight: 1.6 }}>Claude bu dağılıma bakarak aşağıdaki oyun planlarında kitleyi daraltır. Hedeflemeyi değiştirmek senin onayınla, Reklam Yöneticisi'nden yapılır.</p>
             </div>
           </div>
         )}
-      </section>
+      </section>}
 
-      <section className="grid g-2" style={{ alignItems: 'start' }}>
+      {(placements.length > 0 || countries.length > 0) && <section className="grid g-2" style={{ alignItems: 'start' }}>
         <div className="card">
           <div className="card-title flex" style={{ gap: 8 }}><MonitorSmartphone size={16} /> Nerede gösterildi?</div>
           <div className="card-sub" style={{ marginBottom: 12 }}>Platform ve yerleşime göre {metricName} · son 30 gün</div>
@@ -349,11 +378,11 @@ export default function AdDashboard() {
           <div className="card-sub" style={{ marginBottom: 12 }}>Ülkeye göre {metricName} · son 30 gün</div>
           <BarList items={countries} fmt={int} />
         </div>
-      </section>
+      </section>}
 
       <section className="card">
         <div className="card-title">Kampanyalar</div>
-        <div className="card-sub" style={{ marginBottom: 10 }}>Son {days} gün · her gün 08:00 ve 18:00'de, 6 saatte bir de son 3 gün güncellenir</div>
+        <div className="card-sub" style={{ marginBottom: 10 }}>Son {days} gün · satıra tıkla, pano o kampanyaya süzülsün</div>
         <div className="table-wrap">
           <table>
             <thead><tr><th>Kampanya</th><th>Platform</th><th className="num">Harcama</th><th className="num">Sonuç</th><th className="num">Sonuç başı</th><th className="num">Tıklama</th><th className="num">TO</th><th className="num">Gösterim</th><th>Durum</th></tr></thead>
@@ -378,7 +407,6 @@ export default function AdDashboard() {
             </tbody>
           </table>
         </div>
-        <p className="muted small" style={{ marginTop: 10, lineHeight: 1.6 }}>Bir satıra tıklarsan bütün pano o kampanyaya göre süzülür. Kurulum sayısı için oyunda Meta SDK'sı gerekir.</p>
       </section>
     </>
   )

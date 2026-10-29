@@ -12,11 +12,24 @@ import { SampleBanner, Toggle, useIsMobile } from '../components/ui'
 import Needs from '../components/Needs'
 import { triggerWorkflow } from '../lib/trigger'
 
+// Bekleyen sorunun yanında geçen süre: sayfa donmuş gibi görünmesin
+function Waiting({ since }: { since: string }) {
+  const [now, setNow] = useState(Date.now())
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(t)
+  }, [])
+  const s = Math.max(0, Math.round((now - Date.parse(since)) / 1000))
+  const step = s < 25 ? 'Soru alındı, asistan başlatılıyor' : s < 60 ? 'Verilere bakıyor' : 'Cevabı yazıyor'
+  return <>{step}… <span style={{ fontVariantNumeric: 'tabular-nums' }}>{Math.floor(s / 60)}:{String(s % 60).padStart(2, '0')}</span></>
+}
+
 const prompts = [
   'Bu hafta en çok gelir getiren oyun hangisi?',
   'Hangi oyunun çökme oranı yükseldi?',
   'Kötü yorumlarda en sık şikayet ne?',
-  'Hangi ülkede eCPM düştü?',
+  'Hangi reklamım en verimli, bütçeyi nereye kaydırayım?',
+  'Bu hafta TikTok için hangi reklamı çekeyim?',
   'Bir sonraki güncellemede neye odaklanmalıyım?',
 ]
 
@@ -74,7 +87,7 @@ export default function Assistant() {
             <div className="orb"><span /><span /><span /></div>
             <h1 style={{ fontSize: 30, fontWeight: 300, letterSpacing: -1 }}>Ne sormak istersin?</h1>
             <p className="muted small" style={{ maxWidth: 460, margin: '0 auto', lineHeight: 1.6 }}>
-              Gelir, yorumlar, çökmeler ve politika uyarıları hakkında sor. {claude ? 'Sorular her 6 saatte bir cevaplanır; beklemek istemezsen üst çubuktaki güncelle düğmesine bas.' : 'Claude bağlanınca (4. aşama) sorularını sırayla cevaplar.'}
+              Gelir, yorumlar, çökmeler ve politika uyarıları hakkında sor. {claude ? 'Reklam, gelir, yorum, yayın: hepsinin verisini bilir. Cevap genelde 1-2 dakikada gelir.' : 'Claude bağlanınca sorularını cevaplar.'}
             </p>
           </div>
 
@@ -96,7 +109,7 @@ export default function Assistant() {
                   ) : q.status === 'failed' ? (
                     <span style={{ color: 'var(--orange)' }}>Cevaplanamadı. {q.answer ?? ''}</span>
                   ) : (
-                    <span className="flex muted" style={{ gap: 8 }}><Clock size={13} /> {claude ? 'Cevap hazırlanıyor… genelde 10-15 dakika içinde gelir, gelince telefonuna bildirim düşer.' : 'Sırada — Claude bağlanınca cevaplanacak'}</span>
+                    <span className="flex muted" style={{ gap: 8 }}><Clock size={13} /> {claude ? <Waiting since={q.created_at} /> : 'Sırada — Claude bağlanınca cevaplanacak'}</span>
                   )}
                 </div>
               </div>

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, Bot, Flag, PenLine, Rocket, Store } from 'lucide-react'
+import { ArrowRight, Bot, Flag, Flame, Megaphone, Rocket, Store } from 'lucide-react'
 import { useData, usePeople } from '../lib/data'
 import { useStore } from '../lib/store'
 import { useRows, useInsight } from '../lib/rows'
@@ -43,8 +43,8 @@ export default function Welcome() {
         </h1>
         <p className="welcome-sub">
           {fresh ? `${fresh.headline} ${fresh.focus ? `Bugün ilk iş: ${fresh.focus}` : ''}` : critical > 0
-            ? `Bugün ${critical} kritik iş seni bekliyor. Önce onlara bakmanı öneririm; geri kalan her şey yolunda görünüyor.`
-            : 'Bugün kritik bir iş yok. Panelde her şey sakin; plana ve yeni fikirlere vakit ayırabilirsin.'}
+            ? `${critical} kritik iş seni bekliyor; önce onlar.`
+            : 'Kritik iş yok, her şey sakin.'}
         </p>
       </div>
 
@@ -61,7 +61,8 @@ export default function Welcome() {
       <div className="quick-actions">
         <Link to="/yayin"><Rocket size={14} /> Build bırak</Link>
         <Link to="/yayin?tab=aso"><Store size={14} /> Mağaza sayfası raporu</Link>
-        <Link to="/yayin?tab=aso"><PenLine size={14} /> Sürüm notu yaz</Link>
+        <Link to="/reklamlar"><Megaphone size={14} /> Reklam panosu</Link>
+        <Link to="/reklamlar"><Flame size={14} /> Çalışan reklamlar</Link>
         <Link to="/gelir"><Flag size={14} /> {goal.target > 0 ? 'Gelir hedefi' : 'Hedef koy'}</Link>
         <Link to="/asistan"><Bot size={14} /> Asistana sor</Link>
       </div>

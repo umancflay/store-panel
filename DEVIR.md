@@ -264,3 +264,10 @@ Küçük bir Unity mobil oyun stüdyosu (Voo Game Studio / Pixel Game) için tek
   4. `setConnection(source, status, message)` ile Ayarlar'da durum göster.
   5. Tabloyu `supabase/phaseN.sql` olarak yaz; RLS'i `is_admin()` ile kur.
 - **Claude'a yeni bir analiz eklerken:** `ai.mjs`'deki `runClaude(prompt, schema)` ve `parse()` dışa aktarılmış durumda; `adplans.mjs` örnek alınabilir. Claude yalnızca öneri yazar; hiçbir mağaza ya da reklam API'sine yazma yetkisi yoktur.
+
+## Reklam sayfası, trendler, hızlı asistan (30 Eki 2026)
+- Reklam ayrı menü öğesi (`/reklamlar`). Pano: platform sekmeleri (Google Ads, Meta …) → oyun çipleri → kampanya.
+- Google Ads verisi: Google Ads'teki "Voo Panel" komut dosyası saatlik `ingest_ads` RPC'sine yazar (phase12).
+- Reklam trendleri: `scripts/adtrends.mjs`, Claude internette araştırır (WebSearch/WebFetch), `app_settings.ad_trends`. Haftalık ya da panelden "Şimdi araştır" (`ad_trends_request`). assistant.yml içinde ayrı `trends` işi, sohbeti bekletmez.
+- Asistan: sorular hızlı modelle (`vars.CLAUDE_FAST_MODEL`, varsayılan sonnet), reklam/trend/plan/Yayın Uzmanı/uyarı/son sohbet bağlamıyla cevaplanır.
+- Yayın Uzmanı build kartında mağaza kararı tahmini (teknik kontrol, cihaz testi, Google Play/App Store kararı).
