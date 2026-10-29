@@ -162,19 +162,13 @@ Küçük bir Unity mobil oyun stüdyosu (Voo Game Studio / Pixel Game) için tek
 
 ### Yayın Uzmanı Faz 1 (29 Ekim 2026)
 
-- Tasarım: , plan: .
-- Kod:  (giriş),  (bundle, rules, report, llm, publish, pipeline),  (kurallar, eşikler, SDK izleri), , panel  (, ). Testler: Unknown command: "test"
-
-
-Did you mean this?
-  npm test # Test a package
-To see a list of supported npm commands, run:
-  npm help (37 test).
-- Claude kullanmaz; model Ollama + , çıktı doğrulanır, geçmezse kural raporu gösterilir.
+- Tasarım: `docs/superpowers/specs/2026-10-29-yayin-uzmani-design.md`, plan: `docs/superpowers/plans/2026-10-29-yayin-uzmani-faz1.md`.
+- Kod: `scripts/expert.mjs` (giriş), `scripts/expert/` (bundle, rules, report, llm, publish, pipeline), `uzman/` (kurallar, eşikler, SDK izleri), `.github/workflows/expert.yml`, panel `/yayin` (`pages/Expert.tsx`, `components/BuildCard.tsx`). Testler: `npm test` (37 test).
+- Claude kullanmaz; model Ollama + `qwen2.5:7b-instruct`, çıktı doğrulanır, geçmezse kural raporu gösterilir.
 - Akış: uploaded → inspecting → blocked | ready → internal (Play dahili test, onaysız) → awaiting_approval → (panelde Onayla) → live (%10). Yayındayken %50 / herkese aç / durdur düğmeleri.
-- ⏳ Kullanıcı onayı bekleyenler:  çalıştırılmadı;  Edge Function'ın yeni kodu deploy edilmedi (fonksiyon hiç kurulmamış olabilir). İkisi de canlı veritabanı / canlı fonksiyon değişikliği olduğu için açık onay istiyor.
-- ⏳ Gerçek bir AAB ile uçtan uca deneme yapılmadı.  2026 eşiği (36) resmi sayfadan doğrulanmalı.
-- Sıradaki fazlar: Test Lab cihaz testi + 48 saat izleme (Firebase hazır: proje , API'ler açık, hizmet hesabına Test Lab Admin + Analytics Viewer verildi), ret/itiraz, iOS IPA incelemesi, mağaza vitrini.
+- ⏳ Kullanıcı onayı bekleyenler: `supabase/phase11-expert.sql` çalıştırılmadı; `trigger-update` Edge Function'ın yeni kodu deploy edilmedi (fonksiyon hiç kurulmamış olabilir). İkisi de canlı veritabanı / canlı fonksiyon değişikliği olduğu için açık onay istiyor.
+- ⏳ Gerçek bir AAB ile uçtan uca deneme yapılmadı. `targetSdk` 2026 eşiği (36) resmi sayfadan doğrulanmalı.
+- Sıradaki fazlar: Test Lab cihaz testi + 48 saat izleme (Firebase hazır: proje `store-panel-512516`, API'ler açık, hizmet hesabına Test Lab Admin + Analytics Viewer verildi), ret/itiraz, iOS IPA incelemesi, mağaza vitrini.
 
 ### Ekip ve asistan (28 Ekim 2026)
 

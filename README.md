@@ -469,15 +469,15 @@ Yeni sayfaların verisi Supabase'de durur. Bir kez kurman yeterli:
 
 ## Kurulum: Yayın Uzmanı
 
-Build'i panele bırakırsın; uzman inceler, sorunları "ne yapmalısın" diye yazar, dahili teste yükler. Oyunculara açmak senin onayınla. Claude kullanmaz: kurallar () + stüdyonun kendi açık kaynak modeli (Ollama, GitHub Actions'ta).
+Build'i panele bırakırsın; uzman inceler, sorunları "ne yapmalısın" diye yazar, dahili teste yükler. Oyunculara açmak senin onayınla. Claude kullanmaz: kurallar (`uzman/`) + stüdyonun kendi açık kaynak modeli (Ollama, GitHub Actions'ta).
 
-1. Supabase **SQL Editor**'da [](supabase/phase11-expert.sql) dosyasını çalıştır.
+1. Supabase **SQL Editor**'da [`supabase/phase11-expert.sql`](supabase/phase11-expert.sql) dosyasını çalıştır.
 2. **Play Console › Kullanıcılar ve izinler** › hizmet hesabı › Hesap izinleri: "Üretim sürümüne yayınlama…", "Uygulamaları test kanallarına yayınlama", "Test kanallarını yönetme…" işaretli olsun.
-3. **Anında başlatma**: README › Adım 11'deki  Edge Function'ı en güncel koduyla deploy et (secret'lar: , ). Kurulmazsa iş en geç 15 dakikada zamanlamayla başlar.
+3. **Anında başlatma**: README › Adım 11'deki `trigger-update` Edge Function'ı en güncel koduyla deploy et (secret'lar: `GH_REPO`, `GH_DISPATCH_TOKEN`). Kurulmazsa iş en geç 15 dakikada zamanlamayla başlar.
 4. Panel › **Yayın Uzmanı › Veri güvenliği**: her oyun için Play'e ne beyan ettiğini işaretle.
 5. İlk sürüm: Play'de hiç yüklenmemiş bir oyunun ilk build'ini Play Console'dan elle yükle; sonrakileri uzman yükler.
 
-İsteğe bağlı: GitHub › Settings › Variables'ta  (varsayılan ).
+İsteğe bağlı: GitHub › Settings › Variables'ta `EXPERT_MODEL` (varsayılan `qwen2.5:7b-instruct`).
 
 ## Telefonda ana ekrana ekleme
 
