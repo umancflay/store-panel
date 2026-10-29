@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { handleAsk, knowledge, lessonFindings } from './ask.mjs'
+import { dedupe, handleAsk, knowledge, lessonFindings } from './ask.mjs'
 
 const lessons = [
   { id: 'a', text: 'Play, oyun içi satın alma ekran görüntüsü olmadan reddetti. Her IAP ürününe görsel ekle.', platform: 'android' },
@@ -38,4 +38,15 @@ test('soru cevaplanır ve sohbet geçmişinin başına eklenir; model yoksa nazi
   const fail = await handleAsk({ id: 'm', text: 'x?', by: 'u' }, { db, fetchImpl: async () => { throw new Error('yok') } })
   assert.equal(fail.ai, false)
   assert.match(fail.a, /cevap yazamadım/)
+})
+
+test('soruyla ilgili kural tam adımlarıyla bağlama girer', () => {
+  const k = knowledge({ question: 'Build\'imde test reklam kimliği çıktı, nasıl düzeltirim?', today: '2026-10-29' })
+  const rel = k.split('Bildiğin diğer konular')[0]
+  assert.match(rel, /Test reklam kimliği unutulmuş/)
+  assert.match(rel, /2\) Hepsini AdMob/)
+})
+
+test('tekrarlanan cümle bir kez kalır', () => {
+  assert.equal(dedupe('Kimlikleri ara. Bunu yaptıktan sonra değiştir. Kimlikleri ara.'), 'Kimlikleri ara. Bunu yaptıktan sonra değiştir.')
 })
