@@ -1,0 +1,109 @@
+{
+  "_aciklama": "App Store İnceleme Kuralları'nın oyunlarda en sık ret sebebi olanları. Apple'ın ret mesajındaki 'Guideline X.Y' numarasıyla eşleşir. anlam: kullanıcıya Türkçe ne demek; yap: adım adım ne yapmalı; itiraz: haklı olabileceğin durumlar (o zaman App Review Board'a itiraz edilebilir). Yeni bir ret öğrenildiğinde buraya satır eklenir.",
+  "kaynak": "https://developer.apple.com/app-store/review/guidelines/",
+  "kurallar": {
+    "2.1": {
+      "baslik": "Uygulama tamlığı (çökme, eksik içerik, demo hesap)",
+      "anlam": "Apple oyunu açarken çökme, boş ekran, çalışmayan düğme ya da yer tutucu içerik gördü; ya da giriş gerekiyorsa demo hesap istedi.",
+      "yap": ["Mesajdaki cihaz ve iOS sürümünde oyunu baştan sona dene (TestFlight ile).", "Çökme varsa App Store Connect › TestFlight › Çökmeler'e ve Xcode › Organizer › Crashes'e bak.", "Giriş gerekiyorsa App Review Information'a çalışan bir demo hesap yaz.", "Düzeltilmiş build'i yükleyip yeniden gönder."],
+      "itiraz": "Çökme senin cihazlarında hiç oluşmuyorsa Resolution Center'da hangi cihazlarda denediğini yazıp ekran kaydı ekle."
+    },
+    "2.1(a)": { "ref": "2.1" },
+    "2.1(b)": {
+      "baslik": "Uygulama içi satın alma çalışmıyor ya da gönderilmemiş",
+      "anlam": "Oyundaki satın alma ürünleri incelemeye gönderilmemiş, ya da satın alma denendiğinde hata çıktı.",
+      "yap": ["App Store Connect › Uygulama › Uygulama İçi Satın Almalar'da her ürünün 'Ready to Submit' olduğundan ve sürümle birlikte gönderildiğinden emin ol.", "Sandbox hesabıyla satın almayı dene.", "Ürünlerin ekran görüntüsünü ekle."],
+      "itiraz": ""
+    },
+    "2.3": {
+      "baslik": "Doğru bilgi (mağaza sayfası oyunu yansıtmıyor)",
+      "anlam": "Açıklama, ekran görüntüleri ya da önizleme videosu oyunda olmayan bir şeyi gösteriyor ya da yanıltıcı.",
+      "yap": ["Ekran görüntülerini gerçek oyun içinden al.", "Açıklamadan oyunda olmayan özellikleri çıkar.", "Sadece bilgiler değiştiyse yeni build gerekmez; düzeltip yeniden gönder."],
+      "itiraz": ""
+    },
+    "2.3.3": {
+      "baslik": "Ekran görüntüleri uygun değil",
+      "anlam": "Ekran görüntüleri oyunun kendisini göstermiyor (sadece logo, başlık ekranı, tanıtım görseli) ya da yanlış cihaz boyutunda.",
+      "yap": ["Her cihaz boyutu için oyun içinden en az bir gerçek oynanış görüntüsü koy.", "iPad destekliyorsan iPad görüntüleri de iPad'den olsun."],
+      "itiraz": ""
+    },
+    "2.3.7": {
+      "baslik": "Uygulama adı, alt başlık ya da anahtar kelimeler kurala aykırı",
+      "anlam": "Ad/alt başlıkta fiyat, 'en iyi' gibi iddialar, başka marka adları ya da anahtar kelime doldurma var.",
+      "yap": ["Ad ve alt başlıktan iddia ve başka marka adlarını çıkar.", "Anahtar kelimelerde rakip oyun adları kullanma."],
+      "itiraz": ""
+    },
+    "2.3.10": {
+      "baslik": "Başka platformlardan bahsediliyor",
+      "anlam": "Mağaza sayfasında ya da oyun içinde Android, Google Play gibi başka platformların adı geçiyor.",
+      "yap": ["Açıklama, ekran görüntüleri ve oyun içi metinlerden Android/Google Play ifadelerini kaldır (ör. 'Google Play Games ile giriş')."],
+      "itiraz": ""
+    },
+    "2.5.1": {
+      "baslik": "Gizli ya da desteklenmeyen API kullanımı",
+      "anlam": "Oyun ya da bir SDK, Apple'ın izin vermediği bir arayüzü kullanıyor.",
+      "yap": ["Mesajda adı geçen sınıfı/yöntemi hangi SDK'nın kullandığını bul.", "O SDK'yı en son sürüme güncelle ya da kaldır."],
+      "itiraz": ""
+    },
+    "3.1.1": {
+      "baslik": "Satın alma Apple dışı yoldan yapılıyor",
+      "anlam": "Dijital içerik (altın, can, reklamsız sürüm) Apple'ın uygulama içi satın alması dışında satılıyor ya da dış ödeme linki var.",
+      "yap": ["Tüm dijital satışları StoreKit (Unity IAP) üzerinden yap.", "Dış ödeme sayfası linklerini ve 'web'den daha ucuz' ifadelerini kaldır.", "Satın almaları geri yükle (Restore Purchases) düğmesi ekle."],
+      "itiraz": ""
+    },
+    "4.0": {
+      "baslik": "Tasarım (ekrana sığmama, okunmama)",
+      "anlam": "Arayüz bazı cihazlarda (çoğunlukla iPad) kesiliyor, düğmeler çentiğin altında kalıyor ya da metin okunmuyor.",
+      "yap": ["Unity: Canvas Scaler › Scale With Screen Size, Safe Area'ya göre yerleşim.", "iPad desteklemiyorsan Xcode'da sadece iPhone seç (Unity: Player Settings › Target Device = iPhone Only)."],
+      "itiraz": ""
+    },
+    "4.1": {
+      "baslik": "Taklit (başka bir oyuna çok benziyor)",
+      "anlam": "Ad, ikon ya da oyun başka bilinen bir oyunu taklit ediyor gibi görünüyor.",
+      "yap": ["Ad ve ikonu belirgin şekilde farklılaştır.", "Başka oyunların karakter, logo ve görsellerini kullanma."],
+      "itiraz": "Tamamen kendi özgün oyunsa farkları ve kendi tasarım sürecini anlatarak itiraz edebilirsin."
+    },
+    "4.2": {
+      "baslik": "En az işlevsellik (oyun çok basit)",
+      "anlam": "Apple oyunu kalıcı değeri olmayacak kadar basit ya da bir web sitesi paketi gibi buldu.",
+      "yap": ["Oyuna ilerleme, bölümler, kayıt, ses ve dokunma geri bildirimi gibi derinlik ekle.", "İnceleme notlarında oyunun ne sunduğunu kısaca anlat."],
+      "itiraz": "Oyunda birden çok mod/bölüm varsa ve inceleyen görmemiş olabilirse, nasıl ulaşılacağını anlatıp itiraz et."
+    },
+    "4.3": {
+      "baslik": "Spam (çok benzer uygulamalar)",
+      "anlam": "Aynı hesapta ya da mağazada çok benzer oyunlar var, ya da hazır bir şablonla yapılmış gibi görünüyor.",
+      "yap": ["Aynı şablondan çıkan oyunları tek oyunda birleştirmeyi düşün.", "Oyunun benzerlerinden farkını belirginleştir (mekanik, görsel, içerik)."],
+      "itiraz": "Oyun özgünse, benzer sanılan oyunlardan farklarını madde madde yazarak App Review Board'a itiraz et."
+    },
+    "4.8": {
+      "baslik": "Apple ile Giriş eksik",
+      "anlam": "Oyunda Google/Facebook ile giriş var ama eşdeğer gizlilikte bir seçenek (Apple ile Giriş) yok.",
+      "yap": ["Sosyal giriş varsa 'Apple ile Giriş' ekle (Unity: Sign in with Apple paketi).", "Ya da sosyal girişi tamamen kaldır."],
+      "itiraz": ""
+    },
+    "5.1.1": {
+      "baslik": "Veri toplama ve saklama (gizlilik)",
+      "anlam": "Gizlilik politikası eksik/erişilemiyor, gereksiz kişisel veri isteniyor ya da hesap açılabiliyor ama silinemiyor.",
+      "yap": ["App Store Connect'e çalışan bir gizlilik politikası linki koy, oyun içinden de erişilebilsin.", "Hesap açılabiliyorsa oyun içinde 'Hesabımı sil' seçeneği ekle.", "Oyun için gerekmeyen kişisel bilgileri (telefon, doğum tarihi) zorunlu isteme."],
+      "itiraz": ""
+    },
+    "5.1.1(v)": {
+      "baslik": "Hesap silme seçeneği yok",
+      "anlam": "Oyunda hesap oluşturulabiliyor ama oyun içinden hesabı silmenin yolu yok.",
+      "yap": ["Ayarlar menüsüne 'Hesabımı sil' ekle; silme gerçekten verileri silsin.", "İnceleme notlarına bu düğmenin yerini yaz."],
+      "itiraz": ""
+    },
+    "5.1.2": {
+      "baslik": "Veri kullanımı ve paylaşımı (takip izni / ATT)",
+      "anlam": "Oyun izin sormadan takip yapıyor (reklam kimliği), ya da App Privacy bölümünde 'takip' beyan edilmiş ama izin penceresi gösterilmiyor.",
+      "yap": ["Oyun açılırken ATT izin penceresini göster (Unity iOS 14 Advertising Support).", "Info.plist'e NSUserTrackingUsageDescription ekle.", "App Store Connect › App Privacy'deki beyanı oyunun gerçekten yaptığıyla eşleştir.", "İnceleme notlarına izin penceresinin ne zaman çıktığını yaz."],
+      "itiraz": "İzin penceresi gösteriliyorsa ve inceleyen görmemişse (ör. sadece ilk açılışta çıkıyor), nasıl görüneceğini anlatıp ekran kaydı ekle."
+    },
+    "5.2.1": {
+      "baslik": "Fikri mülkiyet (izinsiz marka/içerik)",
+      "anlam": "Oyunda başkasına ait marka, müzik, karakter ya da görsel izinsiz kullanılmış gibi görünüyor.",
+      "yap": ["Lisansını gösteremeyeceğin her içeriği kaldır ya da değiştir.", "Lisanslı içerik varsa belgesini App Review Information'a ekle."],
+      "itiraz": "Lisansın varsa belgeyle birlikte itiraz et."
+    }
+  }
+}

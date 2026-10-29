@@ -1,5 +1,5 @@
 # Yayın Uzmanı: panele bırakılan build'i inceler, test cihazında dener, raporlar, dahili teste yükler; onaylanan yayın eylemlerini uygular,
-# yayından sonra 48 saat çökmeleri izler, mağaza sayfası raporu ve sürüm notu yazar.
+# yayından sonra 48 saat çökmeleri izler, App Store incelemesini takip eder, mağaza sayfası raporu, sürüm notu ve ret cevabı yazar.
 # Claude kullanmaz: kurallar + stüdyonun kendi açık kaynak modeli (Ollama). Public repo olduğu için ücretsiz.
 # Panel olay anında başlatır (Supabase Edge Function); zamanlama sadece yedek.
 name: Yayın Uzmanı
@@ -21,6 +21,9 @@ jobs:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       GOOGLE_PLAY_SA_JSON: ${{ secrets.GOOGLE_PLAY_SA_JSON }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
       VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
       VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
       VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}

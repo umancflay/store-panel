@@ -14,6 +14,13 @@ const STEPS: { key: string; label: string; of: BuildStatus[] }[] = [
   { key: 'ok', label: 'Onay', of: ['awaiting_approval', 'publishing'] },
   { key: 'live', label: 'Yayında', of: ['live'] },
 ]
+// iOS: uzman inceler; yükleme Mac'te yapılır, inceleme App Store sekmesinden izlenir
+const IOS_STEPS: typeof STEPS = [
+  ...STEPS.slice(0, 3),
+  { key: 'mac', label: "Mac'ten yükle", of: [] },
+  { key: 'review', label: 'Apple incelemesi', of: [] },
+  { key: 'live', label: 'Yayında', of: [] },
+]
 const statusText: Record<BuildStatus, [string, string]> = {
   uploaded: ['Sırada', 'b-muted'],
   inspecting: ['İnceleniyor', 'b-warning'],
@@ -59,7 +66,8 @@ export default function BuildCard({
   onRollout: (b: StoreBuild, fraction: number | 'halt') => void
 }) {
   const [fraction, setFraction] = useState('0.1')
-  const step = STEPS.findIndex((s) => s.of.includes(b.status))
+  const steps = b.platform === 'ios' ? IOS_STEPS : STEPS
+  const step = steps.findIndex((s) => s.of.includes(b.status))
   const pending = actions.find((a) => a.build_id === b.id && a.status === 'pending')
   const last = actions.filter((a) => a.build_id === b.id && a.status !== 'pending').sort((x, y) => y.created_at.localeCompare(x.created_at))[0]
   const r = b.report
@@ -72,14 +80,14 @@ export default function BuildCard({
           {b.game_id && <GameLogo id={b.game_id} size={40} />}
           <div style={{ minWidth: 0 }}>
             <div className="card-title">{gameName} <span className="muted">{b.version_name ? `v${b.version_name} (${b.version_code})` : b.file_name}</span></div>
-            <div className="card-sub">{b.platform === 'ios' ? 'iOS' : 'Android'} · {trDateTime(b.created_at)}{r?.build ? ` · ${r.build.sizeMb} MB · hedef API ${r.build.targetSdk}` : ''}</div>
+            <div className="card-sub">{b.platform === 'ios' ? 'iOS' : 'Android'} · {trDateTime(b.created_at)}{r?.build ? ` · ${r.build.sizeMb} MB · ${r.build.kind === 'ipa' ? `iOS SDK ${r.build.iosSdk ?? '?'}` : `hedef API ${r.build.targetSdk}`}` : ''}</div>
           </div>
         </div>
         <span className={`badge ${cls}`}>{label}</span>
       </div>
 
       <div className="stepper" aria-label="İlerleme">
-        {STEPS.map((s, i) => (
+        {steps.map((s, i) => (
           <div key={s.key} className={`step${i < step ? ' done' : i === step ? ' now' : ''}${i === step && (b.status === 'blocked' || b.status === 'failed') ? ' bad' : ''}`}>
             <span className="step-dot">{i < step ? <Check size={10} /> : null}</span>
             <span className="step-label">{s.label}</span>
@@ -90,6 +98,7 @@ export default function BuildCard({
       {b.status === 'inspecting' && <div className="muted small">Uzman build'i inceliyor; birkaç dakika sürer, bitince telefonuna bildirim gelir.</div>}
       {b.status === 'uploaded' && <div className="muted small">Sırada. Uzman birazdan başlayacak.</div>}
       {b.error && <div className="expert-error">{b.error}</div>}
+      {b.platform === 'ios' && b.status === 'ready' && <div className="muted small">Hazır. Xcode Organizer ya da Transporter ile App Store Connect'e yükleyip incelemeye gönder; inceleme durumunu Yayın Uzmanı › App Store'da izlerim, değişince telefonuna haber veririm.</div>}
 
       {(b.summary || r?.text) && (
         <div className="expert-summary">

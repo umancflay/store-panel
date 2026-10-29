@@ -30,6 +30,7 @@ export async function processBuild(build, d) {
     if (!file) throw new Error('Build dosyası bulunamadı; panelden yeniden yükle.')
     const local = path.join(d.tmpDir(), `build-${build.id}${path.extname(file.name || '.aab') || '.aab'}`)
     await d.downloadFile(file, local)
+    if (build.platform === 'ios') return await inspectIos(build, d, { local, gameName })
     const b = await d.readAndroid(local)
     const m = b.manifest
 
@@ -87,6 +88,31 @@ export async function processBuild(build, d) {
     await setBuild(d, build.id, { status: 'failed', error: String(e.message).slice(0, 500) })
     await d.notify(build.created_by, `${gameName}: build işlenemedi`, String(e.message).slice(0, 150), './#/yayin')
   }
+}
+
+// iOS: IPA incelenir, raporlanır. Yükleme Mac'te (Xcode/Transporter) yapılır; incelemeyi uzman App Store Connect'ten izler.
+async function inspectIos(build, d, { local, gameName }) {
+  const b = await d.readIos(local)
+  const i = b.info
+  const [last] = await d.db(`builds?game_id=eq.${encodeURIComponent(build.game_id)}&platform=eq.ios&select=version,build_number&order=updated_at.desc&limit=1`).catch(() => [])
+  const findings = d.runRules({ build: b, prev: last ? { version: last.version, buildNumber: last.build_number } : null, today: d.today() }, d.iosRules)
+  const num = /^\d+$/.test(String(i.CFBundleVersion)) ? Number(i.CFBundleVersion) : null
+  const report = d.buildReport(findings, { gameName, versionName: i.CFBundleShortVersionString, versionCode: i.CFBundleVersion })
+  const summary = (await d.polish(report, findings)) ?? report.text
+  await setBuild(d, build.id, {
+    package_name: i.CFBundleIdentifier, version_code: num, version_name: i.CFBundleShortVersionString, summary,
+    report: {
+      verdict: report.verdict, counts: report.counts, findings, text: report.text, aiSummary: summary !== report.text,
+      build: { kind: 'ipa', iosSdk: i.DTPlatformVersion ?? null, minOs: i.MinimumOSVersion ?? null, buildNumber: String(i.CFBundleVersion ?? ''), sizeMb: Math.round(b.sizeBytes / 1048576), hits: b.hits, frameworks: b.frameworks.map((f) => f.name) },
+    },
+    status: report.verdict === 'blocked' ? 'blocked' : 'ready',
+  })
+  await d.notify(
+    build.created_by,
+    report.verdict === 'blocked' ? `${gameName} iOS ${i.CFBundleShortVersionString}: düzeltmen gerekenler var` : `${gameName} iOS ${i.CFBundleShortVersionString} yüklemeye hazır`,
+    report.verdict === 'blocked' ? report.text.split('\n')[0] : 'Xcode Organizer ya da Transporter ile App Store Connect\'e yükle; incelemeyi ben takip edip haber veririm.',
+    './#/yayin',
+  )
 }
 
 export async function processAction(action, d) {

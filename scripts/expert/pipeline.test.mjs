@@ -99,3 +99,34 @@ test('processAction: onaylı değilse çıkar; onaylıysa bir kez üretime taş�
   await processAction({ id: 9, build_id: 1, kind: 'publish_production', status: 'approved', params: {} }, c.deps)
   assert.equal(c.log.some((x) => x.fn === 'promote'), false)
 })
+
+test('iOS build incelenir, Play\'e yüklenmez, hazır bildirimi gider', async () => {
+  const calls = []
+  const notes = []
+  const d = {
+    db: async (p, m, body) => {
+      calls.push([p, m, body])
+      if (p.startsWith('store_builds?id=eq.9&status=eq.uploaded')) return [{ id: 9 }]
+      if (p.startsWith('games?')) return [{ id: 'salgin', name: 'Salgın' }]
+      if (p.startsWith('files?')) return [{ path: 'x', parts: 1, name: 'Salgin.ipa' }]
+      if (p.startsWith('builds?')) return [{ version: '1.0', build_number: '3' }]
+      return null
+    },
+    downloadFile: async () => {},
+    readIos: async () => ({ info: { CFBundleIdentifier: 'com.voo.salgin', CFBundleShortVersionString: '1.0', CFBundleVersion: '4' }, frameworks: [], hits: [], sizeBytes: 1 << 20 }),
+    iosRules: [],
+    runRules: (ctx, rules) => (assert.deepEqual(ctx.prev, { version: '1.0', buildNumber: '3' }), assert.equal(rules, d.iosRules), []),
+    buildReport: () => ({ verdict: 'clean', counts: { block: 0, warn: 0, info: 0 }, text: 'Salgın 1.0 (4) · Yüklenebilir' }),
+    polish: async () => null,
+    uploadBundle: async () => assert.fail('iOS Play\'e yüklenmemeli'),
+    notify: async (...a) => notes.push(a),
+    today: () => '2026-10-29',
+    tmpDir: () => '/tmp',
+  }
+  await processBuild({ id: 9, game_id: 'salgin', platform: 'ios', file_id: 1, created_by: 'u@x' }, d)
+  const saved = calls.find(([p, m, b]) => p === 'store_builds?id=eq.9' && m === 'PATCH' && b.status)[2]
+  assert.equal(saved.status, 'ready')
+  assert.equal(saved.version_code, 4)
+  assert.equal(saved.report.build.kind, 'ipa')
+  assert.match(notes[0][1], /yüklemeye hazır/)
+})

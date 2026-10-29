@@ -222,7 +222,7 @@ export interface StoreBuild {
     findings: Finding[]
     text: string
     aiSummary?: boolean
-    build?: { kind: string; targetSdk: number; minSdk: number; abis: string[]; sizeMb: number; hits: string[] }
+    build?: { kind: string; targetSdk?: number; minSdk?: number; abis?: string[]; sizeMb: number; hits: string[]; iosSdk?: string | null; minOs?: string | null; buildNumber?: string }
     // Yayın sonrası 48 saat nöbet
     watch?: { at: string; since: string; verdict: 'ok' | 'warn' | 'bad' | 'wait'; text: string; done: boolean }
   } | null

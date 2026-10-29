@@ -1,5 +1,5 @@
 // Yayın Uzmanı işi (GitHub Actions, .github/workflows/expert.yml). Claude kullanmaz.
-//   node scripts/expert.mjs check  → yapılacak iş var mı (yeni build, onaylanmış eylem ya da mağaza sayfası/sürüm notu isteği); GITHUB_OUTPUT'a has=true|false
+//   node scripts/expert.mjs check  → App Store inceleme durumunu günceller; yapılacak iş var mı (yeni build, onaylanmış eylem, yayın nöbeti, koçluk isteği); GITHUB_OUTPUT'a has/model/builds
 //   node scripts/expert.mjs        → build'leri işler, onaylı eylemleri uygular, eski dosyaları temizler, bildirimleri gönderir
 
 import fs from 'node:fs'
@@ -7,6 +7,8 @@ import os from 'node:os'
 import { db, dbReady } from './db.mjs'
 import { flushOutbox } from './push.mjs'
 import { downloadFile, readAndroid } from './expert/bundle.mjs'
+import { readIos } from './expert/ios.mjs'
+import iosRules from '../uzman/kurallar/ios.mjs'
 import { runRules } from './expert/rules.mjs'
 import { buildReport } from './expert/report.mjs'
 import { polish } from './expert/llm.mjs'
@@ -15,6 +17,8 @@ import { cleanupOldFiles, processAction, processBuild } from './expert/pipeline.
 import { queueOf, runQueue } from './expert/coach.mjs'
 import { runRobo } from './expert/testlab.mjs'
 import { dueBuilds, versionVitals, watchLive } from './expert/watch.mjs'
+import { syncReviews } from './expert/appreview.mjs'
+import { api as ascApi, appStoreReady } from './appstore.mjs'
 
 if (!dbReady) {
   console.log('SUPABASE_URL veya SUPABASE_SERVICE_ROLE_KEY tanımlı değil; iş atlandı.')
@@ -32,7 +36,14 @@ async function maybe(p) {
 const pendingBuilds = () => maybe('store_builds?status=eq.uploaded&select=id,game_id,platform,file_id,created_by&order=created_at&limit=3')
 const approvedActions = () => maybe('expert_actions?status=eq.approved&select=id,build_id,kind,params,status&order=approved_at')
 
+const notifyOutbox = (to, title, body, link) => db('notify_outbox', 'POST', { to_email: to, title, body, url: link }, 'return=minimal').catch(() => {})
+
 if (process.argv[2] === 'check') {
+  // App Store inceleme durumu her kontrolde (birkaç saniye): değişim varsa hemen telefona
+  if (appStoreReady) {
+    const n = await syncReviews({ db, ascApi, notify: notifyOutbox }).catch((e) => console.error('App Store inceleme takibi:', e.message))
+    if (n) await flushOutbox()
+  }
   const builds = (await pendingBuilds()).length > 0
   const queue = (await queueOf(db).catch(() => [])).length > 0
   const has = builds || queue || (await approvedActions()).length > 0 || (await dueBuilds(db)).length > 0
@@ -48,6 +59,8 @@ const deps = {
   db,
   downloadFile,
   readAndroid,
+  readIos,
+  iosRules,
   runRules,
   buildReport,
   polish,
@@ -58,7 +71,7 @@ const deps = {
   vitals: (pkg, vc) => versionVitals(pkg, vc),
   today: () => new Date().toISOString().slice(0, 10),
   tmpDir: () => os.tmpdir(),
-  notify: (to, title, body, link) => db('notify_outbox', 'POST', { to_email: to, title, body, url: link }, 'return=minimal').catch(() => {}),
+  notify: notifyOutbox,
   removeFile: async (f) => {
     const prefixes = f.parts > 1 ? Array.from({ length: f.parts }, (_, i) => `${f.path}.part${i}`) : [f.path]
     await fetch(`${url}/storage/v1/object/files`, {

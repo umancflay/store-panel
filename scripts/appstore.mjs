@@ -24,7 +24,7 @@ function jwt() {
   return `${head}.${body}.${sig}`
 }
 
-async function api(path, { raw = false, allow404 = false } = {}) {
+export async function api(path, { raw = false, allow404 = false } = {}) {
   const call = () =>
     fetch(path.startsWith('http') ? path : `${API}${path}`, {
       headers: { Authorization: `Bearer ${jwt()}`, Accept: raw ? 'application/a-gzip' : 'application/json' },
@@ -50,7 +50,7 @@ async function api(path, { raw = false, allow404 = false } = {}) {
   return raw ? Buffer.from(await res.arrayBuffer()) : res.json()
 }
 
-const stateLabel = {
+export const stateLabel = {
   READY_FOR_SALE: 'Yayında', READY_FOR_DISTRIBUTION: 'Yayında', WAITING_FOR_REVIEW: 'İncelemeyi bekliyor', IN_REVIEW: 'İncelemede',
   REJECTED: 'Reddedildi', METADATA_REJECTED: 'Reddedildi (bilgiler)', DEVELOPER_REJECTED: 'Geliştirici geri çekti',
   PREPARE_FOR_SUBMISSION: 'Hazırlanıyor', PENDING_DEVELOPER_RELEASE: 'Yayın onayı bekliyor', PROCESSING_FOR_APP_STORE: 'İşleniyor',

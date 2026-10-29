@@ -8,5 +8,10 @@
     { "from": "2025-11-01", "severity": "warn", "kaynak": "https://developer.android.com/guide/practices/page-sizes" },
     { "from": "2026-06-01", "severity": "block", "not": "Google'ın verdiği ek süre 31 Mayıs 2026'da bitti" }
   ],
-  "maxDownloadMb": 200
+  "maxDownloadMb": 200,
+  "iosSdk": [
+    { "from": "2025-04-24", "min": 18, "xcode": 16, "kaynak": "https://developer.apple.com/news/upcoming-requirements/" },
+    { "from": "2026-04-28", "min": 26, "xcode": 26, "kaynak": "https://developer.apple.com/news/upcoming-requirements/", "not": "Apple'ın duyurusundan doğrulanmalı" }
+  ],
+  "iosCellularMb": 200
 }

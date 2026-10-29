@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Copy, Film, Image as ImageIcon, Loader2, PenLine, Search, Sparkles } from 'lucide-react'
-import { supabase, isDemo } from '../lib/supabase'
+import { isDemo } from '../lib/supabase'
+import { enqueue, useSettingRow, type QueueItem } from '../lib/expertQueue'
 import { useStore } from '../lib/store'
 import { usePeople } from '../lib/data'
-import { triggerWorkflow } from '../lib/trigger'
 import { trDateTime } from '../lib/rows'
 import type { Finding } from '../lib/types'
 import { FindingRow } from './BuildCard'
@@ -20,7 +20,6 @@ type AsoReport = {
   suggestions?: { titles: string[]; shorts: string[]; intro: string | null } | null
 }
 type Notes = { at: string; error?: string; bullets?: string; tr?: string; en?: string | null; ai?: boolean }
-type QueueItem = { id: string; kind: 'aso' | 'notes'; gameId: string; bullets?: string; by: string; at: string }
 
 const demoReport: AsoReport = {
   at: new Date().toISOString(), query: 'zombie survival', language: 'tr-TR', languages: ['tr-TR'],
@@ -39,22 +38,7 @@ const demoReport: AsoReport = {
   suggestions: { titles: ['Salgın: Zombi Hayatta Kalma', 'Salgın: Zombi Şehri'], shorts: ['Zombilerle dolu şehirde hayatta kal, üssünü kur, ekibini büyüt!'], intro: 'Şehir düştü. Elinde sadece bir sırt çantası ve birkaç dost var…' },
 }
 
-function useSettingRow<T>(key: string, demo: T | null) {
-  const [value, setValue] = useState<T | null>(isDemo ? demo : null)
-  const load = useCallback(async () => {
-    if (isDemo) return
-    const { data } = await supabase!.from('app_settings').select('value').eq('key', key).maybeSingle()
-    setValue(((data as { value: T } | null)?.value ?? null))
-  }, [key])
-  useEffect(() => {
-    setValue(isDemo ? demo : null)
-    load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key])
-  return [value, load] as const
-}
-
-const copy = (text: string, toast: (t: string) => void) => navigator.clipboard.writeText(text).then(() => toast('Panoya kopyalandı'))
+export const copy = (text: string, toast: (t: string) => void) => navigator.clipboard.writeText(text).then(() => toast('Panoya kopyalandı'))
 
 export default function AsoCoach({ gameId, gameName }: { gameId: string; gameName: string }) {
   const { toast } = useStore()
@@ -75,14 +59,10 @@ export default function AsoCoach({ gameId, gameName }: { gameId: string; gameNam
 
   async function request(kind: QueueItem['kind'], extra: Partial<QueueItem> = {}) {
     if (isDemo) return toast('Demo modda çalışmaz', 'info')
-    const { data } = await supabase!.from('app_settings').select('value').eq('key', 'expert_queue').maybeSingle()
-    const items = ((data as { value?: { items?: QueueItem[] } } | null)?.value?.items ?? []).filter((i) => !(i.kind === kind && i.gameId === gameId))
-    items.push({ id: crypto.randomUUID(), kind, gameId, by: me.email, at: new Date().toISOString(), ...extra })
-    const { error } = await supabase!.from('app_settings').upsert({ key: 'expert_queue', value: { items }, updated_at: new Date().toISOString() } as never)
-    if (error) return toast('İstenemedi: ' + error.message, 'warn')
+    const { error, started } = await enqueue({ kind, gameId, by: me.email, ...extra })
+    if (error) return toast('İstenemedi: ' + error, 'warn')
     await reloadQueue()
-    const err = await triggerWorkflow('expert.yml')
-    toast(err ? 'Sıraya alındı; uzman en geç 15 dakikada başlar.' : 'Uzman başladı; birkaç dakikada hazır olur, telefonuna haber gelir.')
+    toast(started ? 'Uzman başladı; birkaç dakikada hazır olur, telefonuna haber gelir.' : 'Sıraya alındı; uzman en geç 15 dakikada başlar.')
   }
 
   const r = report && !report.error ? report : null

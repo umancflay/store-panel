@@ -179,7 +179,12 @@ Küçük bir Unity mobil oyun stüdyosu (Voo Game Studio / Pixel Game) için tek
 - **48 saat nöbet:** `scripts/expert/watch.mjs`. Yayındaki sürümün saatlik çökme/ANR oranı (Reporting API, `versionCode` kırılımı) eski sürümlerle karşılaştırılır; kötüyse onay bekleyen `halt` eylemi + bildirim (kendisi durdurmaz), 48 saat temiz geçerse haber verir.
 - `expert.yml`: model (Ollama) sadece build/koçluk işi varken kurulur; nöbet ve onaylı eylemler hızlı geçer.
 - Ana sayfada kısayollar (Build bırak, Mağaza raporu, Sürüm notu, Hedef, Asistan). Testler: 58.
-- Sıradaki fazlar: ret/itiraz yönetimi, iOS IPA incelemesi, öğrenme döngüsü.
+- **iOS / App Store (29 Ekim 2026):**
+  - IPA incelemesi: `scripts/expert/ios.mjs` (unzip + python3 plistlib), kurallar `uzman/kurallar/ios.mjs` (geliştirme imzası, build no, eski Xcode SDK, test reklam kimliği, AdMob App ID, ATT metni, boş izin açıklaması, PrivacyInfo, SKAdNetwork, şifreleme beyanı, boyut). Eşikler `esikler.json › iosSdk` (2026 satırı doğrulanmalı). Uzman IPA'yı yüklemez; kullanıcı Mac'ten yükler.
+  - İnceleme takibi: `scripts/expert/appreview.mjs › syncReviews`, `expert.mjs check` her çalıştığında (birkaç saniye) App Store Connect'teki son sürüm durumunu `app_settings.asc_review_state` ile karşılaştırır, değişince telefona bildirir.
+  - Ret yardımcısı: panelde Yayın Uzmanı › App Store; Apple mesajı yapıştırılır → kural numaraları `uzman/apple-kurallar.json` bilgi tabanıyla Türkçe açıklanır, model İngilizce Resolution Center cevabı yazar (İngilizce değilse ya da kural numarası geçmiyorsa şablon). Sonuç `app_settings.rejection:<oyun>`.
+  - Uzmanın modeli `gemma3:12b` (Qwen 7B'nin Türkçesi bozuktu).
+- Sıradaki: Play politika retleri (Gmail'den), öğrenme döngüsü (ret/sonuçlardan yeni kural), App Store mağaza sayfası koçu.
 
 ### Ekip ve asistan (28 Ekim 2026)
 

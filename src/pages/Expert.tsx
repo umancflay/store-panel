@@ -14,11 +14,12 @@ import Select from '../components/Select'
 import { GameChip, SampleBanner, Seg, Toggle } from '../components/ui'
 import ReleasePage from './Release'
 import AsoCoach from '../components/AsoCoach'
+import AppStoreReview from '../components/AppStoreReview'
 
 // Yayın Uzmanı: build'i bırak, uzman incelesin, raporlasın, dahili teste yüklesin; oyunculara açmak senin onayınla.
 // Claude kullanmaz: kurallar + stüdyonun kendi modeli GitHub'da çalışır (scripts/expert.mjs).
 
-type Tab = 'builds' | 'aso' | 'surum' | 'beyan'
+type Tab = 'builds' | 'aso' | 'appstore' | 'surum' | 'beyan'
 const BEYAN: { key: keyof DataSafety; label: string; hint: string }[] = [
   { key: 'ads', label: 'Reklam gösteriyor', hint: 'AdMob, Unity Ads, AppLovin…' },
   { key: 'ad_id', label: 'Reklam kimliği (cihaz veya diğer kimlikler)', hint: 'Reklam ve analiz SDK\'ları toplar' },
@@ -40,9 +41,13 @@ export default function Expert() {
   const actions = useRows<ExpertAction>('expert_actions', demoActions, { order: 'created_at', ascending: false })
   const [safety, saveSafety] = useSetting<Record<string, DataSafety>>('data_safety', {})
   const android = games.filter((g) => g.platforms.includes('android'))
+  const ios = games.filter((g) => g.platforms.includes('ios'))
+  const storeGames = games.filter((g) => g.platforms.includes('android') || g.platforms.includes('ios'))
   const [picked, setGameId] = useState('')
-  // Oyunlar sonradan yüklenir; seçim yapılmadıysa ilk Android oyunu kullan
-  const gameId = picked || android[0]?.id || ''
+  // Oyunlar sonradan yüklenir; seçim yapılmadıysa ilk mağaza oyununu kullan
+  const gameId = picked || storeGames[0]?.id || ''
+  const asoGame = android.some((g) => g.id === gameId) ? gameId : android[0]?.id ?? ''
+  const iosGame = ios.some((g) => g.id === gameId) ? gameId : ios[0]?.id ?? ''
   const [progress, setProgress] = useState<number | null>(null)
   const [drag, setDrag] = useState(false)
   const input = useRef<HTMLInputElement>(null)
@@ -50,15 +55,16 @@ export default function Expert() {
 
   async function upload(file: File) {
     const ext = file.name.toLowerCase().split('.').pop()
-    if (!['aab', 'apk'].includes(ext ?? '')) return toast('Şimdilik Android build\'i (.aab ya da .apk) bırakabilirsin. iOS incelemesi sonraki aşamada.', 'warn')
+    if (!['aab', 'apk', 'ipa'].includes(ext ?? '')) return toast('Android için .aab ya da .apk, iOS için .ipa bırakabilirsin.', 'warn')
     if (!gameId) return toast('Önce oyunu seç', 'warn')
+    const platform = ext === 'ipa' ? 'ios' : 'android'
     if (isDemo) return toast('Demo modda yüklenmez', 'info')
     try {
       setProgress(0)
       const stored = await uploadFile(file, setProgress)
       const { data: f, error: fe } = await supabase!.from('files').insert({ folder: 'Build', game_id: gameId, ...stored, uploaded_by: me.email } as never).select('id').single()
       if (fe) throw new Error(fe.message)
-      await builds.insert({ game_id: gameId, platform: 'android', file_id: (f as { id: number }).id, file_name: file.name, status: 'uploaded', created_by: me.email })
+      await builds.insert({ game_id: gameId, platform, file_id: (f as { id: number }).id, file_name: file.name, status: 'uploaded', created_by: me.email })
       logActivity(me.email, `${nameOf(gameId)} için ${file.name} build'ini Yayın Uzmanı'na bıraktı`, '/yayin').catch(() => {})
       const err = await triggerWorkflow('expert.yml')
       toast(err ? 'Build yüklendi; uzman en geç 15 dakikada başlar.' : 'Build yüklendi, uzman inceliyor. Bitince telefonuna bildirim gelir.')
@@ -106,7 +112,7 @@ export default function Expert() {
           <h1>Build'i bırak, gerisini uzman yapsın</h1>
           <p>İnceler, sorunları "ne yapmalısın" diye söyler, dahili teste yükler. Oyunculara açmak senin onayınla. Claude kullanmaz; stüdyonun kendi modeli çalışır.</p>
         </div>
-        <Seg value={tab} onChange={setTab} options={[{ value: 'builds', label: 'Build\'ler' }, { value: 'aso', label: 'Mağaza sayfası' }, { value: 'surum', label: 'Sürüm çıkar' }, { value: 'beyan', label: 'Veri güvenliği' }]} />
+        <Seg value={tab} onChange={setTab} options={[{ value: 'builds', label: 'Build\'ler' }, { value: 'aso', label: 'Mağaza sayfası' }, { value: 'appstore', label: 'App Store' }, { value: 'surum', label: 'Sürüm çıkar' }, { value: 'beyan', label: 'Veri güvenliği' }]} />
       </div>
 
       {tab === 'builds' && (
@@ -124,18 +130,18 @@ export default function Expert() {
           >
             <UploadCloud size={30} className="dz-icon" />
             <div className="grow">
-              <b>Android build'ini buraya bırak</b>
-              <div className="muted small">.aab (önerilen) ya da .apk · 500 MB'a kadar · oyun başına son 2 build saklanır</div>
+              <b>Build'i buraya bırak</b>
+              <div className="muted small">Android: .aab ya da .apk · iOS: .ipa · 500 MB'a kadar · oyun başına son 2 build saklanır</div>
               {progress !== null && <div className="dz-bar"><div style={{ width: `${Math.round(progress * 100)}%` }} /></div>}
             </div>
             <Select className="select" value={gameId} onChange={(e) => setGameId(e.target.value)} aria-label="Oyun">
-              {android.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+              {storeGames.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
             </Select>
             <button type="button" className="btn btn-primary" onClick={() => input.current?.click()} disabled={progress !== null}><Rocket size={14} /> Dosya seç</button>
-            <input ref={input} type="file" accept=".aab,.apk" hidden onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
+            <input ref={input} type="file" accept=".aab,.apk,.ipa" hidden onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
           </section>
 
-          {builds.rows.length === 0 && <div className="card empty">Henüz build yok. Unity'den aldığın AAB'yi yukarı bırak; uzman birkaç dakikada raporlar.</div>}
+          {builds.rows.length === 0 && <div className="card empty">Henüz build yok. Unity'den aldığın AAB'yi ya da Xcode'dan aldığın IPA'yı yukarı bırak; uzman birkaç dakikada raporlar.</div>}
           {builds.rows.map((b) => (
             <BuildCard key={b.id} b={b} gameName={nameOf(b.game_id)} actions={actions.rows} onApprove={approve} onReject={reject} onRollout={rollout} />
           ))}
@@ -146,11 +152,23 @@ export default function Expert() {
         <>
           <div className="flex" style={{ gap: 10 }}>
             <span className="small muted">Oyun</span>
-            <Select className="select" style={{ width: 'auto' }} value={gameId} onChange={(e) => setGameId(e.target.value)} aria-label="Oyun">
+            <Select className="select" style={{ width: 'auto' }} value={asoGame} onChange={(e) => setGameId(e.target.value)} aria-label="Oyun">
               {android.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
             </Select>
           </div>
-          {gameId && <AsoCoach key={gameId} gameId={gameId} gameName={nameOf(gameId)} />}
+          {asoGame && <AsoCoach key={asoGame} gameId={asoGame} gameName={nameOf(asoGame)} />}
+        </>
+      )}
+
+      {tab === 'appstore' && (
+        <>
+          <div className="flex" style={{ gap: 10 }}>
+            <span className="small muted">Oyun</span>
+            <Select className="select" style={{ width: 'auto' }} value={iosGame} onChange={(e) => setGameId(e.target.value)} aria-label="Oyun">
+              {ios.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+            </Select>
+          </div>
+          {iosGame ? <AppStoreReview key={iosGame} gameId={iosGame} gameName={nameOf(iosGame)} /> : <div className="card empty">iOS'ta olan oyun yok.</div>}
         </>
       )}
 

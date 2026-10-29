@@ -1,7 +1,8 @@
-// Panelden istenen koçluk işleri (app_settings.expert_queue): mağaza sayfası incelemesi ve sürüm notu.
+// Panelden istenen koçluk işleri (app_settings.expert_queue): mağaza sayfası incelemesi, sürüm notu, App Store ret cevabı.
 // Sonuç app_settings'e yazılır (aso:<oyun>, whatsnew:<oyun>), isteyene telefon bildirimi gider.
 
 import { asoRules, competitors, readListing, suggest, whatsNew } from './aso.mjs'
+import { handleRejection } from './appreview.mjs'
 
 const LANG = { TR: ['tr', 'Türkçe'], US: ['en', 'İngilizce'], GB: ['en', 'İngilizce'], DE: ['de', 'Almanca'], FR: ['fr', 'Fransızca'], ES: ['es', 'İspanyolca'], MX: ['es', 'İspanyolca'], BR: ['pt', 'Portekizce'], RU: ['ru', 'Rusça'], ID: ['id', 'Endonezce'], JP: ['ja', 'Japonca'], KR: ['ko', 'Korece'], IT: ['it', 'İtalyanca'], IN: ['hi', 'Hintçe'], SA: ['ar', 'Arapça'] }
 
@@ -50,6 +51,9 @@ export async function runQueue(deps) {
       if (it.kind === 'aso') {
         await save(db, `aso:${it.gameId}`, await runAso(it, deps))
         await notify(it.by, `${name}: mağaza sayfası raporu hazır`, 'Ne eksik, rakipler ne yapıyor ve başlık/açıklama önerileri Yayın Uzmanı › Mağaza sayfası\'nda.', './#/yayin?tab=aso')
+      } else if (it.kind === 'rejection') {
+        await save(db, `rejection:${it.gameId}`, await (deps.handleRejection ?? handleRejection)(it))
+        await notify(it.by, `${name}: App Store retine cevap hazır`, 'Kuralın ne dediği, ne yapman gerektiği ve İngilizce cevap taslağı Yayın Uzmanı › App Store\'da.', './#/yayin?tab=appstore')
       } else if (it.kind === 'notes') {
         const n = await (deps.whatsNew ?? whatsNew)(it.bullets ?? '')
         await save(db, `whatsnew:${it.gameId}`, { at: new Date().toISOString(), bullets: it.bullets, ...n })
@@ -57,7 +61,7 @@ export async function runQueue(deps) {
       }
     } catch (e) {
       console.error(`Koçluk işi (${it.kind}, ${it.gameId}) yapılamadı:`, e.message)
-      await save(db, `${it.kind === 'aso' ? 'aso' : 'whatsnew'}:${it.gameId}`, { at: new Date().toISOString(), error: e.message })
+      await save(db, `${{ aso: 'aso', notes: 'whatsnew', rejection: 'rejection' }[it.kind] ?? it.kind}:${it.gameId}`, { at: new Date().toISOString(), error: e.message })
     }
   }
   return items.length
