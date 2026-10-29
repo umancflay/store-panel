@@ -195,3 +195,50 @@ export interface Release {
   created_at: string
   updated_at: string
 }
+
+// Yayın Uzmanı (supabase/phase11-expert.sql)
+export type BuildStatus = 'uploaded' | 'inspecting' | 'blocked' | 'ready' | 'internal' | 'awaiting_approval' | 'publishing' | 'live' | 'failed'
+export interface Finding {
+  id: string
+  severity: 'block' | 'warn' | 'info'
+  title: string
+  detail: string
+  fix: string[]
+  policy?: string
+}
+export interface StoreBuild {
+  id: number
+  game_id: string | null
+  platform: 'android' | 'ios'
+  file_id: number | null
+  file_name: string | null
+  package_name: string | null
+  version_code: number | null
+  version_name: string | null
+  status: BuildStatus
+  report: {
+    verdict: 'blocked' | 'warnings' | 'clean'
+    counts: { block: number; warn: number; info: number }
+    findings: Finding[]
+    text: string
+    aiSummary?: boolean
+    build?: { kind: string; targetSdk: number; minSdk: number; abis: string[]; sizeMb: number; hits: string[] }
+  } | null
+  summary: string | null
+  error: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+export interface ExpertAction {
+  id: number
+  build_id: number
+  kind: 'publish_production' | 'increase_rollout' | 'halt'
+  params: { userFraction?: number }
+  status: 'pending' | 'approved' | 'rejected' | 'done' | 'failed'
+  result: string | null
+  approved_by: string | null
+  approved_at: string | null
+  created_at: string
+}
+export type DataSafety = Partial<Record<'ads' | 'ad_id' | 'device_id' | 'analytics' | 'crash_logs' | 'location' | 'personal', boolean>>

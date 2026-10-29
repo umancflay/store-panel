@@ -8,7 +8,7 @@ import { logActivity } from '../lib/files'
 import { demoReleases, demoTasks } from '../data/demo'
 import { ASSISTANT, taskCode, type Release, type ReleaseCheck, type ReleaseStatus, type Task } from '../lib/types'
 import { platformLabel } from '../lib/format'
-import { GameLogo, Modal, SampleBanner, Seg } from '../components/ui'
+import { GameLogo, Modal, Seg } from '../components/ui'
 import Select from '../components/Select'
 import { triggerWorkflow } from '../lib/trigger'
 
@@ -213,13 +213,8 @@ export default function ReleasePage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-      <SampleBanner />
-      <div className="page-head flex between wrap" style={{ gap: 14 }}>
-        <div>
-          <span className="eyebrow">Sürüm çıkar</span>
-          <h1>Yeni sürümü sorunsuz yayınla</h1>
-          <p>Her sürüm için mağaza kontrol listesi. Adımları işaretle, sürüm notlarını Claude'a yazdır. Hiçbir şey mağazaya kendiliğinden gönderilmez.</p>
-        </div>
+      <div className="flex between wrap" style={{ gap: 14 }}>
+        <p className="muted small" style={{ maxWidth: 640 }}>Her sürüm için mağaza kontrol listesi. Adımları işaretle, sürüm notlarını Claude'a yazdır. Hiçbir şey mağazaya kendiliğinden gönderilmez.</p>
         <button type="button" className="btn btn-primary" onClick={() => setAdding(true)}><Plus size={14} /> Yeni sürüm</button>
       </div>
 

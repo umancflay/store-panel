@@ -44,7 +44,7 @@ export const navGroups: { title: string; items: NavItem[] }[] = [
       { to: '/gelir', label: 'Gelir', hint: 'AdMob ve satış', icon: Wallet },
       { to: '/reklamlar', label: 'Reklam', hint: 'Kampanyalar', icon: Megaphone },
       { to: '/yorumlar', label: 'Yorumlar', hint: 'Oyuncular', icon: MessageSquareText },
-      { to: '/surum', label: 'Sürüm çıkar', hint: 'Mağaza kontrol listesi', icon: Rocket },
+      { to: '/yayin', label: 'Yayın Uzmanı', hint: 'Build, test, yayın', icon: Rocket },
       { to: '/ayarlar', label: 'Ayarlar', hint: 'Profil ve bağlantılar', icon: Settings },
     ],
   },

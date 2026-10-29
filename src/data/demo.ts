@@ -1,7 +1,7 @@
 // SADECE DEMO MOD için örnek görev/not/plan verileri (Supabase bağlı değilken).
 // Gerçek modda bu dosya kullanılmaz; panel yalnızca veritabanındaki gerçek kayıtları gösterir.
 
-import type { AssistantQuestion, Automation, CalEvent, Decision, Message, Note, Person, Plan, PlanNode, Task, WorkPlan, WorkSuggestion, Release } from '../lib/types'
+import type { AssistantQuestion, Automation, CalEvent, Decision, Message, Note, Person, Plan, PlanNode, Task, WorkPlan, WorkSuggestion, Release, StoreBuild, ExpertAction } from '../lib/types'
 import { addDays, today } from '../lib/rows'
 
 const t = today()
@@ -103,4 +103,33 @@ export const demoReleases: Release[] = [
     changes: 'Yeni bölüm: Salgın koğuşu. 3 yeni hasta tipi. Açılıştaki çökme düzeltildi.',
     checklist: [], task_id: null, created_by: DEMO_ME, created_at: ago(2), updated_at: ago(0),
   },
+]
+
+// Yayın Uzmanı (demo)
+export const demoBuilds: StoreBuild[] = [
+  {
+    id: 2, game_id: 'salgin', platform: 'android', file_id: null, file_name: 'Salgin-1.1.0.aab', package_name: 'com.voo.salgin', version_code: 43, version_name: '1.1.0',
+    status: 'awaiting_approval', summary: 'Salgın 1.1.0 dahili teste yüklendi, engelleyici sorun yok. Bir uyarı var: oyun konum izni istiyor; kullanmıyorsan kaldır. Oyunculara %10 açmak için onayla.',
+    report: {
+      verdict: 'warnings', counts: { block: 0, warn: 1, info: 0 }, aiSummary: true, text: '',
+      findings: [{ id: 'sensitive-permissions', severity: 'warn', title: 'Hassas izinler var', detail: 'ACCESS_FINE_LOCATION (kesin konum)', fix: ['Oyun bu izni kullanmıyorsa kaldır: Assets/Plugins/Android/AndroidManifest.xml\'e tools:node="remove" satırı ekle.'] }],
+      build: { kind: 'aab', targetSdk: 36, minSdk: 23, abis: ['arm64-v8a', 'armeabi-v7a'], sizeMb: 92, hits: ['Lcom/google/android/gms/ads/'] },
+    },
+    error: null, created_by: DEMO_ME, created_at: ago(0), updated_at: ago(0),
+  },
+  {
+    id: 1, game_id: 'tasinma-kaosu', platform: 'android', file_id: null, file_name: 'TasinmaKaosu-1.0.5.aab', package_name: 'com.voo.tasinma', version_code: 15, version_name: '1.0.5',
+    status: 'blocked', summary: null, error: null, created_by: DEMO_PARTNER, created_at: ago(1), updated_at: ago(1),
+    report: {
+      verdict: 'blocked', counts: { block: 2, warn: 0, info: 0 }, text: 'Taşınma Kaosu 1.0.5 (15) · Yüklenemez: 2 engelleyici sorun',
+      findings: [
+        { id: 'target-sdk-too-low', severity: 'block', title: 'Hedef API seviyesi düşük', detail: 'Hedef API 34; Google 36 istiyor.', fix: ['Unity › Player Settings › Other Settings › Target API Level\'ı en yükseğe ayarla.', 'Build\'i yeniden al.'] },
+        { id: 'test-ad-id', severity: 'block', title: 'Test reklam kimliği unutulmuş', detail: 'Build içinde Google\'ın test reklam kimliği bulundu.', fix: ['ca-app-pub-3940256099942544 ile başlayan kimlikleri gerçek kimliklerle değiştir.'] },
+      ],
+      build: { kind: 'aab', targetSdk: 34, minSdk: 22, abis: ['arm64-v8a'], sizeMb: 61, hits: [] },
+    },
+  },
+]
+export const demoActions: ExpertAction[] = [
+  { id: 1, build_id: 2, kind: 'publish_production', params: { userFraction: 0.1 }, status: 'pending', result: null, approved_by: null, approved_at: null, created_at: ago(0) },
 ]
