@@ -2,6 +2,7 @@
 // onaylanan eylemi uygula; eski build dosyalarını temizle. Bağımlılıklar dışarıdan verilir (testte sahte).
 
 import path from 'node:path'
+import { lessonFindings } from './ask.mjs'
 
 const now = () => new Date().toISOString()
 const pct = (f) => `%${Math.round(f * 100)}`
@@ -64,6 +65,9 @@ export async function processBuild(build, d) {
       })
     }
 
+    // Kullanıcının uzmana öğrettikleri her raporda hatırlatılır
+    if (d.lessons) findings.push(...lessonFindings(await d.lessons(), 'android'))
+
     // Engelleyici yoksa sanal telefonda açıp oynat (Firebase Test Lab, sadece ücretsiz planda)
     let device = null
     if (d.testLab && build.platform === 'android' && !findings.some((f) => f.severity === 'block')) {
@@ -110,6 +114,7 @@ async function inspectIos(build, d, { local, gameName }) {
   const i = b.info
   const [last] = await d.db(`builds?game_id=eq.${encodeURIComponent(build.game_id)}&platform=eq.ios&select=version,build_number&order=updated_at.desc&limit=1`).catch(() => [])
   const findings = d.runRules({ build: b, prev: last ? { version: last.version, buildNumber: last.build_number } : null, today: d.today() }, d.iosRules)
+  if (d.lessons) findings.push(...lessonFindings(await d.lessons(), 'ios'))
   const num = /^\d+$/.test(String(i.CFBundleVersion)) ? Number(i.CFBundleVersion) : null
   const report = d.buildReport(findings, { gameName, versionName: i.CFBundleShortVersionString, versionCode: i.CFBundleVersion })
   const summary = (await d.polish(report, findings)) ?? report.text

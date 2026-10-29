@@ -184,7 +184,10 @@ Küçük bir Unity mobil oyun stüdyosu (Voo Game Studio / Pixel Game) için tek
   - İnceleme takibi: `scripts/expert/appreview.mjs › syncReviews`, `expert.mjs check` her çalıştığında (birkaç saniye) App Store Connect'teki son sürüm durumunu `app_settings.asc_review_state` ile karşılaştırır, değişince telefona bildirir.
   - Ret yardımcısı: panelde Yayın Uzmanı › App Store; Apple mesajı yapıştırılır → kural numaraları `uzman/apple-kurallar.json` bilgi tabanıyla Türkçe açıklanır, model İngilizce Resolution Center cevabı yazar (İngilizce değilse ya da kural numarası geçmiyorsa şablon). Sonuç `app_settings.rejection:<oyun>`.
   - Uzmanın modeli `gemma3:4b` (hızlı; daha iyi Türkçe için EXPERT_MODEL=gemma3:12b).
-- Sıradaki: Play politika retleri (Gmail'den), öğrenme döngüsü (ret/sonuçlardan yeni kural), App Store mağaza sayfası koçu.
+- **Uzmana sor / öğret (29 Ekim 2026):** `scripts/expert/ask.mjs`. Sorular kuyruğa (`kind: ask`) girer, model kurallar + eşikler + Apple bilgi tabanı + öğrettiklerin + oyunun son build/mağaza raporuyla cevaplar → `app_settings.expert_chat` (son 40). Öğrettiklerin `app_settings.expert_lessons` (panel doğrudan yazar); her build raporuna "Öğrettiğin: …" bilgi bulgusu olarak eklenir.
+- **Cihazda dene:** kuyrukta `kind: devicetest` (buildId); sonuç `store_builds.report.device`, ekran görüntüleri `files` kovasında `expert/build-<id>/`.
+- Panel: build silme (dosya + görüntüler + kayıt), eski kartlar küçük, 1180px üstünde sabit sol menü.
+- Sıradaki: Play politika retleri (Gmail'den), iOS cihaz testi, App Store mağaza sayfası koçu.
 
 ### Ekip ve asistan (28 Ekim 2026)
 

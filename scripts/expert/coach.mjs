@@ -3,6 +3,7 @@
 
 import { asoRules, competitors, readListing, suggest, whatsNew } from './aso.mjs'
 import { handleRejection } from './appreview.mjs'
+import { handleAsk } from './ask.mjs'
 import { deviceTest } from './pipeline.mjs'
 import path from 'node:path'
 
@@ -79,6 +80,9 @@ export async function runQueue(deps) {
       } else if (it.kind === 'devicetest') {
         await runDeviceTest(it, deps)
         await notify(it.by, `${name}: cihaz testi bitti`, "Sonuç ve ekran görüntüleri Yayın Uzmanı › Build'ler'de.", './#/yayin')
+      } else if (it.kind === 'ask') {
+        const e = await (deps.handleAsk ?? handleAsk)(it, { db })
+        await notify(it.by, 'Uzman cevapladı', e.a.replace(/\s+/g, ' ').slice(0, 140), './#/yayin?tab=sor')
       } else if (it.kind === 'rejection') {
         await save(db, `rejection:${it.gameId}`, await (deps.handleRejection ?? handleRejection)(it))
         await notify(it.by, `${name}: App Store retine cevap hazır`, 'Kuralın ne dediği, ne yapman gerektiği ve İngilizce cevap taslağı Yayın Uzmanı › App Store\'da.', './#/yayin?tab=appstore')

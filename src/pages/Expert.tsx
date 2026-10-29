@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Apple, Bot, ListChecks, Package, Rocket, ShieldCheck, Smartphone, Store, UploadCloud } from 'lucide-react'
+import { Apple, Bot, GraduationCap, ListChecks, Package, Rocket, ShieldCheck, Smartphone, Store, UploadCloud } from 'lucide-react'
 import { useData, usePeople } from '../lib/data'
 import { useStore } from '../lib/store'
 import { supabase, isDemo } from '../lib/supabase'
@@ -15,14 +15,16 @@ import { GameChip, SampleBanner, Toggle } from '../components/ui'
 import ReleasePage from './Release'
 import AsoCoach from '../components/AsoCoach'
 import AppStoreReview from '../components/AppStoreReview'
+import AskExpert from '../components/AskExpert'
 import { enqueue } from '../lib/expertQueue'
 
 // Yayın Uzmanı: build'i bırak, uzman incelesin, raporlasın, dahili teste yüklesin; oyunculara açmak senin onayınla.
 // Claude kullanmaz: kurallar + stüdyonun kendi modeli GitHub'da çalışır (scripts/expert.mjs).
 
-type Tab = 'builds' | 'aso' | 'appstore' | 'surum' | 'beyan'
+type Tab = 'builds' | 'sor' | 'aso' | 'appstore' | 'surum' | 'beyan'
 const TABS: { value: Tab; label: string; icon: typeof Rocket }[] = [
   { value: 'builds', label: 'Build\'ler', icon: Package },
+  { value: 'sor', label: 'Uzmana sor', icon: GraduationCap },
   { value: 'aso', label: 'Mağaza sayfası', icon: Store },
   { value: 'appstore', label: 'App Store', icon: Apple },
   { value: 'surum', label: 'Sürüm çıkar', icon: ListChecks },
@@ -227,6 +229,8 @@ export default function Expert() {
           {iosGame ? <AppStoreReview key={iosGame} gameId={iosGame} gameName={nameOf(iosGame)} /> : <div className="card empty">iOS'ta olan oyun yok.</div>}
         </>
       )}
+
+      {tab === 'sor' && <AskExpert />}
 
       {tab === 'surum' && <ReleasePage />}
 

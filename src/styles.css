@@ -996,3 +996,21 @@ tr.on td { background: rgba(143,211,174,.06); }
 .watch-line.warn { color: var(--gold); }
 .watch-line.bad { color: var(--orange-fg); }
 @media (prefers-reduced-motion: reduce) { .expert-hero::after, .build-card.tone-run::before { animation: none; } }
+
+/* Uzmana sor / öğret */
+.ask-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 900px) { .ask-grid { grid-template-columns: 1fr; } }
+.ask-chat, .ask-teach { display: flex; flex-direction: column; gap: 10px; }
+.ask-form { display: flex; flex-direction: column; gap: 8px; }
+.ask-suggest { display: flex; flex-wrap: wrap; gap: 6px; }
+.ask-suggest button { padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.03); color: var(--soft); font: 400 11px var(--font); cursor: pointer; transition: background .15s, color .15s; }
+.ask-suggest button:hover { background: rgba(143,211,174,.1); color: #fff; border-color: rgba(143,211,174,.35); }
+.ask-item { display: flex; flex-direction: column; gap: 8px; padding: 14px 0; border-top: 1px solid var(--line); }
+.ask-q { align-self: flex-end; max-width: 85%; padding: 10px 14px; border-radius: 16px 16px 4px 16px; background: rgba(255,255,255,.08); font-size: 13px; }
+.ask-q .muted { font-size: 10px; }
+.ask-a { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; }
+.ask-a p { margin: 0; padding: 12px 14px; border-radius: 4px 16px 16px 16px; background: linear-gradient(160deg, rgba(143,211,174,.09), rgba(255,255,255,.02)); border: 1px solid rgba(143,211,174,.2); white-space: pre-wrap; line-height: 1.6; color: #e8e8e8; }
+.ask-item.pending .ask-a { padding-left: 4px; gap: 8px; align-items: center; }
+.lesson-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.lesson { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,.03); border: 1px solid var(--line); font-size: 12px; line-height: 1.5; }
+.lesson .plat { margin-top: 1px; flex-shrink: 0; }

@@ -18,6 +18,7 @@ import { queueOf, runQueue } from './expert/coach.mjs'
 import { runRobo } from './expert/testlab.mjs'
 import { dueBuilds, versionVitals, watchLive } from './expert/watch.mjs'
 import { syncReviews } from './expert/appreview.mjs'
+import { lessonsOf } from './expert/ask.mjs'
 import { api as ascApi, appStoreReady } from './appstore.mjs'
 
 if (!dbReady) {
@@ -47,7 +48,7 @@ if (process.argv[2] === 'check') {
   const builds = (await pendingBuilds()).length > 0
   const items = await queueOf(db).catch(() => [])
   const queue = items.length > 0
-  const needsModel = items.some((i) => ['aso', 'notes', 'rejection'].includes(i.kind))
+  const needsModel = items.some((i) => ['aso', 'notes', 'rejection', 'ask'].includes(i.kind))
   const has = builds || queue || (await approvedActions()).length > 0 || (await dueBuilds(db)).length > 0
   // Model (Ollama) sadece rapor/öneri yazılacaksa kurulur; nöbet ve onaylı eylemler için gerekmez
   if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `has=${has}\nmodel=${builds || needsModel}\nbuilds=${builds}\n`)
@@ -62,6 +63,7 @@ const deps = {
   downloadFile,
   readAndroid,
   readIos,
+  lessons: () => lessonsOf(db),
   iosRules,
   runRules,
   buildReport,
