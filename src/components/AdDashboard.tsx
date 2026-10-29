@@ -42,6 +42,8 @@ const FEMALE = '#d95926'
 
 const statusText: Record<string, [string, string]> = {
   ACTIVE: ['Yayında', 'b-ok'],
+  ENABLED: ['Yayında', 'b-ok'], // Google Ads
+  REMOVED: ['Silindi', 'b-muted'], // Google Ads
   PAUSED: ['Durduruldu', 'b-muted'],
   CAMPAIGN_PAUSED: ['Durduruldu', 'b-muted'],
   ADSET_PAUSED: ['Durduruldu', 'b-muted'],
@@ -209,7 +211,7 @@ export default function AdDashboard() {
       const list = cur.filter((r) => r.external_id === c.external_id && r.platform === c.platform)
       return { ...c, ...sum(list) }
     })
-    .filter((c) => c.spend > 0 || c.status === 'ACTIVE')
+    .filter((c) => c.spend > 0 || c.status === 'ACTIVE' || c.status === 'ENABLED')
     .sort((a, b) => b.spend - a.spend)
 
   if (demo) return null
