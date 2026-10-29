@@ -39,7 +39,9 @@ export default function Expert() {
   const actions = useRows<ExpertAction>('expert_actions', demoActions, { order: 'created_at', ascending: false })
   const [safety, saveSafety] = useSetting<Record<string, DataSafety>>('data_safety', {})
   const android = games.filter((g) => g.platforms.includes('android'))
-  const [gameId, setGameId] = useState(android[0]?.id ?? '')
+  const [picked, setGameId] = useState('')
+  // Oyunlar sonradan yüklenir; seçim yapılmadıysa ilk Android oyunu kullan
+  const gameId = picked || android[0]?.id || ''
   const [progress, setProgress] = useState<number | null>(null)
   const [drag, setDrag] = useState(false)
   const input = useRef<HTMLInputElement>(null)
