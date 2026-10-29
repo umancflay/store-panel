@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { supabase, isDemo } from '../lib/supabase'
-import { countryName, dayLabel, int, pct, short } from '../lib/format'
+import { countryName, dayLabel, int, localIso, pct, short } from '../lib/format'
 import { BarList, ChartTip, Seg } from './ui'
 
 // Oyuncular: Google Play toplu raporlarından son 30 günün kurulum / kaldırma / aktif cihaz kırılımları.
@@ -46,7 +46,7 @@ function keyLabel(dim: Dim, key: string) {
   return key
 }
 
-const daysAgo = (n: number) => new Date(Date.now() - n * 86400000).toISOString().slice(0, 10)
+const daysAgo = (n: number) => localIso(new Date(Date.now() - n * 86400000))
 
 // Demo modda (Supabase ayarlı değilken) örnek veri
 function demoData(gameId: string): { summary: Summary[]; days: Day[] } {

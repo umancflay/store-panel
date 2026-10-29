@@ -1,6 +1,8 @@
 // 1. aşama için ÖRNEK veriler. Gerçek veriler sonraki aşamalarda Supabase'den gelecek.
 // Sayılar sabit bir tohumla üretilir, böylece her açılışta aynı görünür.
 
+import { localIso } from '../lib/format'
+
 export type Platform = 'android' | 'ios'
 
 export interface Game {
@@ -62,7 +64,7 @@ today.setHours(0, 0, 0, 0)
 export function isoDay(offset: number) {
   const d = new Date(today)
   d.setDate(d.getDate() - offset)
-  return d.toISOString().slice(0, 10)
+  return localIso(d)
 }
 
 const profiles: Record<string, { dl: number; ecpm: number; iap: number; crash: number; rating: number }> = {

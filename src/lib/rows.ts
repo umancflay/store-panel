@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase, isDemo } from './supabase'
+import { localIso } from './format'
 
 // Demo modda sayfalar arası geçişte değişiklikler kaybolmasın
 const demoCache = new Map<string, unknown[]>()
@@ -103,11 +104,11 @@ export function useRows<T extends { id: number }>(
 }
 
 // Türkçe tarih yardımcıları
-export const today = () => new Date().toISOString().slice(0, 10)
+export const today = () => localIso(new Date())
 export function addDays(iso: string, n: number) {
   const d = new Date(iso + 'T00:00:00')
   d.setDate(d.getDate() + n)
-  return d.toISOString().slice(0, 10)
+  return localIso(d)
 }
 export function daysBetween(a: string, b: string) {
   return Math.round((new Date(b + 'T00:00:00').getTime() - new Date(a + 'T00:00:00').getTime()) / 86400000)

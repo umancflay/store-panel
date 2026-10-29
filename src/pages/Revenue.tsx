@@ -5,7 +5,7 @@ import { TrendingDown } from 'lucide-react'
 import { gameById, type AdUnit } from '../data/sample'
 import { useData } from '../lib/data'
 import { byDay, limits, periodRows, totals } from '../lib/metrics'
-import { change, currencySymbol, dayLabel, int, money, money2, pct, short } from '../lib/format'
+import { change, currencySymbol, dayLabel, int, localIso, money, money2, pct, short } from '../lib/format'
 import { ChartTip, Delta, Donut, GameChip, GameLogo, Rings, SampleBanner, Seg, Sparkline, StatCard, useCountUp } from '../components/ui'
 import Needs from '../components/Needs'
 import AdmobSummary from '../components/AdmobSummary'
@@ -49,7 +49,7 @@ export default function Revenue() {
       for (let d = 0; d < 7; d++) {
         const x = new Date(monday)
         x.setDate(monday.getDate() + w * 7 + d)
-        const iso = x.toISOString().slice(0, 10)
+        const iso = localIso(x)
         cells.push({ date: iso, v: x > end ? null : map.get(iso) ?? 0 })
       }
       weeks.push({ label: dayLabel(cells[0].date), cells })

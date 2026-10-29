@@ -3,7 +3,7 @@ import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAx
 import { Users, MonitorSmartphone, Globe2, TrendingUp } from 'lucide-react'
 import { useData } from '../lib/data'
 import { supabase, isDemo } from '../lib/supabase'
-import { countryName, currencySymbol, dayLabel, int, money2, pct, short } from '../lib/format'
+import { countryName, currencySymbol, dayLabel, int, localIso, money2, pct, short } from '../lib/format'
 import { BarList, GameLogo } from './ui'
 import Select from './Select'
 
@@ -60,8 +60,7 @@ const placementName: Record<string, string> = {
 }
 const pubName: Record<string, string> = { instagram: 'Instagram', facebook: 'Facebook', audience_network: 'Audience Network', messenger: 'Messenger', threads: 'Threads' }
 
-const iso = (d: Date) => d.toISOString().slice(0, 10)
-const daysAgo = (n: number) => iso(new Date(Date.now() - n * 86400000))
+const daysAgo = (n: number) => localIso(new Date(Date.now() - n * 86400000))
 
 function useAdData() {
   const [rows, setRows] = useState<CampaignDay[]>([])

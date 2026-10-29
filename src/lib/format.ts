@@ -36,6 +36,10 @@ export function dateLong(iso: string) {
   return new Date(iso).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
+// Yerel takvim günü (YYYY-AA-GG). toISOString UTC'ye çevirir; Türkiye'de (UTC+3) yerel gece yarısı bir önceki güne düşer.
+export const localIso = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+
 export function daysUntil(iso: string) {
   const d = new Date(iso)
   const now = new Date()

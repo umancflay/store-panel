@@ -5,6 +5,7 @@ import { usePeople } from '../lib/data'
 import { useStore } from '../lib/store'
 import { supabase, isDemo } from '../lib/supabase'
 import { useRows, addDays, daysBetween, today, trDate, trDateTime } from '../lib/rows'
+import { localIso } from '../lib/format'
 import { demoDecisions, demoMessages, demoNodes, demoPlans, demoTasks, DEMO_PARTNER } from '../data/demo'
 import { ASSISTANT, type Decision, type Message, type Plan, type PlanNode, type Task } from '../lib/types'
 import { SampleBanner, initials, Seg } from '../components/ui'
@@ -58,7 +59,7 @@ export default function Shared() {
   const start = (() => {
     const d = new Date(today() + 'T00:00:00')
     d.setDate(d.getDate() - ((d.getDay() + 6) % 7) - 7) // geçen haftanın pazartesi
-    return d.toISOString().slice(0, 10)
+    return localIso(d)
   })()
   const todayIdx = daysBetween(start, today())
 
