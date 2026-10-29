@@ -1,4 +1,5 @@
-// Firebase Test Lab: build'i sanal bir telefonda açıp Robo ile 5 dakika oynatır (kendi kendine dokunarak gezer).
+// Firebase Test Lab: build'i sanal bir telefonda açıp Robo ile 3 dakika oynatır (kendi kendine dokunarak gezer).
+// Sonuç net: açıldı mı, çöktü mü, kaç dakika sürdü; Robo'nun çektiği ekran görüntüleri panele taşınır.
 // Çökerse engelleyici bulgu olur, Play'e yüklenmez. Sadece ücretsiz planda çalışır (Spark: günde 10 sanal cihaz testi);
 // projede faturalandırma açıksa ya da bu doğrulanamazsa test yapılmaz — para harcanmaz.
 
@@ -35,7 +36,7 @@ export function matrixFinding(matrix, device) {
     return { id: 'testlab-invalid', severity: 'warn', title: 'Test cihazında denenemedi', detail: `Test Lab build'i kabul etmedi (${matrix.invalidMatrixDetails ?? 'bilinmeyen sebep'}).`, fix: ['Build\'in imzalı ve arm64 içerdiğinden emin ol.', ...look] }
   switch (matrix.outcomeSummary) {
     case 'SUCCESS':
-      return { id: 'testlab-ok', severity: 'info', title: 'Test cihazında sorunsuz açıldı ve oynandı', detail: `${where} üzerinde Robo oyunu kendi kendine 5 dakika gezdi; çökme ya da donma olmadı.`, fix: look }
+      return { id: 'testlab-ok', severity: 'info', title: 'Test cihazında sorunsuz açıldı ve oynandı', detail: `${where} üzerinde Robo oyunu kendi kendine 3 dakika gezdi; çökme ya da donma olmadı.`, fix: look }
     case 'FAILURE':
       return {
         id: 'testlab-crash', severity: 'block', title: 'Test cihazında çöktü ya da dondu',
@@ -50,14 +51,16 @@ export function matrixFinding(matrix, device) {
   }
 }
 
-export async function runRobo({ filePath, buildId, minSdk, fetchImpl = fetch, tokenImpl = saToken, pollMs = 20000, maxWaitMs = 25 * 60000 }) {
+export async function runRobo({ filePath, buildId, minSdk, storeShot, fetchImpl = fetch, tokenImpl = saToken, pollMs = 15000, maxWaitMs = 20 * 60000 }) {
+  const t0 = Date.now()
   const project = JSON.parse(process.env.GOOGLE_PLAY_SA_JSON).project_id
-  const call = async (url, { method = 'GET', body, raw, type } = {}) => {
+  const call = async (url, { method = 'GET', body, raw, type, bin } = {}) => {
     const res = await fetchImpl(url, {
       method,
       headers: { Authorization: `Bearer ${await tokenImpl()}`, 'Content-Type': type ?? 'application/json' },
       body: raw ?? (body ? JSON.stringify(body) : undefined),
     })
+    if (bin && res.ok) return Buffer.from(await res.arrayBuffer())
     const text = await res.text()
     if (!res.ok) throw Object.assign(new Error(`${res.status} ${text.slice(0, 300)}`), { status: res.status })
     return text ? JSON.parse(text) : {}
@@ -78,12 +81,13 @@ export async function runRobo({ filePath, buildId, minSdk, fetchImpl = fetch, to
   await call(`https://storage.googleapis.com/upload/storage/v1/b/${defaultBucket}/o?uploadType=media&name=${encodeURIComponent(name)}`, { method: 'POST', raw: fs.readFileSync(filePath), type: 'application/octet-stream' })
   const gcsPath = `gs://${defaultBucket}/${name}`
 
+  const resultsDir = `uzman/results/build-${buildId}-${Date.now()}/`
   let matrix = await call(`${TESTING}/projects/${project}/testMatrices?requestId=${crypto.randomUUID()}`, {
     method: 'POST',
     body: {
-      testSpecification: { testTimeout: '300s', androidRoboTest: isApk ? { appApk: { gcsPath } } : { appBundle: { bundleLocation: { gcsPath } } } },
+      testSpecification: { testTimeout: '180s', androidRoboTest: isApk ? { appApk: { gcsPath } } : { appBundle: { bundleLocation: { gcsPath } } } },
       environmentMatrix: { androidDeviceList: { androidDevices: [{ androidModelId: device.androidModelId, androidVersionId: device.androidVersionId, locale: 'en', orientation: 'portrait' }] } },
-      resultStorage: { googleCloudStorage: { gcsPath: `gs://${defaultBucket}/uzman/results/build-${buildId}-${Date.now()}/` } },
+      resultStorage: { googleCloudStorage: { gcsPath: `gs://${defaultBucket}/${resultsDir}` } },
       flakyTestAttempts: 0,
     },
   })
@@ -92,5 +96,20 @@ export async function runRobo({ filePath, buildId, minSdk, fetchImpl = fetch, to
     await sleep(pollMs)
     matrix = await call(`${TESTING}/projects/${project}/testMatrices/${matrix.testMatrixId}`)
   }
-  return { finding: matrixFinding(matrix, device), device, url: matrix.resultStorage?.resultsUrl ?? null }
+  // Robo'nun ekran görüntülerinden en fazla 6 tanesi (baştan sona eşit aralıklı) panele taşınır
+  const shots = []
+  if (storeShot && matrix.state === 'FINISHED') {
+    try {
+      const list = await call(`https://storage.googleapis.com/storage/v1/b/${defaultBucket}/o?prefix=${encodeURIComponent(resultsDir)}&maxResults=1000`)
+      const pngs = (list.items ?? []).map((o) => o.name).filter((n) => /.png$/i.test(n)).sort()
+      const pick = pngs.length <= 6 ? pngs : Array.from({ length: 6 }, (_, i) => pngs[Math.round((i * (pngs.length - 1)) / 5)])
+      for (const [i, n] of pick.entries()) {
+        const buf = await call(`https://storage.googleapis.com/storage/v1/b/${defaultBucket}/o/${encodeURIComponent(n)}?alt=media`, { bin: true })
+        shots.push(await storeShot(i, buf))
+      }
+    } catch (e) {
+      console.error('Test ekran görüntüleri alınamadı:', e.message)
+    }
+  }
+  return { finding: matrixFinding(matrix, device), device, url: matrix.resultStorage?.resultsUrl ?? null, outcome: matrix.state === 'INVALID' ? 'INVALID' : matrix.outcomeSummary ?? matrix.state, shots, minutes: Math.max(1, Math.round((Date.now() - t0) / 60000)) }
 }

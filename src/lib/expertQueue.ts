@@ -5,7 +5,7 @@ import { triggerWorkflow } from './trigger'
 // Yayın Uzmanı'na panelden iş verme: app_settings.expert_queue'ya yazılır, uzman işi hemen başlatılır.
 // Sonuçlar yine app_settings'e (aso:<oyun>, whatsnew:<oyun>, rejection:<oyun>) yazılır.
 
-export type QueueItem = { id: string; kind: 'aso' | 'notes' | 'rejection'; gameId: string; by: string; at: string; bullets?: string; text?: string; fixes?: string; appeal?: boolean }
+export type QueueItem = { id: string; kind: 'aso' | 'notes' | 'rejection' | 'devicetest'; gameId: string; buildId?: number; by: string; at: string; bullets?: string; text?: string; fixes?: string; appeal?: boolean }
 
 // Tek bir app_settings satırı; anahtar değişince sıfırlanır
 export function useSettingRow<T>(key: string, demo: T | null) {

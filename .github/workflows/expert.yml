@@ -27,7 +27,7 @@ jobs:
       VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
       VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
       VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
-      EXPERT_MODEL: ${{ vars.EXPERT_MODEL || 'gemma3:12b' }}
+      EXPERT_MODEL: ${{ vars.EXPERT_MODEL || 'gemma3:4b' }}
       BUNDLETOOL: ${{ github.workspace }}/.tools/bundletool.jar
     steps:
       - uses: actions/checkout@v4

@@ -164,7 +164,7 @@ Küçük bir Unity mobil oyun stüdyosu (Voo Game Studio / Pixel Game) için tek
 
 - Tasarım: `docs/superpowers/specs/2026-10-29-yayin-uzmani-design.md`, plan: `docs/superpowers/plans/2026-10-29-yayin-uzmani-faz1.md`.
 - Kod: `scripts/expert.mjs` (giriş), `scripts/expert/` (bundle, rules, report, llm, publish, pipeline), `uzman/` (kurallar, eşikler, SDK izleri), `.github/workflows/expert.yml`, panel `/yayin` (`pages/Expert.tsx`, `components/BuildCard.tsx`). Testler: `npm test` (37 test).
-- Claude kullanmaz; model Ollama + `gemma3:12b` (29 Ekim'de Qwen 7B'den geçildi: Türkçesi bozuktu), çıktı doğrulanır, geçmezse kural raporu gösterilir.
+- Claude kullanmaz; model Ollama + `gemma3:4b` (29 Ekim: Qwen 7B'nin Türkçesi bozuktu; 12B yavaştı, kullanıcı hız istedi), çıktı doğrulanır, geçmezse kural raporu gösterilir.
 - Akış: uploaded → inspecting → blocked | ready → internal (Play dahili test, onaysız) → awaiting_approval → (panelde Onayla) → live (%10). Yayındayken %50 / herkese aç / durdur düğmeleri.
 - ✅ 29 Ekim 2026: `phase11-expert.sql` çalıştırıldı, `trigger-update` Edge Function ilk kez kuruldu (panelden anında başlatma çalışıyor). İlk gerçek AAB (RengiYakala, yanlışlıkla Salgın seçilmiş) uçtan uca işlendi: yanlış paket ve test reklam kimliği yakalandı, Play'e gitmedi.
 - ⏳ `targetSdk` 2026 eşiği (36) resmi sayfadan doğrulanmalı. Fonksiyonun "Verify JWT with legacy secret" ayarı açık; çalışıyor, dokunulmadı.
@@ -183,7 +183,7 @@ Küçük bir Unity mobil oyun stüdyosu (Voo Game Studio / Pixel Game) için tek
   - IPA incelemesi: `scripts/expert/ios.mjs` (unzip + python3 plistlib), kurallar `uzman/kurallar/ios.mjs` (geliştirme imzası, build no, eski Xcode SDK, test reklam kimliği, AdMob App ID, ATT metni, boş izin açıklaması, PrivacyInfo, SKAdNetwork, şifreleme beyanı, boyut). Eşikler `esikler.json › iosSdk` (2026 satırı doğrulanmalı). Uzman IPA'yı yüklemez; kullanıcı Mac'ten yükler.
   - İnceleme takibi: `scripts/expert/appreview.mjs › syncReviews`, `expert.mjs check` her çalıştığında (birkaç saniye) App Store Connect'teki son sürüm durumunu `app_settings.asc_review_state` ile karşılaştırır, değişince telefona bildirir.
   - Ret yardımcısı: panelde Yayın Uzmanı › App Store; Apple mesajı yapıştırılır → kural numaraları `uzman/apple-kurallar.json` bilgi tabanıyla Türkçe açıklanır, model İngilizce Resolution Center cevabı yazar (İngilizce değilse ya da kural numarası geçmiyorsa şablon). Sonuç `app_settings.rejection:<oyun>`.
-  - Uzmanın modeli `gemma3:12b` (Qwen 7B'nin Türkçesi bozuktu).
+  - Uzmanın modeli `gemma3:4b` (hızlı; daha iyi Türkçe için EXPERT_MODEL=gemma3:12b).
 - Sıradaki: Play politika retleri (Gmail'den), öğrenme döngüsü (ret/sonuçlardan yeni kural), App Store mağaza sayfası koçu.
 
 ### Ekip ve asistan (28 Ekim 2026)

@@ -223,7 +223,9 @@ export interface StoreBuild {
     text: string
     aiSummary?: boolean
     build?: { kind: string; targetSdk?: number; minSdk?: number; abis?: string[]; sizeMb: number; hits: string[]; iosSdk?: string | null; minOs?: string | null; buildNumber?: string }
-    // Yayın sonrası 48 saat nöbet
+    // Sanal telefonda deneme (Firebase Test Lab)
+    device?: { at: string; outcome: string; name?: string | null; url?: string | null; shots?: string[]; minutes?: number; reason?: string }
+    // Yayın sonrası canlı izleme
     watch?: { at: string; since: string; verdict: 'ok' | 'warn' | 'bad' | 'wait'; text: string; done: boolean }
   } | null
   summary: string | null

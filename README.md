@@ -477,7 +477,7 @@ Build'i panele bırakırsın; uzman inceler, sorunları "ne yapmalısın" diye y
 4. Panel › **Yayın Uzmanı › Veri güvenliği**: her oyun için Play'e ne beyan ettiğini işaretle.
 5. İlk sürüm: Play'de hiç yüklenmemiş bir oyunun ilk build'ini Play Console'dan elle yükle; sonrakileri uzman yükler.
 
-İsteğe bağlı: GitHub › Settings › Variables'ta `EXPERT_MODEL` (varsayılan `gemma3:12b`; Google'ın açık modeli, Türkçesi iyi).
+İsteğe bağlı: GitHub › Settings › Variables'ta `EXPERT_MODEL` (varsayılan `gemma3:4b`, hızlı; daha iyi Türkçe için `gemma3:12b` yazılabilir).
 
 ## Telefonda ana ekrana ekleme
 

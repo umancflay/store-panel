@@ -44,12 +44,12 @@ test('kötüyse durdurma önerisi açılır (onay bekler) ve bir kez bildirilir'
   assert.equal(saved.done, false)
 })
 
-test('48 saat temiz geçince nöbet biter ve haber verir', async () => {
+test('48 saat temiz geçince izleme sessizce biter', async () => {
   const calls = []
   const notes = []
   const since = new Date(Date.now() - 49 * 3600000).toISOString()
   const b = { id: 8, package_name: 'p', version_code: 42, version_name: '1.3', report: { watch: { since, at: since } } }
   await watchLive({ db: fakeDb(b, calls), notify: async (...a) => notes.push(a), vitals: async () => ({ crash: { newRate: 0.2, oldRate: 0.3, users: 900 }, anr: null }) })
-  assert.match(notes[0][1], /48 saat sorunsuz/)
+  assert.equal(notes.length, 0)
   assert.equal(calls.find(([p, m]) => p === 'store_builds?id=eq.8' && m === 'PATCH')[2].report.watch.done, true)
 })

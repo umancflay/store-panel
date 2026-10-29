@@ -114,15 +114,17 @@ export const demoBuilds: StoreBuild[] = [
       verdict: 'clean', counts: { block: 0, warn: 0, info: 1 }, text: '', aiSummary: true,
       findings: [{ id: 'testlab-ok', severity: 'info', title: 'Test cihazında sorunsuz açıldı ve oynandı', detail: 'Medium Phone (Android API 34) üzerinde Robo oyunu kendi kendine 5 dakika gezdi; çökme ya da donma olmadı.', fix: [] }],
       build: { kind: 'aab', targetSdk: 36, minSdk: 23, abis: ['arm64-v8a'], sizeMb: 48, hits: [] },
+      device: { at: ago(1), outcome: 'SUCCESS', name: 'Medium Phone · Android 34', minutes: 4, shots: ['a', 'b', 'c', 'd', 'e', 'f'], url: 'https://console.firebase.google.com' },
       watch: { at: ago(0), since: ago(1), verdict: 'bad', text: 'Yeni sürümde çökme %2,40 (eski sürümlerde %0,35).', done: false },
     },
   },
   {
-    id: 2, game_id: 'salgin', platform: 'android', file_id: null, file_name: 'Salgin-1.1.0.aab', package_name: 'com.voo.salgin', version_code: 43, version_name: '1.1.0',
+    id: 2, game_id: 'salgin', platform: 'android', file_id: 5, file_name: 'Salgin-1.1.0.aab', package_name: 'com.voo.salgin', version_code: 43, version_name: '1.1.0',
     status: 'awaiting_approval', summary: 'Salgın 1.1.0 dahili teste yüklendi, engelleyici sorun yok. Bir uyarı var: oyun konum izni istiyor; kullanmıyorsan kaldır. Oyunculara %10 açmak için onayla.',
     report: {
       verdict: 'warnings', counts: { block: 0, warn: 1, info: 0 }, aiSummary: true, text: '',
       findings: [{ id: 'sensitive-permissions', severity: 'warn', title: 'Hassas izinler var', detail: 'ACCESS_FINE_LOCATION (kesin konum)', fix: ['Oyun bu izni kullanmıyorsa kaldır: Assets/Plugins/Android/AndroidManifest.xml\'e tools:node="remove" satırı ekle.'] }],
+      device: { at: ago(0), outcome: 'RUNNING' },
       build: { kind: 'aab', targetSdk: 36, minSdk: 23, abis: ['arm64-v8a', 'armeabi-v7a'], sizeMb: 92, hits: ['Lcom/google/android/gms/ads/'] },
     },
     error: null, created_by: DEMO_ME, created_at: ago(0), updated_at: ago(0),

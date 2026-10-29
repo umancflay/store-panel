@@ -45,10 +45,12 @@ if (process.argv[2] === 'check') {
     if (n) await flushOutbox()
   }
   const builds = (await pendingBuilds()).length > 0
-  const queue = (await queueOf(db).catch(() => [])).length > 0
+  const items = await queueOf(db).catch(() => [])
+  const queue = items.length > 0
+  const needsModel = items.some((i) => ['aso', 'notes', 'rejection'].includes(i.kind))
   const has = builds || queue || (await approvedActions()).length > 0 || (await dueBuilds(db)).length > 0
   // Model (Ollama) sadece rapor/öneri yazılacaksa kurulur; nöbet ve onaylı eylemler için gerekmez
-  if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `has=${has}\nmodel=${builds || queue}\nbuilds=${builds}\n`)
+  if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `has=${has}\nmodel=${builds || needsModel}\nbuilds=${builds}\n`)
   console.log(has ? 'Yayın Uzmanı için iş var' : 'Yayın Uzmanı için iş yok')
   process.exit(0)
 }
@@ -68,6 +70,16 @@ const deps = {
   promote,
   setRollout,
   testLab: (o) => runRobo(o),
+  // Test ekran görüntüleri gizli "files" kovasına; panel imzalı bağlantıyla gösterir
+  storeShot: async (p, buf) => {
+    const res = await fetch(`${url}/storage/v1/object/files/${p}`, {
+      method: 'POST',
+      headers: { apikey: key, 'Content-Type': 'image/png', 'x-upsert': 'true', ...(key.startsWith('eyJ') ? { Authorization: `Bearer ${key}` } : {}) },
+      body: buf,
+    })
+    if (!res.ok) throw new Error(`Ekran görüntüsü kaydedilemedi: ${res.status}`)
+    return p
+  },
   vitals: (pkg, vc) => versionVitals(pkg, vc),
   today: () => new Date().toISOString().slice(0, 10),
   tmpDir: () => os.tmpdir(),

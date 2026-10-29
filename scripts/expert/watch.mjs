@@ -1,5 +1,5 @@
-// Yayın sonrası 48 saat nöbet: yeni sürümün çökme ve ANR oranını eski sürümlerle saat saat karşılaştırır.
-// Kötüye giderse durdurmayı ÖNERİR (onay bekleyen "halt" eylemi); kendisi durdurmaz. 48 saat temiz geçerse haber verir.
+// Canlı izleme (sessiz): yayından sonra 48 saat yeni sürümün çökme ve ANR oranını eski sürümlerle karşılaştırır.
+// Hiçbir şeyi bekletmez; sadece kötüye giderse haber verir ve durdurmayı ÖNERİR (onay bekleyen "halt" eylemi), kendisi durdurmaz.
 
 import { saToken } from '../play.mjs'
 
@@ -79,7 +79,6 @@ export async function watchLive(d) {
     } catch (e) {
       res = { verdict: 'wait', text: `Play'den çökme verisi alınamadı: ${String(e.message).slice(0, 150)}` }
     }
-    const prev = b.report?.watch?.verdict
     const watch = { at: new Date().toISOString(), since, verdict: res.verdict, text: res.text, done: done && res.verdict !== 'bad', alerted: b.report?.watch?.alerted ?? false }
 
     if (res.verdict === 'bad' && !watch.alerted) {
@@ -87,10 +86,6 @@ export async function watchLive(d) {
       if (!open.length) await d.db('expert_actions', 'POST', { build_id: b.id, kind: 'halt', params: { reason: res.text }, status: 'pending' }, 'return=minimal')
       await d.notify(null, `${b.version_name}: çökmeler arttı, yayını durdurayım mı?`, `${res.text} Panelde "Durdur"a basarsan yeni oyunculara gitmesi durur.`, './#/yayin')
       watch.alerted = true
-    } else if (watch.done) {
-      await d.notify(null, `${b.version_name}: 48 saat sorunsuz geçti`, `${res.text} İstersen yayını herkese açabilirsin.`, './#/yayin')
-    } else if (res.verdict === 'warn' && prev !== 'warn') {
-      await d.notify(null, `${b.version_name}: çökmelerde hafif artış`, res.text, './#/yayin')
     }
     await d.db(`store_builds?id=eq.${b.id}`, 'PATCH', { report: { ...(b.report ?? {}), watch } }, 'return=minimal')
     n++

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Rocket, ShieldCheck, UploadCloud } from 'lucide-react'
+import { Apple, Bot, ListChecks, Package, Rocket, ShieldCheck, Smartphone, Store, UploadCloud } from 'lucide-react'
 import { useData, usePeople } from '../lib/data'
 import { useStore } from '../lib/store'
 import { supabase, isDemo } from '../lib/supabase'
@@ -11,15 +11,23 @@ import { demoActions, demoBuilds } from '../data/demo'
 import type { DataSafety, ExpertAction, StoreBuild } from '../lib/types'
 import BuildCard from '../components/BuildCard'
 import Select from '../components/Select'
-import { GameChip, SampleBanner, Seg, Toggle } from '../components/ui'
+import { GameChip, SampleBanner, Toggle } from '../components/ui'
 import ReleasePage from './Release'
 import AsoCoach from '../components/AsoCoach'
 import AppStoreReview from '../components/AppStoreReview'
+import { enqueue } from '../lib/expertQueue'
 
 // Yayın Uzmanı: build'i bırak, uzman incelesin, raporlasın, dahili teste yüklesin; oyunculara açmak senin onayınla.
 // Claude kullanmaz: kurallar + stüdyonun kendi modeli GitHub'da çalışır (scripts/expert.mjs).
 
 type Tab = 'builds' | 'aso' | 'appstore' | 'surum' | 'beyan'
+const TABS: { value: Tab; label: string; icon: typeof Rocket }[] = [
+  { value: 'builds', label: 'Build\'ler', icon: Package },
+  { value: 'aso', label: 'Mağaza sayfası', icon: Store },
+  { value: 'appstore', label: 'App Store', icon: Apple },
+  { value: 'surum', label: 'Sürüm çıkar', icon: ListChecks },
+  { value: 'beyan', label: 'Veri güvenliği', icon: ShieldCheck },
+]
 const BEYAN: { key: keyof DataSafety; label: string; hint: string }[] = [
   { key: 'ads', label: 'Reklam gösteriyor', hint: 'AdMob, Unity Ads, AppLovin…' },
   { key: 'ad_id', label: 'Reklam kimliği (cihaz veya diğer kimlikler)', hint: 'Reklam ve analiz SDK\'ları toplar' },
@@ -52,6 +60,8 @@ export default function Expert() {
   const [drag, setDrag] = useState(false)
   const input = useRef<HTMLInputElement>(null)
   const nameOf = (id: string | null) => games.find((g) => g.id === id)?.name ?? id ?? 'Oyun'
+  const count = (...s: StoreBuild['status'][]) => builds.rows.filter((b) => s.includes(b.status)).length
+  const stats = { running: count('uploaded', 'inspecting', 'publishing'), waiting: count('awaiting_approval'), blocked: count('blocked', 'failed'), live: count('live') }
 
   async function upload(file: File) {
     const ext = file.name.toLowerCase().split('.').pop()
@@ -89,6 +99,14 @@ export default function Expert() {
     await actions.update(a.id, { status: 'rejected', approved_by: me.email, approved_at: new Date().toISOString() }).catch(() => {})
     toast(a.kind === 'halt' ? 'Tamam, yayın devam ediyor' : 'Tamam, dahili testte kalıyor', 'info')
   }
+  // Hızlı cihaz testi: build'in dosyası sanal telefonda açılır, sonuç kartta görünür
+  async function deviceTest(b: StoreBuild) {
+    if (isDemo) return toast('Demo modda çalışmaz', 'info')
+    const { error, started } = await enqueue({ kind: 'devicetest', gameId: b.game_id ?? '', buildId: b.id, by: me.email })
+    if (error) return toast('Başlatılamadı: ' + error, 'warn')
+    toast(started ? 'Telefonda deneniyor; 3–5 dakikada sonuç gelir.' : 'Sıraya alındı; uzman en geç 15 dakikada başlar.')
+  }
+
   // Yayındaki sürüm için panelden verilen komut zaten onaydır
   async function rollout(b: StoreBuild, fraction: number | 'halt') {
     try {
@@ -106,14 +124,28 @@ export default function Expert() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
       <SampleBanner />
-      <div className="page-head flex between wrap" style={{ gap: 14 }}>
-        <div>
-          <span className="eyebrow">Yayın Uzmanı</span>
-          <h1>Build'i bırak, gerisini uzman yapsın</h1>
-          <p>İnceler, sorunları "ne yapmalısın" diye söyler, dahili teste yükler. Oyunculara açmak senin onayınla. Claude kullanmaz; stüdyonun kendi modeli çalışır.</p>
+      <section className="expert-hero">
+        <div className="expert-hero-text">
+          <span className="eyebrow"><Bot size={11} /> Yayın Uzmanı · kendi modelin</span>
+          <h1>Build'i bırak,<br /><span>gerisini uzman yapsın.</span></h1>
+          <p>İnceler, telefonda dener, sorunları "ne yapmalısın" diye söyler, dahili teste yükler. Oyunculara açmak senin onayınla.</p>
         </div>
-        <Seg value={tab} onChange={setTab} options={[{ value: 'builds', label: 'Build\'ler' }, { value: 'aso', label: 'Mağaza sayfası' }, { value: 'appstore', label: 'App Store' }, { value: 'surum', label: 'Sürüm çıkar' }, { value: 'beyan', label: 'Veri güvenliği' }]} />
-      </div>
+        <div className="expert-stats">
+          <div><span>İnceleniyor</span><b>{stats.running}</b></div>
+          <div className={stats.waiting ? 'hot' : ''}><span>Onayını bekliyor</span><b>{stats.waiting}</b></div>
+          <div className={stats.blocked ? 'bad' : ''}><span>Düzeltme gerekli</span><b>{stats.blocked}</b></div>
+          <div className="ok"><span>Yayında</span><b>{stats.live}</b></div>
+        </div>
+      </section>
+
+      <nav className="expert-tabs" aria-label="Yayın Uzmanı bölümleri">
+        {TABS.map((t) => (
+          <button key={t.value} type="button" className={tab === t.value ? 'on' : ''} onClick={() => setTab(t.value)}>
+            <t.icon size={14} /> {t.label}
+            {t.value === 'builds' && stats.waiting > 0 && <span className="menu-badge">{stats.waiting}</span>}
+          </button>
+        ))}
+      </nav>
 
       {tab === 'builds' && (
         <>
@@ -128,10 +160,14 @@ export default function Expert() {
               if (f) upload(f)
             }}
           >
-            <UploadCloud size={30} className="dz-icon" />
+            <span className="dz-orb"><UploadCloud size={26} /></span>
             <div className="grow">
-              <b>Build'i buraya bırak</b>
-              <div className="muted small">Android: .aab ya da .apk · iOS: .ipa · 500 MB'a kadar · oyun başına son 2 build saklanır</div>
+              <b>Build'i buraya sürükle</b>
+              <div className="dz-plats">
+                <span className="plat android"><Smartphone size={11} /> Android · .aab / .apk</span>
+                <span className="plat ios"><Apple size={11} /> iOS · .ipa</span>
+                <span className="muted small">500 MB'a kadar</span>
+              </div>
               {progress !== null && <div className="dz-bar"><div style={{ width: `${Math.round(progress * 100)}%` }} /></div>}
             </div>
             <Select className="select" value={gameId} onChange={(e) => setGameId(e.target.value)} aria-label="Oyun">
@@ -143,7 +179,7 @@ export default function Expert() {
 
           {builds.rows.length === 0 && <div className="card empty">Henüz build yok. Unity'den aldığın AAB'yi ya da Xcode'dan aldığın IPA'yı yukarı bırak; uzman birkaç dakikada raporlar.</div>}
           {builds.rows.map((b) => (
-            <BuildCard key={b.id} b={b} gameName={nameOf(b.game_id)} actions={actions.rows} onApprove={approve} onReject={reject} onRollout={rollout} />
+            <BuildCard key={b.id} b={b} gameName={nameOf(b.game_id)} actions={actions.rows} onApprove={approve} onReject={reject} onRollout={rollout} onDeviceTest={deviceTest} />
           ))}
         </>
       )}

@@ -6,6 +6,19 @@ import path from 'node:path'
 const now = () => new Date().toISOString()
 const pct = (f) => `%${Math.round(f * 100)}`
 
+const ORDER = { block: 0, warn: 1, info: 2 }
+
+// Sanal telefonda deneme: sonuç bulgusu + panelde gösterilecek özet (ekran görüntüleri Supabase'e taşınır)
+export async function deviceTest(d, buildId, filePath, minSdk) {
+  const storeShot = d.storeShot ? (i, buf) => d.storeShot(`expert/build-${buildId}/shot-${Date.now()}-${i}.png`, buf) : undefined
+  const t = await d.testLab({ filePath, buildId, minSdk, storeShot }).catch((e) => ({ skipped: String(e.message).slice(0, 200) }))
+  if (t?.skipped || !t?.finding) {
+    const why = t?.skipped ?? 'bilinmeyen sebep'
+    return { finding: { id: 'testlab-skipped', severity: 'info', title: 'Test cihazı denemesi yapılmadı', detail: `Sebep: ${why}.`, fix: [] }, device: { at: now(), outcome: 'SKIPPED', reason: why } }
+  }
+  return { finding: t.finding, device: { at: now(), outcome: t.outcome, name: t.device ? `${t.device.name} · Android ${t.device.api}` : null, url: t.url, shots: t.shots ?? [], minutes: t.minutes } }
+}
+
 async function setBuild(d, id, patch) {
   await d.db(`store_builds?id=eq.${id}`, 'PATCH', { ...patch, updated_at: now() }, 'return=minimal')
 }
@@ -52,13 +65,13 @@ export async function processBuild(build, d) {
     }
 
     // Engelleyici yoksa sanal telefonda açıp oynat (Firebase Test Lab, sadece ücretsiz planda)
+    let device = null
     if (d.testLab && build.platform === 'android' && !findings.some((f) => f.severity === 'block')) {
-      await setBuild(d, build.id, { summary: 'Test cihazında deneniyor (5–10 dakika)…' })
-      const t = await d.testLab({ filePath: local, buildId: build.id, minSdk: m.minSdk }).catch((e) => ({ skipped: String(e.message).slice(0, 200) }))
-      if (t?.finding) findings.push(t.finding)
-      else if (t?.skipped) findings.push({ id: 'testlab-skipped', severity: 'info', title: 'Test cihazı denemesi yapılmadı', detail: `Sebep: ${t.skipped}.`, fix: [] })
-      const order = { block: 0, warn: 1, info: 2 }
-      findings.sort((a, b) => order[a.severity] - order[b.severity])
+      await setBuild(d, build.id, { summary: 'Test cihazında deneniyor (3–5 dakika)…' })
+      const t = await deviceTest(d, build.id, local, m.minSdk)
+      device = t.device
+      findings.push(t.finding)
+      findings.sort((a, b) => ORDER[a.severity] - ORDER[b.severity])
     }
 
     const report = d.buildReport(findings, { gameName, versionName: m.versionName, versionCode: m.versionCode })
@@ -68,6 +81,7 @@ export async function processBuild(build, d) {
       package_name: m.package, version_code: m.versionCode, version_name: m.versionName, summary,
       report: {
         verdict: report.verdict, counts: report.counts, findings, text: report.text, aiSummary: summary !== report.text,
+        ...(device ? { device } : {}),
         build: { kind: b.kind, targetSdk: m.targetSdk, minSdk: m.minSdk, abis: b.abis, sizeMb: Math.round(b.sizeBytes / 1048576), permissions: m.permissions, hits: sdks },
       },
       status: report.verdict === 'blocked' ? 'blocked' : 'ready',
