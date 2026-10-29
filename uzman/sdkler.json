@@ -1,0 +1,18 @@
+{
+  "_aciklama": "Build içinde aranan SDK izleri. needles: dex/so/metadata dosyalarında aranan metinler. beyan: Play veri güvenliği formunda işaretlenmesi gereken veri türleri (ads, ad_id, analytics, crash_logs, device_id, location, personal).",
+  "testAdId": "ca-app-pub-3940256099942544",
+  "sdkler": [
+    { "id": "admob", "ad": "Google AdMob", "needles": ["Lcom/google/android/gms/ads/"], "beyan": ["ads", "ad_id", "device_id"] },
+    { "id": "unity-ads", "ad": "Unity Ads", "needles": ["Lcom/unity3d/ads/"], "beyan": ["ads", "ad_id"] },
+    { "id": "applovin", "ad": "AppLovin", "needles": ["Lcom/applovin/"], "beyan": ["ads", "ad_id"] },
+    { "id": "ironsource", "ad": "ironSource / LevelPlay", "needles": ["Lcom/ironsource/"], "beyan": ["ads", "ad_id"] },
+    { "id": "meta-audience", "ad": "Meta Audience Network", "needles": ["Lcom/facebook/ads/"], "beyan": ["ads", "ad_id"] },
+    { "id": "facebook-sdk", "ad": "Facebook SDK", "needles": ["Lcom/facebook/FacebookSdk"], "beyan": ["analytics", "ad_id"] },
+    { "id": "firebase-analytics", "ad": "Firebase Analytics", "needles": ["Lcom/google/firebase/analytics/"], "beyan": ["analytics", "ad_id"] },
+    { "id": "crashlytics", "ad": "Firebase Crashlytics", "needles": ["Lcom/google/firebase/crashlytics/"], "beyan": ["crash_logs"] },
+    { "id": "appsflyer", "ad": "AppsFlyer", "needles": ["Lcom/appsflyer/"], "beyan": ["analytics", "ad_id"] },
+    { "id": "adjust", "ad": "Adjust", "needles": ["Lcom/adjust/sdk/"], "beyan": ["analytics", "ad_id"] },
+    { "id": "gameanalytics", "ad": "GameAnalytics", "needles": ["Lcom/gameanalytics/"], "beyan": ["analytics"] },
+    { "id": "unity-analytics", "ad": "Unity Analytics", "needles": ["Lcom/unity3d/services/analytics", "com.unity.services.analytics"], "beyan": ["analytics"] }
+  ]
+}
