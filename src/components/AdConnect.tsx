@@ -6,7 +6,7 @@ import { useStore } from '../lib/store'
 import { trDateTime, useSetting } from '../lib/rows'
 
 // Reklam verilen platformları bağlama: her biri için durum ve adım adım kurulum.
-// Google Ads: geliştirici izni beklemeden, hesabın içindeki betik (Araçlar › Betikler) her saat kampanya sonuçlarını
+// Google Ads: geliştirici izni beklemeden, hesabın içindeki betik (Araçlar › Komut Dosyaları) her saat kampanya sonuçlarını
 // panele gönderir (supabase/phase12-ads-ingest.sql › ingest_ads). Sadece okuma: kampanya açmaz, bütçe değiştirmez.
 
 const SUPA = import.meta.env.VITE_SUPABASE_URL as string | undefined
@@ -127,14 +127,14 @@ export default function AdConnect() {
           ) : (
             <div className="adc-setup">
               <ol>
-                <li>Google Ads'te üstteki <b>Araçlar</b> (anahtar simgesi) › <b>Toplu işlemler</b> › <b>Betikler</b>'e gir.</li>
-                <li>Mavi <b>+</b> › <b>Yeni betik</b>. İçindeki her şeyi sil, aşağıdaki betiği yapıştır; adını "Voo Panel" yap.</li>
-                <li><b>Yetkilendir</b>'e bas, voogamestudio@gmail.com'u seç, izin ver.</li>
+                <li>Google Ads'te üstteki <b>Araçlar</b> (anahtar simgesi) › <b>Toplu işlemler</b> › <b>Komut Dosyaları</b>'na gir.</li>
+                <li>Mavi <b>+</b> › <b>Yeni komut dosyası</b>. İçindeki her şeyi sil, aşağıdaki betiği yapıştır; adını "Voo Panel" yap.</li>
+                <li>Sarı şeritteki <b>Yetkilendir</b>'e bas, voogamestudio@gmail.com'u seç, izin ver.</li>
                 <li><b>Çalıştır</b>'a bas; altta "Panel: 200" yazarsa tamam. Sonra <b>Sıklık: Saatlik</b> seçip kaydet.</li>
               </ol>
               <div className="flex" style={{ gap: 8 }}>
                 <button type="button" className="btn btn-green sm" onClick={() => copy(adsScript(ingest.key))} disabled={!ingest.key}><Copy size={12} /> Betiği kopyala</button>
-                <a className="btn sm" href="https://ads.google.com/aw/bulk/scripts" target="_blank" rel="noreferrer"><ExternalLink size={12} /> Betikler sayfasını aç</a>
+                <a className="btn sm" href="https://ads.google.com/aw/bulk/scripts/management" target="_blank" rel="noreferrer"><ExternalLink size={12} /> Komut Dosyaları sayfasını aç</a>
                 <button type="button" className="btn btn-ghost sm" onClick={() => prepare(true)} title="Eski betik çalışmaz olur"><RefreshCw size={12} /> Anahtarı yenile</button>
               </div>
               <div className="muted" style={{ fontSize: 10 }}>Betikteki anahtar sadece senin Google Ads hesabında durur; panel dışında kimse kullanamaz. Paylaşma.</div>
