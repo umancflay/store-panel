@@ -61,6 +61,29 @@ p { margin: 0; }
 
 .main { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
 
+/* Geniş ekran: solda sabit menü (üstteki açılır menü gizlenir) */
+.sidenav { display: none; }
+@media (min-width: 1180px) {
+  .shell { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 28px; align-items: start; }
+  .sidenav { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 92px; max-height: calc(100vh - 110px); overflow-y: auto; scrollbar-width: none; padding-bottom: 12px; }
+  .sidenav::-webkit-scrollbar { display: none; }
+  .menu-wrap { display: none; }
+}
+.side-group { display: flex; flex-direction: column; gap: 2px; }
+.side-group .menu-title { padding: 0 10px 6px; }
+.side-item { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 12px; color: var(--muted); font-size: 13px; text-decoration: none; transition: background .15s, color .15s; }
+.side-item:hover { background: rgba(255,255,255,.05); color: #fff; }
+.side-item.active { background: rgba(255,255,255,.08); color: #fff; }
+.side-ico { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; flex-shrink: 0; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.06); transition: background .15s, color .15s; }
+.side-item.active .side-ico { background: linear-gradient(150deg, #fff, #8fd3ae); color: #0a0a0a; border-color: transparent; box-shadow: 0 0 14px rgba(143,211,174,.35); }
+.side-sub { display: flex; flex-direction: column; gap: 1px; margin: 2px 0 6px 23px; padding-left: 14px; border-left: 1px solid rgba(255,255,255,.08); }
+.side-sub a { padding: 5px 10px; border-radius: 9px; font-size: 12px; color: var(--muted); text-decoration: none; }
+.side-sub a:hover { color: #fff; background: rgba(255,255,255,.04); }
+.side-sub a.on { color: #fff; background: rgba(143,211,174,.10); }
+.side-search { display: flex; align-items: center; gap: 8px; margin-top: 4px; padding: 9px 12px; border-radius: 12px; border: 1px dashed rgba(255,255,255,.12); background: none; color: var(--muted); font: 400 12px var(--font); cursor: pointer; }
+.side-search:hover { color: #fff; border-color: rgba(255,255,255,.25); }
+.side-search kbd { margin-left: auto; font: 500 10px var(--font); padding: 2px 6px; border-radius: 6px; background: rgba(255,255,255,.07); color: var(--soft); }
+
 /* ---------- Üst çubuk ve menü ---------- */
 
 .topbar {
@@ -935,6 +958,7 @@ tr.on td { background: rgba(143,211,174,.06); }
 .build-card.tone-run::before { background: linear-gradient(var(--green), var(--gold)); animation: beat 2s ease-in-out infinite; }
 .build-card.tone-bad { background: linear-gradient(160deg, rgba(255,122,85,.05), transparent 45%), var(--card); }
 .build-card.tone-wait { background: linear-gradient(160deg, rgba(232,192,122,.05), transparent 45%), var(--card); }
+.build-actions { display: flex; align-items: center; gap: 6px; }
 .build-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 16px; font-weight: 500; }
 .ver-pill { font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 999px; background: rgba(255,255,255,.07); color: var(--soft); }
 .build-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 5px; font-size: 11px; color: var(--muted); }

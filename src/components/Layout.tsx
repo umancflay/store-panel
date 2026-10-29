@@ -187,6 +187,30 @@ export default function Layout() {
           </header>
 
           <CommandPalette open={cmd} onClose={() => setCmd(false)} />
+          <div className="shell">
+          {/* Geniş ekranda her zaman görünen sol menü: sayfalar ve açık sayfanın sekmeleri */}
+          <nav className="sidenav" aria-label="Sol menü">
+            {navGroups.map((g) => (
+              <div key={g.title} className="side-group">
+                <span className="menu-title">{g.title}</span>
+                {g.items.map((n) => (
+                  <div key={n.to}>
+                    <Link to={n.to} className={`side-item ${on(n) ? 'active' : ''}`}>
+                      <span className="side-ico"><n.icon size={15} /></span>
+                      <span className="grow">{n.label}</span>
+                      {n.to === '/komuta' && critical > 0 && <span className="menu-badge">{critical}</span>}
+                    </Link>
+                    {on(n) && n.tabs && (
+                      <div className="side-sub">
+                        {n.tabs.map((t) => <Link key={t.to} to={t.to} className={isActive(t.to) ? 'on' : ''}>{t.label}</Link>)}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ))}
+            <button type="button" className="side-search" onClick={() => setCmd(true)}><Search size={13} /> Ara <kbd>Ctrl K</kbd></button>
+          </nav>
           <main className="main">
             {current?.tabs && (
               <nav className="seg hub-tabs" aria-label={current.label}>
@@ -202,6 +226,7 @@ export default function Layout() {
               <Outlet />
             </PageGuard>
           </main>
+          </div>
         </div>
       </div>
 

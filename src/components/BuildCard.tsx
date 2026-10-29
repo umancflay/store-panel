@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { AlertOctagon, AlertTriangle, Apple, Check, CheckCircle2, ChevronDown, ExternalLink, HeartPulse, Info, Loader2, MinusCircle, Pause, Play, Rocket, Smartphone, X, XCircle } from 'lucide-react'
+import { AlertOctagon, AlertTriangle, Apple, Check, CheckCircle2, ChevronDown, ExternalLink, HeartPulse, Info, Loader2, MinusCircle, Pause, Play, Rocket, Smartphone, Trash2, X, XCircle } from 'lucide-react'
 import { isDemo } from '../lib/supabase'
 import { fileUrls } from '../lib/files'
 import { trDateTime } from '../lib/rows'
@@ -110,7 +110,7 @@ function DeviceTest({ b, onTest }: { b: StoreBuild; onTest?: (b: StoreBuild) => 
 }
 
 export default function BuildCard({
-  b, gameName, actions, onApprove, onReject, onRollout, onDeviceTest,
+  b, gameName, actions, onApprove, onReject, onRollout, onDeviceTest, onDelete, startOpen = true,
 }: {
   b: StoreBuild
   gameName: string
@@ -119,8 +119,13 @@ export default function BuildCard({
   onReject: (a: ExpertAction) => void
   onRollout: (b: StoreBuild, fraction: number | 'halt') => void
   onDeviceTest?: (b: StoreBuild) => void
+  onDelete?: (b: StoreBuild) => void
+  startOpen?: boolean
 }) {
   const [fraction, setFraction] = useState('0.1')
+  const [open, setOpen] = useState(startOpen)
+  const [sure, setSure] = useState(false)
+  const [more, setMore] = useState(false)
   const ios = b.platform === 'ios'
   const steps = ios ? IOS_STEPS : STEPS
   const step = steps.findIndex((s) => s.of.includes(b.status))
@@ -148,9 +153,26 @@ export default function BuildCard({
             </div>
           </div>
         </div>
-        <span className={`badge ${cls}`}>{label}</span>
+        <div className="build-actions">
+          <span className={`badge ${cls}`}>{label}</span>
+          {onDelete && (sure
+            ? <button type="button" className="btn sm btn-red" onClick={() => onDelete(b)} onBlur={() => setSure(false)} autoFocus><Trash2 size={12} /> Sil, emin misin?</button>
+            : <button type="button" className="icon-btn" title="Build'i sil" aria-label="Build'i sil" onClick={() => setSure(true)}><Trash2 size={14} /></button>)}
+          <button type="button" className="icon-btn" aria-expanded={open} aria-label={open ? 'Kartı küçült' : 'Kartı aç'} onClick={() => setOpen((v) => !v)}><ChevronDown size={15} className={`finding-chev${open ? ' open' : ''}`} /></button>
+        </div>
       </div>
 
+      {!open && r && (
+        <div className="count-chips" style={{ margin: 0 }}>
+          {r.counts.block > 0 && <span className="cchip block"><AlertOctagon size={11} /> {r.counts.block} engelleyici</span>}
+          {r.counts.warn > 0 && <span className="cchip warn"><AlertTriangle size={11} /> {r.counts.warn} uyarı</span>}
+          {r.counts.block === 0 && r.counts.warn === 0 && <span className="cchip ok"><Check size={11} /> Kontrollerin hepsi geçti</span>}
+          {r.device?.outcome === 'SUCCESS' && <span className="cchip ok"><Smartphone size={11} /> Telefonda sorunsuz</span>}
+          {r.device?.outcome === 'FAILURE' && <span className="cchip block"><Smartphone size={11} /> Telefonda çöktü</span>}
+        </div>
+      )}
+
+      {open && <>
       <div className="stepper" aria-label="İlerleme">
         {steps.map((s, i) => (
           <div key={s.key} className={`step${i < step ? ' done' : i === step ? ' now' : ''}${i === step && (b.status === 'blocked' || b.status === 'failed') ? ' bad' : ''}`}>
@@ -170,7 +192,17 @@ export default function BuildCard({
       {b.status !== 'inspecting' && (b.summary || r?.text) && (
         <div className="expert-summary">
           <div className="flex" style={{ gap: 8, marginBottom: 6 }}><span className="avatar ai sm">AI</span><b className="small">Uzmanın özeti</b>{r?.aiSummary && <span className="muted" style={{ fontSize: 10 }}>· kendi modelin yazdı</span>}</div>
-          <p>{b.summary ?? r?.text.split('\n')[0]}</p>
+          {(() => {
+            // Kural raporu bulguların tekrarı: sadece ilk satırı (sonuç) göster; model özeti uzunsa kısalt
+            const text = r?.aiSummary ? b.summary ?? '' : (b.summary ?? r?.text ?? '').split('\n')[0]
+            const long = text.length > 260
+            return (
+              <p>
+                {long && !more ? text.slice(0, 240).replace(/\s+\S*$/, '') + '…' : text}
+                {long && <button type="button" className="linkish" style={{ marginLeft: 6 }} onClick={() => setMore((v) => !v)}>{more ? 'kısalt' : 'devamı'}</button>}
+              </p>
+            )
+          })()}
         </div>
       )}
 
@@ -225,6 +257,7 @@ export default function BuildCard({
         </div>
       )}
       {last?.status === 'failed' && <div className="expert-error">Son işlem yapılamadı: {last.result}</div>}
+      </>}
     </section>
   )
 }

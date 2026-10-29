@@ -5,7 +5,7 @@ import { useData, usePeople } from '../lib/data'
 import { useStore } from '../lib/store'
 import { supabase, isDemo } from '../lib/supabase'
 import { useRows, useSetting } from '../lib/rows'
-import { uploadFile, logActivity } from '../lib/files'
+import { deleteStored, uploadFile, logActivity } from '../lib/files'
 import { triggerWorkflow } from '../lib/trigger'
 import { demoActions, demoBuilds } from '../data/demo'
 import type { DataSafety, ExpertAction, StoreBuild } from '../lib/types'
@@ -99,6 +99,26 @@ export default function Expert() {
     await actions.update(a.id, { status: 'rejected', approved_by: me.email, approved_at: new Date().toISOString() }).catch(() => {})
     toast(a.kind === 'halt' ? 'Tamam, yayın devam ediyor' : 'Tamam, dahili testte kalıyor', 'info')
   }
+  // Build'i tamamen sil: dosyası, test ekran görüntüleri ve kaydı (eylemleri de birlikte silinir)
+  async function removeBuild(b: StoreBuild) {
+    if (isDemo) return builds.setRows((r) => r.filter((x) => x.id !== b.id))
+    try {
+      if (b.file_id != null) {
+        const { data: f } = await supabase!.from('files').select('id,path,parts').eq('id', b.file_id).maybeSingle()
+        if (f) {
+          await deleteStored(f as { path: string; parts: number }).catch(() => {})
+          await supabase!.from('files').delete().eq('id', (f as { id: number }).id)
+        }
+      }
+      const shots = b.report?.device?.shots ?? []
+      if (shots.length) await supabase!.storage.from('files').remove(shots).catch(() => {})
+      await builds.remove(b.id)
+      toast(`${nameOf(b.game_id)} ${b.version_name ?? ''} silindi`.replace(/\s+silindi/, ' silindi'))
+    } catch (e) {
+      toast('Silinemedi: ' + (e as Error).message, 'warn')
+    }
+  }
+
   // Hızlı cihaz testi: build'in dosyası sanal telefonda açılır, sonuç kartta görünür
   async function deviceTest(b: StoreBuild) {
     if (isDemo) return toast('Demo modda çalışmaz', 'info')
@@ -178,8 +198,8 @@ export default function Expert() {
           </section>
 
           {builds.rows.length === 0 && <div className="card empty">Henüz build yok. Unity'den aldığın AAB'yi ya da Xcode'dan aldığın IPA'yı yukarı bırak; uzman birkaç dakikada raporlar.</div>}
-          {builds.rows.map((b) => (
-            <BuildCard key={b.id} b={b} gameName={nameOf(b.game_id)} actions={actions.rows} onApprove={approve} onReject={reject} onRollout={rollout} onDeviceTest={deviceTest} />
+          {builds.rows.map((b, i) => (
+            <BuildCard key={b.id} b={b} gameName={nameOf(b.game_id)} actions={actions.rows} onApprove={approve} onReject={reject} onRollout={rollout} onDeviceTest={deviceTest} onDelete={removeBuild} startOpen={i === 0 || ['uploaded', 'inspecting', 'awaiting_approval', 'publishing', 'live'].includes(b.status)} />
           ))}
         </>
       )}
