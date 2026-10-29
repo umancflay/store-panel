@@ -845,3 +845,11 @@ tr.on td { background: rgba(143,211,174,.06); }
 .beyan-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
 .beyan-game { padding: 14px; border-radius: 16px; background: var(--inner); border: 1px solid var(--line); }
 @media (max-width: 600px) { .step-label { font-size: 8.5px; } }
+
+/* Menüde birleşen sayfaların sekmeleri (Çalışma › Görevler gibi) */
+.hub-tabs { align-self: flex-start; max-width: 100%; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+.hub-tabs::-webkit-scrollbar { display: none; }
+.hub-tabs a { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 999px; color: var(--muted); font: 500 12px var(--font); text-decoration: none; white-space: nowrap; transition: background .18s, color .18s; }
+.hub-tabs a:hover { color: #fff; }
+.hub-tabs a.on { background: #fff; color: #0a0a0a; }
+.hub-tabs .menu-badge { position: static; margin-left: 2px; }

@@ -6,7 +6,7 @@ import { useStore } from '../lib/store'
 import { useRows, addDays, today, trDate, trDateTime } from '../lib/rows'
 import { usePresence } from '../lib/presence'
 import { logActivity } from '../lib/files'
-import { navGroups } from '../components/Layout'
+import { allPages } from '../components/Layout'
 import { demoEvents, demoNotes, demoTasks } from '../data/demo'
 import { ASSISTANT, levelLabel, taskCode, type Activity, type CalEvent, type FileRow, type Note, type Task, type TaskStatus } from '../lib/types'
 import { FileTile, useRemoveFile, useThumbs } from '../components/Attachments'
@@ -18,7 +18,7 @@ import { triggerWorkflow } from '../lib/trigger'
 const levelRank = { critical: 0, medium: 1, low: 2 }
 const levelColor = { critical: '#FF7A55', medium: '#E8C07A', low: '#8FD3AE' }
 const pageName = (path: string) =>
-  navGroups.flatMap((g) => g.items).find((i) => i.to !== '/' && path.startsWith(i.to))?.label ?? (path === '/' ? 'Ana sayfa' : 'panel')
+  allPages.find((i) => i.to !== '/' && path.startsWith(i.to))?.label ?? (path === '/' ? 'Ana sayfa' : 'panel')
 const dayName = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' })
 
 type Tab = 'week' | 'feed' | 'recent'

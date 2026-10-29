@@ -7,7 +7,7 @@ import { useStore } from '../lib/store'
 import { logActivity } from '../lib/files'
 import { demoNotes, demoTasks } from '../data/demo'
 import { taskCode } from '../lib/types'
-import { navGroups } from './Layout'
+import { allPages } from './Layout'
 import { GameLogo } from './ui'
 import { triggerWorkflow } from '../lib/trigger'
 
@@ -63,7 +63,7 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
     const hit = (...fields: (string | undefined)[]) => words.every((w) => fields.some((f) => f && norm(f).includes(w)))
     const out: Item[] = []
 
-    for (const n of navGroups.flatMap((g) => g.items)) {
+    for (const n of allPages) {
       if (!words.length || hit(n.label, n.hint)) out.push({ key: 'p' + n.to, group: 'Sayfalar', label: n.label, sub: n.hint, icon: <n.icon size={15} />, run: go(n.to) })
     }
     if (words.length) {

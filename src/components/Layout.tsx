@@ -12,45 +12,65 @@ import CommandPalette from './CommandPalette'
 import { Brand, initials } from './ui'
 import { usePresenceTracker } from '../lib/presence'
 
-// Menü grupları: günlük bakış, çalışma ve mağaza/gelir sayfaları
-type NavItem = { to: string; label: string; hint: string; icon: typeof Home }
+// Menü grupları: günlük bakış, ekip ve mağaza/gelir. Benzer sayfalar tek menü öğesinde sekme olarak durur.
+type Page = { to: string; label: string; hint: string; icon: typeof Home }
+type NavItem = Page & { tabs?: Page[] }
+const tab = (to: string, label: string, hint: string, icon: typeof Home): Page => ({ to, label, hint, icon })
 export const navGroups: { title: string; items: NavItem[] }[] = [
   {
     title: 'Günlük',
     items: [
       { to: '/', label: 'Ana sayfa', hint: 'Günün özeti', icon: Home },
-      { to: '/komuta', label: 'Komuta', hint: 'Oyunlar ve sinyaller', icon: Radar },
+      {
+        to: '/komuta', label: 'Komuta', hint: 'Sinyaller ve uyarılar', icon: Radar,
+        tabs: [tab('/komuta', 'Sinyaller', 'Oyunlar ve sinyaller', Radar), tab('/uyarilar', 'Uyarılar', 'Politika ve hatalar', BellRing)],
+      },
       { to: '/asistan', label: 'Asistan', hint: 'Yapay zekaya sor', icon: Bot },
-      { to: '/uyarilar', label: 'Uyarılar', hint: 'Politika ve hatalar', icon: BellRing },
     ],
   },
   {
-    title: 'Çalışma',
+    title: 'Ekip',
     items: [
-      { to: '/calisma', label: 'Çalışma alanı', hint: 'Ekip panosu', icon: LayoutDashboard },
-      { to: '/gorevler', label: 'Görevler', hint: 'İş panosu', icon: KanbanSquare },
-      { to: '/plan', label: 'Plan', hint: 'Çalışma sırası', icon: Network },
-      { to: '/ortak', label: 'Ortak plan', hint: 'Birlikte çalış', icon: Users },
-      { to: '/otomasyon', label: 'Otomasyon', hint: 'Kurallar', icon: Workflow },
-      { to: '/notlar', label: 'Notlar', hint: 'Dokümanlar', icon: NotebookPen },
-      { to: '/dosyalar', label: 'Dosyalar', hint: 'Ortak klasör', icon: FolderOpen },
-      { to: '/takvim', label: 'Takvim', hint: 'Tarihler', icon: CalendarDays },
+      {
+        to: '/calisma', label: 'Çalışma', hint: 'Pano, görevler, takvim', icon: LayoutDashboard,
+        tabs: [
+          tab('/calisma', 'Bugün', 'Ekip panosu', LayoutDashboard),
+          tab('/gorevler', 'Görevler', 'İş panosu', KanbanSquare),
+          tab('/ortak', 'Ortak plan', 'Birlikte çalış', Users),
+          tab('/takvim', 'Takvim', 'Tarihler', CalendarDays),
+        ],
+      },
+      {
+        to: '/plan', label: 'Plan', hint: 'Yol haritası ve kurallar', icon: Network,
+        tabs: [tab('/plan', 'Yol haritası', 'Çalışma sırası', Network), tab('/otomasyon', 'Otomasyon', 'Kurallar', Workflow)],
+      },
+      {
+        to: '/notlar', label: 'Belgeler', hint: 'Notlar ve dosyalar', icon: NotebookPen,
+        tabs: [tab('/notlar', 'Notlar', 'Dokümanlar', NotebookPen), tab('/dosyalar', 'Dosyalar', 'Ortak klasör', FolderOpen)],
+      },
     ],
   },
   {
     title: 'Mağaza ve gelir',
     items: [
-      { to: '/oyunlar', label: 'Oyunlar', hint: 'Mağazalar', icon: Gamepad2 },
-      { to: '/gelir', label: 'Gelir', hint: 'AdMob ve satış', icon: Wallet },
-      { to: '/reklamlar', label: 'Reklam', hint: 'Kampanyalar', icon: Megaphone },
-      { to: '/yorumlar', label: 'Yorumlar', hint: 'Oyuncular', icon: MessageSquareText },
+      {
+        to: '/oyunlar', label: 'Oyunlar', hint: 'Mağazalar ve yorumlar', icon: Gamepad2,
+        tabs: [tab('/oyunlar', 'Oyunlar', 'Mağazalar', Gamepad2), tab('/yorumlar', 'Yorumlar', 'Oyuncular', MessageSquareText)],
+      },
+      {
+        to: '/gelir', label: 'Gelir', hint: 'AdMob, satış, reklam', icon: Wallet,
+        tabs: [tab('/gelir', 'Gelir', 'AdMob ve satış', Wallet), tab('/reklamlar', 'Reklam', 'Kampanyalar', Megaphone)],
+      },
       { to: '/yayin', label: 'Yayın Uzmanı', hint: 'Build, test, yayın', icon: Rocket },
       { to: '/ayarlar', label: 'Ayarlar', hint: 'Profil ve bağlantılar', icon: Settings },
     ],
   },
 ]
+// Arama ve "kim nerede" için tüm sayfalar (sekmeler dahil)
+export const allPages: Page[] = navGroups.flatMap((g) => g.items.flatMap((i) => i.tabs ?? [i]))
 const links = navGroups.flatMap((g) => g.items)
-const mobileMain = ['/', '/calisma', '/gorevler', '/gelir']
+const pathsOf = (n: NavItem) => (n.tabs ?? [n]).map((t) => t.to)
+const mobileMain = ['/', '/calisma', '/gelir', '/yayin']
 
 export default function Layout() {
   const { signOut } = useAuth()
@@ -101,7 +121,8 @@ export default function Layout() {
 
   const critical = alerts.filter((a) => a.level === 'critical' && a.status === 'open').length
   const isActive = (to: string) => (to === '/' ? loc.pathname === '/' : loc.pathname.startsWith(to))
-  const current = links.find((n) => isActive(n.to))
+  const current = links.find((n) => pathsOf(n).some(isActive))
+  const on = (n: NavItem) => n === current
 
   return (
     <div className="page">
@@ -130,14 +151,14 @@ export default function Layout() {
                     <div key={g.title} className="menu-group">
                       <span className="menu-title">{g.title}</span>
                       {g.items.map((n) => (
-                        <NavLink key={n.to} to={n.to} end={n.to === '/'} className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}>
+                        <Link key={n.to} to={n.to} className={`menu-item ${on(n) ? 'active' : ''}`}>
                           <span className="menu-ico"><n.icon size={16} /></span>
                           <span className="menu-txt">
                             <b>{n.label}</b>
                             <small>{n.hint}</small>
                           </span>
-                          {n.to === '/uyarilar' && critical > 0 && <span className="menu-badge">{critical}</span>}
-                        </NavLink>
+                          {n.to === '/komuta' && critical > 0 && <span className="menu-badge">{critical}</span>}
+                        </Link>
                       ))}
                     </div>
                   ))}
@@ -167,6 +188,16 @@ export default function Layout() {
 
           <CommandPalette open={cmd} onClose={() => setCmd(false)} />
           <main className="main">
+            {current?.tabs && (
+              <nav className="seg hub-tabs" aria-label={current.label}>
+                {current.tabs.map((t) => (
+                  <Link key={t.to} to={t.to} className={isActive(t.to) ? 'on' : ''}>
+                    <t.icon size={13} /> {t.label}
+                    {t.to === '/uyarilar' && critical > 0 && <span className="menu-badge">{critical}</span>}
+                  </Link>
+                ))}
+              </nav>
+            )}
             <PageGuard key={loc.pathname}>
               <Outlet />
             </PageGuard>
@@ -176,7 +207,7 @@ export default function Layout() {
 
       <nav className="bottom-nav" aria-label="Alt menü">
         {links.filter((n) => mobileMain.includes(n.to)).map((n) => (
-          <NavLink key={n.to} to={n.to} end={n.to === '/'} className={({ isActive }) => (isActive ? 'active' : '')}>
+          <NavLink key={n.to} to={n.to} end={n.to === '/'} className={on(n) ? 'active' : ''}>
             <span className="bn-icon"><n.icon size={18} /></span>
             {n.label}
           </NavLink>
@@ -199,11 +230,11 @@ export default function Layout() {
               <span className="menu-title">{g.title}</span>
               <div className="sheet-grid">
                 {g.items.map((n) => (
-                  <NavLink key={n.to} to={n.to} end={n.to === '/'} className={({ isActive }) => `sheet-tile ${isActive ? 'on' : ''}`}>
+                  <Link key={n.to} to={n.to} className={`sheet-tile ${on(n) ? 'on' : ''}`}>
                     <span className="menu-ico"><n.icon size={17} /></span>
                     <b>{n.label}</b>
-                    <small>{n.to === '/uyarilar' && critical > 0 ? `${critical} kritik` : n.hint}</small>
-                  </NavLink>
+                    <small>{n.to === '/komuta' && critical > 0 ? `${critical} kritik` : n.hint}</small>
+                  </Link>
                 ))}
               </div>
             </div>
