@@ -50,6 +50,16 @@ export async function processBuild(build, d) {
       })
     }
 
+    // Engelleyici yoksa sanal telefonda açıp oynat (Firebase Test Lab, sadece ücretsiz planda)
+    if (d.testLab && build.platform === 'android' && !findings.some((f) => f.severity === 'block')) {
+      await setBuild(d, build.id, { summary: 'Test cihazında deneniyor (5–10 dakika)…' })
+      const t = await d.testLab({ filePath: local, buildId: build.id, minSdk: m.minSdk }).catch((e) => ({ skipped: String(e.message).slice(0, 200) }))
+      if (t?.finding) findings.push(t.finding)
+      else if (t?.skipped) findings.push({ id: 'testlab-skipped', severity: 'info', title: 'Test cihazı denemesi yapılmadı', detail: `Sebep: ${t.skipped}.`, fix: [] })
+      const order = { block: 0, warn: 1, info: 2 }
+      findings.sort((a, b) => order[a.severity] - order[b.severity])
+    }
+
     const report = d.buildReport(findings, { gameName, versionName: m.versionName, versionCode: m.versionCode })
     const summary = (await d.polish(report, findings)) ?? report.text
     const sdks = b.hits

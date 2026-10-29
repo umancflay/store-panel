@@ -71,16 +71,17 @@ export default function Expert() {
 
   async function approve(a: ExpertAction, fraction: number) {
     try {
-      await actions.update(a.id, { status: 'approved', params: { userFraction: fraction }, approved_by: me.email, approved_at: new Date().toISOString() })
+      const halt = a.kind === 'halt'
+      await actions.update(a.id, { status: 'approved', params: halt ? a.params : { userFraction: fraction }, approved_by: me.email, approved_at: new Date().toISOString() })
       triggerWorkflow('expert.yml')
-      toast(`Onaylandı: oyuncuların %${Math.round(fraction * 100)}'una açılıyor`)
+      toast(halt ? 'Onaylandı: yayın durduruluyor' : `Onaylandı: oyuncuların %${Math.round(fraction * 100)}'una açılıyor`)
     } catch (e) {
       toast('Onaylanamadı: ' + (e as Error).message, 'warn')
     }
   }
   async function reject(a: ExpertAction) {
     await actions.update(a.id, { status: 'rejected', approved_by: me.email, approved_at: new Date().toISOString() }).catch(() => {})
-    toast('Tamam, dahili testte kalıyor', 'info')
+    toast(a.kind === 'halt' ? 'Tamam, yayın devam ediyor' : 'Tamam, dahili testte kalıyor', 'info')
   }
   // Yayındaki sürüm için panelden verilen komut zaten onaydır
   async function rollout(b: StoreBuild, fraction: number | 'halt') {

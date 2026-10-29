@@ -108,6 +108,16 @@ export const demoReleases: Release[] = [
 // Yayın Uzmanı (demo)
 export const demoBuilds: StoreBuild[] = [
   {
+    id: 3, game_id: 'dropshipping', platform: 'android', file_id: null, file_name: 'Dropshipping-2.4.0.aab', package_name: 'com.voo.dropshipping', version_code: 24, version_name: '2.4.0',
+    status: 'live', summary: 'Dropshipping 2.4.0 test cihazında sorunsuz oynandı ve oyuncuların %20\'sine açıldı.', error: null, created_by: DEMO_ME, created_at: ago(1), updated_at: ago(0),
+    report: {
+      verdict: 'clean', counts: { block: 0, warn: 0, info: 1 }, text: '', aiSummary: true,
+      findings: [{ id: 'testlab-ok', severity: 'info', title: 'Test cihazında sorunsuz açıldı ve oynandı', detail: 'Medium Phone (Android API 34) üzerinde Robo oyunu kendi kendine 5 dakika gezdi; çökme ya da donma olmadı.', fix: [] }],
+      build: { kind: 'aab', targetSdk: 36, minSdk: 23, abis: ['arm64-v8a'], sizeMb: 48, hits: [] },
+      watch: { at: ago(0), since: ago(1), verdict: 'bad', text: 'Yeni sürümde çökme %2,40 (eski sürümlerde %0,35).', done: false },
+    },
+  },
+  {
     id: 2, game_id: 'salgin', platform: 'android', file_id: null, file_name: 'Salgin-1.1.0.aab', package_name: 'com.voo.salgin', version_code: 43, version_name: '1.1.0',
     status: 'awaiting_approval', summary: 'Salgın 1.1.0 dahili teste yüklendi, engelleyici sorun yok. Bir uyarı var: oyun konum izni istiyor; kullanmıyorsan kaldır. Oyunculara %10 açmak için onayla.',
     report: {
@@ -131,5 +141,6 @@ export const demoBuilds: StoreBuild[] = [
   },
 ]
 export const demoActions: ExpertAction[] = [
+  { id: 2, build_id: 3, kind: 'halt', params: { reason: 'Yeni sürümde çökme %2,40 (eski sürümlerde %0,35).' }, status: 'pending', result: null, approved_by: null, approved_at: null, created_at: ago(0) },
   { id: 1, build_id: 2, kind: 'publish_production', params: { userFraction: 0.1 }, status: 'pending', result: null, approved_by: null, approved_at: null, created_at: ago(0) },
 ]

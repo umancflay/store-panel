@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AlertOctagon, AlertTriangle, Check, ChevronDown, ExternalLink, Info, Pause, Rocket, X } from 'lucide-react'
+import { AlertOctagon, AlertTriangle, Check, ChevronDown, ExternalLink, HeartPulse, Info, Pause, Rocket, X } from 'lucide-react'
 import { trDateTime } from '../lib/rows'
 import type { BuildStatus, ExpertAction, Finding, StoreBuild } from '../lib/types'
 import { GameLogo, Seg } from './ui'
@@ -114,6 +114,25 @@ export default function BuildCard({
           <Seg value={fraction} onChange={setFraction} options={[{ value: '0.1', label: '%10' }, { value: '0.2', label: '%20' }, { value: '0.5', label: '%50' }]} />
           <button type="button" className="btn btn-ghost" onClick={() => onReject(pending)}><X size={13} /> Şimdi değil</button>
           <button type="button" className="btn btn-green" onClick={() => onApprove(pending, Number(fraction))}><Rocket size={13} /> Onayla</button>
+        </div>
+      )}
+
+      {pending && pending.kind === 'halt' && (
+        <div className="approve danger">
+          <div className="grow">
+            <b>Yayın durdurulsun mu?</b>
+            <div className="muted small">{pending.params.reason ?? 'Çökmeler arttı.'} Durdurursan yeni oyunculara gitmez; mevcut oyuncular etkilenmez.</div>
+          </div>
+          <button type="button" className="btn btn-ghost" onClick={() => onReject(pending)}><X size={13} /> Devam etsin</button>
+          <button type="button" className="btn btn-red" onClick={() => onApprove(pending, 0)}><Pause size={13} /> Durdur</button>
+        </div>
+      )}
+
+      {b.status === 'live' && r?.watch && (
+        <div className={`watch ${r.watch.verdict}`}>
+          <HeartPulse size={14} />
+          <span className="grow">{r.watch.done ? '48 saatlik nöbet bitti. ' : 'İlk 48 saat nöbette. '}{r.watch.text}</span>
+          <span className="muted" style={{ fontSize: 10 }}>{trDateTime(r.watch.at)}</span>
         </div>
       )}
 

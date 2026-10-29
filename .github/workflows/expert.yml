@@ -1,4 +1,5 @@
-# Yayın Uzmanı: panele bırakılan build'i inceler, raporlar, dahili teste yükler; onaylanan yayın eylemlerini uygular.
+# Yayın Uzmanı: panele bırakılan build'i inceler, test cihazında dener, raporlar, dahili teste yükler; onaylanan yayın eylemlerini uygular,
+# yayından sonra 48 saat çökmeleri izler, mağaza sayfası raporu ve sürüm notu yazar.
 # Claude kullanmaz: kurallar + stüdyonun kendi açık kaynak modeli (Ollama). Public repo olduğu için ücretsiz.
 # Panel olay anında başlatır (Supabase Edge Function); zamanlama sadece yedek.
 name: Yayın Uzmanı
@@ -35,7 +36,7 @@ jobs:
         run: node scripts/expert.mjs check
 
       - name: Araçları hazırla (bundletool, aapt2)
-        if: steps.check.outputs.has == 'true'
+        if: steps.check.outputs.builds == 'true'
         run: |
           mkdir -p .tools
           curl -sSL -o .tools/bundletool.jar https://github.com/google/bundletool/releases/download/1.17.2/bundletool-all-1.17.2.jar
@@ -44,14 +45,14 @@ jobs:
           java -version
 
       - name: Model önbelleği
-        if: steps.check.outputs.has == 'true'
+        if: steps.check.outputs.model == 'true'
         uses: actions/cache@v4
         with:
           path: ~/.ollama/models
           key: ollama-${{ env.EXPERT_MODEL }}
 
       - name: Kendi modelini başlat (Ollama)
-        if: steps.check.outputs.has == 'true'
+        if: steps.check.outputs.model == 'true'
         continue-on-error: true   # model açılamazsa kural raporu yine yazılır
         run: |
           curl -fsSL https://ollama.com/install.sh | sh

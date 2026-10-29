@@ -876,3 +876,10 @@ tr.on td { background: rgba(143,211,174,.06); }
 .aso-notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-top: 12px; }
 .aso-notes pre { margin: 6px 0 0; padding: 12px; border-radius: 12px; background: rgba(255,255,255,.04); white-space: pre-wrap; font: 400 12px/1.6 var(--font); }
 @media (max-width: 640px) { .aso-compare { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Yayın sonrası 48 saat nöbet */
+.watch { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 12px; font-size: 12px; background: rgba(255,255,255,.04); border: 1px solid var(--line); }
+.watch.ok { border-color: rgba(143,211,174,.35); color: var(--green-fg); }
+.watch.warn { border-color: rgba(232,192,122,.4); color: var(--gold); }
+.watch.bad { border-color: rgba(255,122,85,.5); color: var(--orange-fg); }
+.approve.danger { border-color: rgba(255,122,85,.45); background: rgba(255,122,85,.06); }

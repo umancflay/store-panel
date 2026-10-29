@@ -29,6 +29,7 @@ export async function saToken() {
         'https://www.googleapis.com/auth/androidpublisher',
         'https://www.googleapis.com/auth/playdeveloperreporting',
         'https://www.googleapis.com/auth/devstorage.read_only',
+        'https://www.googleapis.com/auth/cloud-platform', // Test Lab, sonuç kovası, faturalandırma kontrolü (Yayın Uzmanı)
       ].join(' '),
       aud: 'https://oauth2.googleapis.com/token',
       iat: now,

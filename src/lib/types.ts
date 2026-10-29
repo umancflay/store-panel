@@ -223,6 +223,8 @@ export interface StoreBuild {
     text: string
     aiSummary?: boolean
     build?: { kind: string; targetSdk: number; minSdk: number; abis: string[]; sizeMb: number; hits: string[] }
+    // Yayın sonrası 48 saat nöbet
+    watch?: { at: string; since: string; verdict: 'ok' | 'warn' | 'bad' | 'wait'; text: string; done: boolean }
   } | null
   summary: string | null
   error: string | null
@@ -234,7 +236,7 @@ export interface ExpertAction {
   id: number
   build_id: number
   kind: 'publish_production' | 'increase_rollout' | 'halt'
-  params: { userFraction?: number }
+  params: { userFraction?: number; reason?: string }
   status: 'pending' | 'approved' | 'rejected' | 'done' | 'failed'
   result: string | null
   approved_by: string | null
