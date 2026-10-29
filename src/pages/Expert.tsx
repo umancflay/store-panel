@@ -13,11 +13,12 @@ import BuildCard from '../components/BuildCard'
 import Select from '../components/Select'
 import { GameChip, SampleBanner, Seg, Toggle } from '../components/ui'
 import ReleasePage from './Release'
+import AsoCoach from '../components/AsoCoach'
 
 // Yayın Uzmanı: build'i bırak, uzman incelesin, raporlasın, dahili teste yüklesin; oyunculara açmak senin onayınla.
 // Claude kullanmaz: kurallar + stüdyonun kendi modeli GitHub'da çalışır (scripts/expert.mjs).
 
-type Tab = 'builds' | 'surum' | 'beyan'
+type Tab = 'builds' | 'aso' | 'surum' | 'beyan'
 const BEYAN: { key: keyof DataSafety; label: string; hint: string }[] = [
   { key: 'ads', label: 'Reklam gösteriyor', hint: 'AdMob, Unity Ads, AppLovin…' },
   { key: 'ad_id', label: 'Reklam kimliği (cihaz veya diğer kimlikler)', hint: 'Reklam ve analiz SDK\'ları toplar' },
@@ -104,7 +105,7 @@ export default function Expert() {
           <h1>Build'i bırak, gerisini uzman yapsın</h1>
           <p>İnceler, sorunları "ne yapmalısın" diye söyler, dahili teste yükler. Oyunculara açmak senin onayınla. Claude kullanmaz; stüdyonun kendi modeli çalışır.</p>
         </div>
-        <Seg value={tab} onChange={setTab} options={[{ value: 'builds', label: 'Build\'ler' }, { value: 'surum', label: 'Sürüm çıkar' }, { value: 'beyan', label: 'Veri güvenliği' }]} />
+        <Seg value={tab} onChange={setTab} options={[{ value: 'builds', label: 'Build\'ler' }, { value: 'aso', label: 'Mağaza sayfası' }, { value: 'surum', label: 'Sürüm çıkar' }, { value: 'beyan', label: 'Veri güvenliği' }]} />
       </div>
 
       {tab === 'builds' && (
@@ -137,6 +138,18 @@ export default function Expert() {
           {builds.rows.map((b) => (
             <BuildCard key={b.id} b={b} gameName={nameOf(b.game_id)} actions={actions.rows} onApprove={approve} onReject={reject} onRollout={rollout} />
           ))}
+        </>
+      )}
+
+      {tab === 'aso' && (
+        <>
+          <div className="flex" style={{ gap: 10 }}>
+            <span className="small muted">Oyun</span>
+            <Select className="select" style={{ width: 'auto' }} value={gameId} onChange={(e) => setGameId(e.target.value)} aria-label="Oyun">
+              {android.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+            </Select>
+          </div>
+          {gameId && <AsoCoach key={gameId} gameId={gameId} gameName={nameOf(gameId)} />}
         </>
       )}
 

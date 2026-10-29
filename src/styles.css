@@ -865,3 +865,14 @@ tr.on td { background: rgba(143,211,174,.06); }
 .goal-stats b { font-size: 18px; font-weight: 400; }
 @media (max-width: 640px) { .goal-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .welcome-goal { color: inherit; text-decoration: none; }
+
+/* Mağaza sayfası koçu */
+.aso-compare { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 14px; }
+.aso-compare > div { padding: 12px; border-radius: 14px; background: rgba(255,255,255,.03); border: 1px solid var(--line); min-width: 0; }
+.aso-compare span { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--muted); }
+.aso-compare b { display: block; font-size: 20px; font-weight: 400; margin: 2px 0; }
+.aso-compare small { display: block; font-size: 10px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.aso-sugg { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,.04); margin-bottom: 6px; font-size: 13px; }
+.aso-notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-top: 12px; }
+.aso-notes pre { margin: 6px 0 0; padding: 12px; border-radius: 12px; background: rgba(255,255,255,.04); white-space: pre-wrap; font: 400 12px/1.6 var(--font); }
+@media (max-width: 640px) { .aso-compare { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

@@ -1,5 +1,5 @@
 // Yayın Uzmanı işi (GitHub Actions, .github/workflows/expert.yml). Claude kullanmaz.
-//   node scripts/expert.mjs check  → yapılacak iş var mı (yeni build ya da onaylanmış eylem); GITHUB_OUTPUT'a has=true|false
+//   node scripts/expert.mjs check  → yapılacak iş var mı (yeni build, onaylanmış eylem ya da mağaza sayfası/sürüm notu isteği); GITHUB_OUTPUT'a has=true|false
 //   node scripts/expert.mjs        → build'leri işler, onaylı eylemleri uygular, eski dosyaları temizler, bildirimleri gönderir
 
 import fs from 'node:fs'
@@ -12,6 +12,7 @@ import { buildReport } from './expert/report.mjs'
 import { polish } from './expert/llm.mjs'
 import { promote, setRollout, uploadBundle } from './expert/publish.mjs'
 import { cleanupOldFiles, processAction, processBuild } from './expert/pipeline.mjs'
+import { queueOf, runQueue } from './expert/coach.mjs'
 
 if (!dbReady) {
   console.log('SUPABASE_URL veya SUPABASE_SERVICE_ROLE_KEY tanımlı değil; iş atlandı.')
@@ -30,7 +31,7 @@ const pendingBuilds = () => maybe('store_builds?status=eq.uploaded&select=id,gam
 const approvedActions = () => maybe('expert_actions?status=eq.approved&select=id,build_id,kind,params,status&order=approved_at')
 
 if (process.argv[2] === 'check') {
-  const has = (await pendingBuilds()).length > 0 || (await approvedActions()).length > 0
+  const has = (await pendingBuilds()).length > 0 || (await approvedActions()).length > 0 || (await queueOf(db).catch(() => [])).length > 0
   if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `has=${has}\n`)
   console.log(has ? 'Yayın Uzmanı için iş var' : 'Yayın Uzmanı için iş yok')
   process.exit(0)
@@ -69,6 +70,8 @@ for (const a of await approvedActions()) {
   console.log(`Eylem #${a.id} (${a.kind}) uygulanıyor`)
   await processAction(a, deps)
 }
+const coached = await runQueue(deps).catch((e) => console.error('Koçluk hatası:', e.message))
+if (coached) console.log(`Koçluk: ${coached} iş`)
 await cleanupOldFiles(deps).catch((e) => console.error('Temizlik hatası:', e.message))
 await flushOutbox()
 console.log('Yayın Uzmanı: bitti')

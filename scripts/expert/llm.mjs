@@ -8,6 +8,7 @@ export const MODEL = process.env.EXPERT_MODEL || 'qwen2.5:7b-instruct'
 const SYSTEM = [
   'Sen bir mobil oyun stüdyosunun yayın uzmanısın. Kullanıcı kod bilmiyor; Türkçe, kısa ve adım adım konuş.',
   'Sadece sana verilen bulguları kullan. Yeni sorun, sayı, tarih ya da politika maddesi uydurma.',
+  'Menü yollarını ve yerleri (Unity › Player Settings, Play Console › …, panelin Veri güvenliği sekmesi) bulgulardaki gibi aynen kullan; başka bir yere yönlendirme.',
   'Önce sonucu tek cümleyle söyle (yüklenebilir mi), sonra en fazla 8 maddede ne yapması gerektiğini sırala; engelleyici sorunlar önce.',
 ].join(' ')
 

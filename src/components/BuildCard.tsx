@@ -28,7 +28,7 @@ const statusText: Record<BuildStatus, [string, string]> = {
 const sevIcon = { block: <AlertOctagon size={15} />, warn: <AlertTriangle size={15} />, info: <Info size={15} /> }
 const sevLabel = { block: 'Engelleyici', warn: 'Uyarı', info: 'Bilgi' }
 
-function FindingRow({ f }: { f: Finding }) {
+export function FindingRow({ f }: { f: Finding }) {
   const [open, setOpen] = useState(f.severity === 'block')
   return (
     <div className={`finding ${f.severity}`}>
