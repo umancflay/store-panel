@@ -41,6 +41,14 @@ export function goalProgress(days, today, goal) {
   return { month, sofar, pace, projected, left, need: goal > 0 ? Math.max(0, (goal - sofar) / left) : 0, ratio: goal > 0 ? sofar / goal : 0 }
 }
 
+// Geçen 7 gün ile önceki 7 günün toplamı (pazartesi özeti)
+export function weekSummary(days, today) {
+  const sum = (from, to) => Array.from({ length: to - from + 1 }, (_, i) => days[shift(today, -from - i)] ?? 0).reduce((a, b) => a + b, 0)
+  const last = sum(1, 7)
+  const prev = sum(8, 14)
+  return { last, prev, change: prev > 0 ? ((last - prev) / prev) * 100 : null }
+}
+
 async function all(path) {
   const out = []
   for (let off = 0; ; off += 1000) {
@@ -95,22 +103,22 @@ export async function applyGoals() {
     }
   }
 
-  if (goal.monthly > 0) {
-    const p = goalProgress(days, today, goal.monthly)
-    const monday = new Date(today + 'T12:00:00Z').getUTCDay() === 1
-    if (p.sofar >= goal.monthly && goal.reached !== p.month) {
-      await db('notify_outbox', 'POST', { title: 'Aylık gelir hedefine ulaştın 🎉', body: `Bu ay ${tl(p.sofar)} kazandın; hedef ${tl(goal.monthly)} idi.`, url: './#/gelir' }, 'return=minimal')
-      await upsert('app_settings', [{ key: 'revenue_goal', value: { ...stored, reached: p.month }, updated_at: new Date().toISOString() }], 'key')
-      notes.push('hedef tebriği')
-    } else if (monday && p.sofar < goal.monthly) {
-      const ok = p.projected >= goal.monthly
-      await db('notify_outbox', 'POST', {
-        title: ok ? 'Gelir hedefi yolunda' : 'Gelir hedefinin gerisindesin',
-        body: `Bu ay ${tl(p.sofar)} / ${tl(goal.monthly)}. Bu hızla ay sonu ~${tl(p.projected)}.${ok ? '' : ` Hedef için günde ${tl(p.need)} lazım (şu an ${tl(p.pace)}).`}`,
-        url: './#/gelir',
-      }, 'return=minimal')
-      notes.push('haftalık hedef özeti')
-    }
+  const monday = new Date(today + 'T12:00:00Z').getUTCDay() === 1
+  const p = goal.monthly > 0 ? goalProgress(days, today, goal.monthly) : null
+  if (p && p.sofar >= goal.monthly && goal.reached !== p.month) {
+    await db('notify_outbox', 'POST', { title: 'Aylık gelir hedefine ulaştın 🎉', body: `Bu ay ${tl(p.sofar)} kazandın; hedef ${tl(goal.monthly)} idi.`, url: './#/gelir' }, 'return=minimal')
+    await upsert('app_settings', [{ key: 'revenue_goal', value: { ...stored, reached: p.month }, updated_at: new Date().toISOString() }], 'key')
+    notes.push('hedef tebriği')
+  }
+  // Pazartesi sabahı: geçen haftanın geliri ve (varsa) hedef gidişatı
+  if (monday) {
+    const w = weekSummary(days, today)
+    const trend = w.change == null ? '' : ` (önceki haftaya göre ${w.change >= 0 ? '+' : ''}%${Math.round(w.change)})`
+    const goalLine = p && p.sofar < goal.monthly
+      ? ` Bu ay ${tl(p.sofar)} / ${tl(goal.monthly)}; bu hızla ay sonu ~${tl(p.projected)}.${p.projected >= goal.monthly ? ' Hedef yolunda.' : ` Hedef için günde ${tl(p.need)} lazım.`}`
+      : ''
+    await db('notify_outbox', 'POST', { title: `Geçen hafta ${tl(w.last)} kazandın${trend}`, body: `Haftalık gelir özeti.${goalLine}`.trim(), url: './#/gelir' }, 'return=minimal')
+    notes.push('haftalık özet')
   }
   console.log(`Gelir hedefi: ${notes.length ? notes.join(', ') : 'bildirim yok'}`)
 }

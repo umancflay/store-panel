@@ -166,9 +166,20 @@ Küçük bir Unity mobil oyun stüdyosu (Voo Game Studio / Pixel Game) için tek
 - Kod: `scripts/expert.mjs` (giriş), `scripts/expert/` (bundle, rules, report, llm, publish, pipeline), `uzman/` (kurallar, eşikler, SDK izleri), `.github/workflows/expert.yml`, panel `/yayin` (`pages/Expert.tsx`, `components/BuildCard.tsx`). Testler: `npm test` (37 test).
 - Claude kullanmaz; model Ollama + `qwen2.5:7b-instruct`, çıktı doğrulanır, geçmezse kural raporu gösterilir.
 - Akış: uploaded → inspecting → blocked | ready → internal (Play dahili test, onaysız) → awaiting_approval → (panelde Onayla) → live (%10). Yayındayken %50 / herkese aç / durdur düğmeleri.
-- ⏳ Kullanıcı onayı bekleyenler: `supabase/phase11-expert.sql` çalıştırılmadı; `trigger-update` Edge Function'ın yeni kodu deploy edilmedi (fonksiyon hiç kurulmamış olabilir). İkisi de canlı veritabanı / canlı fonksiyon değişikliği olduğu için açık onay istiyor.
-- ⏳ Gerçek bir AAB ile uçtan uca deneme yapılmadı. `targetSdk` 2026 eşiği (36) resmi sayfadan doğrulanmalı.
-- Sıradaki fazlar: Test Lab cihaz testi + 48 saat izleme (Firebase hazır: proje `store-panel-512516`, API'ler açık, hizmet hesabına Test Lab Admin + Analytics Viewer verildi), ret/itiraz, iOS IPA incelemesi, mağaza vitrini.
+- ✅ 29 Ekim 2026: `phase11-expert.sql` çalıştırıldı, `trigger-update` Edge Function ilk kez kuruldu (panelden anında başlatma çalışıyor). İlk gerçek AAB (RengiYakala, yanlışlıkla Salgın seçilmiş) uçtan uca işlendi: yanlış paket ve test reklam kimliği yakalandı, Play'e gitmedi.
+- ⏳ `targetSdk` 2026 eşiği (36) resmi sayfadan doğrulanmalı. Fonksiyonun "Verify JWT with legacy secret" ayarı açık; çalışıyor, dokunulmadı.
+
+### Yayın Uzmanı Faz 2 ve panel güncellemeleri (29 Ekim 2026)
+
+- **Menü 17 → 10:** `Layout.tsx › navGroups` içinde benzer sayfalar `tabs` ile tek öğede (Komuta+Uyarılar, Çalışma: Bugün/Görevler/Ortak plan/Takvim, Plan+Otomasyon, Belgeler: Notlar/Dosyalar, Oyunlar+Yorumlar, Gelir+Reklam). Eski adresler aynen çalışır; `allPages` arama ve "kim nerede" için.
+- **Tarih hatası düzeltildi:** `toISOString` Türkiye'de günü bir geri kaydırıyordu (panel hep bir gün geriden gidiyordu). Ortak `lib/format.ts › localIso`.
+- **Gelir hedefi:** `components/GoalCard.tsx` (Gelir sayfası, ana sayfada yüzde), `app_settings.revenue_goal` (TL). `scripts/goals.mjs` sabah işinde: dün 7 günlük ortalamadan %50+ düşerse uyarı + bildirim, pazartesi haftalık gelir özeti (+ hedef gidişatı), hedefe ulaşınca tebrik.
+- **Mağaza sayfası koçu:** `scripts/expert/aso.mjs` + `coach.mjs`, panelde Yayın Uzmanı › Mağaza sayfası (`components/AsoCoach.tsx`). Play sayfası API'den okunur (edit açılır, kaydedilmeden silinir), "tür" aramasındaki ilk 5 oyunla karşılaştırılır, kurallar + kendi model önerileri; sürüm notu (TR+EN). İstekler `app_settings.expert_queue`, sonuçlar `aso:<oyun>`, `whatsnew:<oyun>`.
+- **Test Lab:** `scripts/expert/testlab.mjs`. Engelleyici yoksa build sanal arm64 telefonda Robo ile 5 dk. Sadece faturalandırma KAPALIYKEN çalışır (Cloud Billing API ile kontrol; doğrulanamazsa test atlanır, bulgu "yapılmadı" der). İlk gerçek denemede atlanma sebebine bakılmalı: Cloud Billing API'nin projede açık olması ve hizmet hesabının `resourcemanager.projects.get` izni gerekebilir. `saToken`'a `cloud-platform` kapsamı eklendi.
+- **48 saat nöbet:** `scripts/expert/watch.mjs`. Yayındaki sürümün saatlik çökme/ANR oranı (Reporting API, `versionCode` kırılımı) eski sürümlerle karşılaştırılır; kötüyse onay bekleyen `halt` eylemi + bildirim (kendisi durdurmaz), 48 saat temiz geçerse haber verir.
+- `expert.yml`: model (Ollama) sadece build/koçluk işi varken kurulur; nöbet ve onaylı eylemler hızlı geçer.
+- Ana sayfada kısayollar (Build bırak, Mağaza raporu, Sürüm notu, Hedef, Asistan). Testler: 58.
+- Sıradaki fazlar: ret/itiraz yönetimi, iOS IPA incelemesi, öğrenme döngüsü.
 
 ### Ekip ve asistan (28 Ekim 2026)
 
@@ -216,7 +227,7 @@ Küçük bir Unity mobil oyun stüdyosu (Voo Game Studio / Pixel Game) için tek
 4. **Stock Guys ve Haul Guys.** Play'de yayına çıkınca Meta uygulamalarına Android paket adı eklenecek (developers.facebook.com › uygulama › Ayarlar › Temel › Android › Google Play, sınıf adı `com.unity3d.player.UnityPlayerActivity`). App Store'a çıkınca iOS da eklenecek.
 5. **TikTok Ads bağlantısı.** Henüz yapılmadı. TikTok for Business geliştirici uygulaması onayı 1-3 gün sürer; erken başvurulmalı. `campaigns`/`ad_breakdowns` tablolarına `platform='tiktok'` ile aynı yapıda yazılmalı.
 6. **Kurulum ölçümü.** Meta kurulumları sayamıyor çünkü oyunlarda Meta SDK'sı yok. Kullanıcı Unity'de Meta SDK'yı (ya da AppsFlyer/Adjust gibi bir MMP) ekleyince kurulum ve kurulum başı maliyet panelde dolar.
-7. **README Adım 11:** "Şimdi güncelle" Edge Function'ı hâlâ deploy edilmedi.
+7. ✅ **README Adım 11:** "Şimdi güncelle" Edge Function'ı 29 Ekim 2026'da kuruldu.
 8. **Kullanıcı tarafında bekleyenler:**
    - Google Ads hesabına fatura bilgisi (Borsa kampanyası ₺250/gün, yayınlanmıyor);
    - Meta Voo Game Studio reklam hesabına ödeme yöntemi;

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Bot, Flag, PenLine, Rocket, Store } from 'lucide-react'
 import { useData, usePeople } from '../lib/data'
 import { useStore } from '../lib/store'
 import { useRows, useInsight } from '../lib/rows'
@@ -55,6 +55,15 @@ export default function Welcome() {
         <Link to="/gorevler" className={`btn btn-lg ${critical > 0 ? 'btn-hot' : 'btn-ghost'}`}>
           {critical > 0 ? `Kritik işlere bak (${critical})` : 'Görevlere bak'}
         </Link>
+      </div>
+
+      {/* Sık yapılan işlere tek dokunuş */}
+      <div className="quick-actions">
+        <Link to="/yayin"><Rocket size={14} /> Build bırak</Link>
+        <Link to="/yayin?tab=aso"><Store size={14} /> Mağaza sayfası raporu</Link>
+        <Link to="/yayin?tab=aso"><PenLine size={14} /> Sürüm notu yaz</Link>
+        <Link to="/gelir"><Flag size={14} /> {goal.target > 0 ? 'Gelir hedefi' : 'Hedef koy'}</Link>
+        <Link to="/asistan"><Bot size={14} /> Asistana sor</Link>
       </div>
 
       <div className="welcome-stats">

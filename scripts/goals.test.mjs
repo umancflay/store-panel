@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { goalProgress, revenueDrop, trDay } from './goals.mjs'
+import { goalProgress, revenueDrop, trDay, weekSummary } from './goals.mjs'
 
 const week = (start, values) => Object.fromEntries(values.map((v, i) => {
   const d = new Date(start + 'T12:00:00Z')
@@ -42,4 +42,9 @@ test('ayın ilk günü son 7 günün ortalamasıyla tahmin eder', () => {
 
 test('Türkiye günü UTC gece yarısından önce değişir', () => {
   assert.equal(trDay(new Date('2026-10-28T22:30:00Z')), '2026-10-29')
+})
+
+test('haftalık özet: geçen 7 gün ve önceki 7 gün', () => {
+  const days = week('2026-10-12', [...Array(7).fill(5), ...Array(7).fill(10)]) // 12–18: 5, 19–25: 10
+  assert.deepEqual(weekSummary(days, '2026-10-26'), { last: 70, prev: 35, change: 100 })
 })
