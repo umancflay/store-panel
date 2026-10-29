@@ -92,7 +92,9 @@ function DeviceTest({ b, onTest }: { b: StoreBuild; onTest?: (b: StoreBuild) => 
           </div>
         </div>
       ) : (
-        <div className="muted small">Build'i sanal bir telefonda açıp 3 dakika kendi kendine oynatır; çöküyor mu net söyler.</div>
+        <div className="muted small">{b.file_id == null
+          ? 'Bu build\'in dosyası artık yok (Dosyalar\'dan silinmiş ya da eski build temizlenmiş). Telefonda denemek için build\'i yeniden bırak.'
+          : 'Build\'i sanal bir telefonda açıp 3 dakika kendi kendine oynatır; çöküyor mu net söyler.'}</div>
       )}
       {d?.shots && d.shots.length > 0 && (
         <div className="devtest-shots">
