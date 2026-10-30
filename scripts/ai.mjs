@@ -184,13 +184,14 @@ function buildPrompt(ctx, want) {
 }
 
 // opts.model: hızlı işler (sohbet) için daha hızlı model; opts.web: internette arama (sadece okuma: WebSearch, WebFetch)
+// opts.readDir: Claude bu klasördeki dosyalara (ör. indirilmiş mağaza görselleri) bakabilir (sadece Read)
 export function runClaude(prompt, schema = SCHEMA, opts = {}) {
   const args = [
     '-p',
     '--output-format', 'json',
     '--json-schema', JSON.stringify(schema),
-    '--tools', opts.web ? 'WebSearch,WebFetch' : '',
-    ...(opts.web ? ['--allowedTools', 'WebSearch', 'WebFetch'] : []),
+    '--tools', [opts.web && 'WebSearch,WebFetch', opts.readDir && 'Read'].filter(Boolean).join(','),
+    ...(opts.web || opts.readDir ? ['--allowedTools', ...(opts.web ? ['WebSearch', 'WebFetch'] : []), ...(opts.readDir ? ['Read'] : [])] : []),
     '--no-session-persistence',
     '--append-system-prompt', SYSTEM,
     '--model', opts.model || process.env.CLAUDE_MODEL || 'opus', // varsayılan: en güçlü model (abonelikle, ek ücret yok)
@@ -200,7 +201,7 @@ export function runClaude(prompt, schema = SCHEMA, opts = {}) {
     // Terminalden kopyalarken token satır sonuna bölünebiliyor: tüm boşlukları ve satır sonlarını at
     const token = (process.env.CLAUDE_CODE_OAUTH_TOKEN ?? '').replace(/\s+/g, '')
     const env = { PATH: process.env.PATH, HOME: process.env.HOME, CLAUDE_CODE_OAUTH_TOKEN: token }
-    const child = spawn('claude', args, { env, stdio: ['pipe', 'pipe', 'pipe'] })
+    const child = spawn('claude', args, { env, stdio: ['pipe', 'pipe', 'pipe'], ...(opts.readDir ? { cwd: opts.readDir } : {}) })
     let out = ''
     let err = ''
     const timer = setTimeout(() => child.kill('SIGTERM'), (opts.timeoutMin ?? 12) * 60 * 1000)

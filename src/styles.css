@@ -1121,3 +1121,14 @@ details.adc > summary::-webkit-details-marker { display: none; }
 .screens { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
 .screen { display: flex; flex-direction: column; gap: 6px; align-items: center; }
 .screen img { width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,.08); }
+
+/* Tasarım rehberi */
+.guide-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; }
+@media (max-width: 760px) { .guide-form { grid-template-columns: 1fr; } }
+.guide { display: flex; flex-direction: column; gap: 14px; margin-top: 14px; }
+.guide-style { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+.guide-style > div { padding: 12px; border-radius: 12px; background: rgba(255,255,255,.03); }
+.guide-style span { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.guide-style p { margin: 4px 0 0; font-size: 12px; line-height: 1.55; }
+.guide-list { margin: 0; padding-left: 18px; font-size: 12px; line-height: 1.6; }
+.guide-prompts { display: flex; flex-direction: column; gap: 8px; }

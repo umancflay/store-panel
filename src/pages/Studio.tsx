@@ -8,6 +8,7 @@ import { triggerWorkflow } from '../lib/trigger'
 import { trDateTime } from '../lib/rows'
 import { GameLogo, SampleBanner } from '../components/ui'
 import GameProfile from '../components/GameProfile'
+import DesignGuide from '../components/DesignGuide'
 
 // Reklam Stüdyosu: oyun seç → 3 fikir (çekim listesiyle) → kayıtları ekle → video + mağaza görselleri → onayla → paket.
 // Projeler app_settings.ad_projects'te; fikir yazma ve video birleştirme asistan işinde (scripts/studio.mjs).
@@ -159,6 +160,7 @@ export default function Studio() {
       </div>
 
       {gid && <GameProfile gameId={gid} gameName={games.find((g) => g.id === gid)?.name ?? gid} />}
+      {gid && <DesignGuide gameId={gid} gameName={games.find((g) => g.id === gid)?.name ?? gid} />}
       {gid && <LessonsCard gameId={gid} />}
 
       <section className="card studio-new">

@@ -12,6 +12,7 @@ import { hasAssistantTasks, runAssistantTasks } from './assistanttasks.mjs'
 import { markTrendsStarted, runAdTrends, trendsDue } from './adtrends.mjs'
 import { runStudio, studioDue } from './studio.mjs'
 import { profilesDue, runProfiles } from './gameprofile.mjs'
+import { guidesDue, runGuides } from './designguide.mjs'
 
 if (!dbReady) {
   console.log('SUPABASE_URL veya SUPABASE_SERVICE_ROLE_KEY tanımlı değil; iş atlandı.')
@@ -29,7 +30,7 @@ if (process.argv[2] === 'trends-check') {
 }
 // Reklam Stüdyosu: fikir yazma ve video birleştirme (ffmpeg) ayrı işte
 if (process.argv[2] === 'studio-check') {
-  const due = (await studioDue()) || (await profilesDue())
+  const due = (await studioDue()) || (await profilesDue()) || (await guidesDue())
   if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `has=${due}
 `)
   console.log(due ? 'Stüdyoda iş var' : 'Stüdyoda iş yok')
@@ -37,6 +38,7 @@ if (process.argv[2] === 'studio-check') {
 }
 if (process.argv[2] === 'studio') {
   await runProfiles()
+  await runGuides()
   await runStudio()
   process.exit(0)
 }
