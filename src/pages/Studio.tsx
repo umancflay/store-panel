@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Check, Clapperboard, Download, Film, Image as ImageIcon, Loader2, Plus, RefreshCw, Sparkles, Trash2, Upload, X } from 'lucide-react'
+import { Check, Clapperboard, Copy, Download, Film, Image as ImageIcon, Loader2, Plus, RefreshCw, Sparkles, Trash2, Upload, X } from 'lucide-react'
 import { supabase, isDemo } from '../lib/supabase'
 import { useData, usePeople } from '../lib/data'
 import { useStore } from '../lib/store'
@@ -12,19 +12,20 @@ import { GameLogo, SampleBanner } from '../components/ui'
 // Projeler app_settings.ad_projects'te; fikir yazma ve video birleştirme asistan işinde (scripts/studio.mjs).
 // Durumlar dürüst: fikir "denenecek fikir"dir, video senin onayından önce "hazır" sayılmaz, hiçbir şey kendiliğinden yayınlanmaz.
 
-type Shot = { seconds: number; record: string; text: string; fileId?: number | null; fileName?: string }
-type Idea = { id: string; title: string; platform: string; why: string; evidence: 'trend' | 'veri' | 'yok'; hook: string; shots: Shot[]; endText: string; storeHeadline: string }
+type Shot = { seconds: number; kind?: 'oyun' | 'ai' | 'kisi'; record: string; direction?: string; aiPrompt?: string; text: string; fileId?: number | null; fileName?: string }
+type Idea = { id: string; title: string; platform: string; why: string; evidence: 'trend' | 'veri' | 'yok'; hook: string; shots: Shot[]; endText: string; storeHeadline: string; style?: string; music?: string }
 type Out = { path: string; fileId: number | null }
-type Status = 'ideas_requested' | 'pick' | 'recording' | 'render_requested' | 'review' | 'ready' | 'published' | 'failed_ideas' | 'failed_render'
+type Status = 'ideas_requested' | 'pick' | 'recording' | 'detail_requested' | 'render_requested' | 'review' | 'ready' | 'published' | 'failed_ideas' | 'failed_render'
 interface Project {
   id: string; gameId: string; status: Status; by: string; createdAt: string; updatedAt?: string; note?: string
   ideas?: Idea[]; idea?: Idea; outputs?: { video?: Out; feature?: Out; square?: Out }; seconds?: number; error?: string | null; publishedOn?: string
 }
 type GameFile = { id: number; name: string; mime: string | null; created_at: string }
 
-const waiting = (s: Status) => s === 'ideas_requested' || s === 'render_requested'
+const waiting = (s: Status) => s === 'ideas_requested' || s === 'detail_requested' || s === 'render_requested'
 const statusLabel: Record<Status, [string, string]> = {
   ideas_requested: ['Fikirler hazırlanıyor', 'b-warning'],
+  detail_requested: ['Promptlar yazılıyor', 'b-warning'],
   pick: ['Fikir seç', 'b-primary'],
   recording: ['Kayıt eksik', 'b-warning'],
   render_requested: ['Video hazırlanıyor', 'b-warning'],
@@ -35,7 +36,8 @@ const statusLabel: Record<Status, [string, string]> = {
   failed_render: ['Hata', 'b-critical'],
 }
 const steps = ['Fikir', 'Çekim', 'Video', 'İnceleme', 'Paket']
-const stepOf: Record<Status, number> = { ideas_requested: 0, pick: 0, failed_ideas: 0, recording: 1, render_requested: 2, failed_render: 2, review: 3, ready: 4, published: 4 }
+const stepOf: Record<Status, number> = { ideas_requested: 0, pick: 0, failed_ideas: 0, recording: 1, detail_requested: 1, render_requested: 2, failed_render: 2, review: 3, ready: 4, published: 4 }
+const kindText = { oyun: 'Oyun kaydı', ai: 'Yapay zeka videosu', kisi: 'İnsan çekimi' }
 const evidenceText = { trend: 'Dayanak: güncel trend', veri: 'Dayanak: senin reklam verin', yok: 'Dayanak yok, deneme' }
 
 const demoProjects: Project[] = [{
@@ -44,7 +46,7 @@ const demoProjects: Project[] = [{
     id: 'i0', title: 'Son 10 saniye kurtarışı', platform: 'TikTok', evidence: 'trend', why: 'Bu ay "fail → kurtarış" kurgusu oyun reklamlarında en çok izlenen kurgu.',
     hook: 'Ekran kırmızı, zombi kapıda: "Bunu kurtarabilir misin?"', endText: 'Play free now', storeHeadline: 'Hayatta kal',
     shots: [
-      { seconds: 3, record: 'Kalabalık zombilerin üssü sardığı an (oyun içi kayıt)', text: 'Only 1% survive this', fileId: 1, fileName: 'kayit1.mp4' },
+      { seconds: 3, kind: 'ai', record: 'Gece, sirenler, şehre koşan zombi sürüsü', direction: 'Oyun dışı açılış sahnesi: korku ve aciliyet.', aiPrompt: 'Cinematic night shot of a ruined city street, a massive horde of zombies sprinting toward the camera under flickering red emergency lights, handheld camera slowly pushing in, 24mm lens, heavy fog, desaturated teal and red palette, tense horror mood, fast pacing, vertical 9:16, 3 seconds, no text, no logos, no watermark', text: 'Only 1% survive this', fileId: 1, fileName: 'kayit1.mp4' },
       { seconds: 5, record: 'Son anda barikat kurma', text: 'Watch this...' },
       { seconds: 4, record: 'Üssün kurtulduğu, ekranın yeşile döndüğü an', text: 'Can you do better?' },
     ],
@@ -188,7 +190,7 @@ function ProjectView({ p, patch, remove, run, me }: { p: Project; patch: (id: st
       </div>
 
       {waiting(p.status) && (
-        <div className="studio-wait"><Loader2 size={16} className="spin" /> {p.status === 'ideas_requested' ? 'Claude trendlere ve reklam verine bakıp fikir yazıyor' : 'Kayıtlar birleştiriliyor, yazılar ekleniyor'}… <Elapsed since={p.updatedAt ?? p.createdAt} /></div>
+        <div className="studio-wait"><Loader2 size={16} className="spin" /> {p.status === 'ideas_requested' ? 'Claude trendlere ve reklam verine bakıp fikir yazıyor' : p.status === 'detail_requested' ? 'Her çekim için yönerge ve yapay zeka video promptu yazılıyor' : 'Kayıtlar birleştiriliyor, yazılar ekleniyor'}… <Elapsed since={p.updatedAt ?? p.createdAt} /></div>
       )}
 
       {(p.status === 'failed_ideas' || p.status === 'failed_render') && (
@@ -212,8 +214,11 @@ function ProjectView({ p, patch, remove, run, me }: { p: Project; patch: (id: st
         </div>
       )}
 
+      {p.status === 'recording' && p.error && <div className="studio-wait bad"><X size={16} /> {p.error}</div>}
+
       {idea && (p.status === 'recording' || p.status === 'failed_render') && (
-        <Shots p={p} idea={idea} patch={patch} run={run} me={me} onRender={() => run(() => req('render_requested'), 'Video hazırlanıyor; genelde 2-4 dakika')} />
+        <Shots p={p} idea={idea} patch={patch} run={run} me={me} onRender={() => run(() => req('render_requested'), 'Video hazırlanıyor; genelde 2-4 dakika')}
+          onDetail={() => run(() => req('detail_requested'), 'Promptlar yazılıyor; genelde 1 dakika')} />
       )}
 
       {(p.status === 'review' || p.status === 'ready' || p.status === 'published') && p.outputs && (
@@ -224,7 +229,8 @@ function ProjectView({ p, patch, remove, run, me }: { p: Project; patch: (id: st
   )
 }
 
-function Shots({ p, idea, patch, run, me, onRender }: { p: Project; idea: Idea; patch: (id: string, x: Partial<Project>) => Promise<void>; run: (fn: () => Promise<unknown>, ok?: string) => Promise<void>; me: string; onRender: () => void }) {
+function Shots({ p, idea, patch, run, me, onRender, onDetail }: { p: Project; idea: Idea; patch: (id: string, x: Partial<Project>) => Promise<void>; run: (fn: () => Promise<unknown>, ok?: string) => Promise<void>; me: string; onRender: () => void; onDetail: () => void }) {
+  const { toast } = useStore()
   const [files, setFiles] = useState<GameFile[]>([])
   const [busy, setBusy] = useState<number | null>(null)
   const input = useRef<HTMLInputElement>(null)
@@ -256,14 +262,28 @@ function Shots({ p, idea, patch, run, me, onRender }: { p: Project; idea: Idea; 
   }
 
   const ready = idea.shots.every((s) => s.fileId)
+  const detailed = idea.shots.some((s) => s.direction)
   return (
     <div className="shots">
-      <div className="muted small">Kanca: <b style={{ color: '#fff' }}>{idea.hook}</b></div>
+      <div className="studio-brief">
+        <div><span className="muted">Kanca</span><b>{idea.hook}</b></div>
+        {idea.style && <div><span className="muted">Görsel tarz</span><b>{idea.style}</b></div>}
+        {idea.music && <div><span className="muted">Müzik</span><b>{idea.music}</b></div>}
+        <button type="button" className="btn sm" onClick={onDetail}><Sparkles size={12} /> {detailed ? 'Promptları yenile' : 'Detaylı yönerge ve prompt yaz'}</button>
+      </div>
       {idea.shots.map((s, i) => (
         <div key={i} className={`shot ${s.fileId ? 'ok' : ''}`}>
           <span className="shot-n">{i + 1}</span>
           <div className="grow" style={{ minWidth: 0 }}>
-            <div className="small"><b>{s.seconds} sn</b> · {s.record}</div>
+            <div className="small flex wrap" style={{ gap: 6 }}><b>{s.seconds} sn</b>{s.kind && <span className={`badge ${s.kind === 'ai' ? 'b-primary' : 'b-muted'}`}>{kindText[s.kind]}</span>} {s.record}</div>
+            {s.direction && <p className="shot-dir">{s.direction}</p>}
+            {s.aiPrompt && (
+              <div className="ai-prompt">
+                <div className="flex between"><span className="muted" style={{ fontSize: 10 }}>Yapay zeka video promptu (Veo, Kling, Runway, Sora…)</span>
+                  <button type="button" className="btn btn-ghost sm" onClick={() => navigator.clipboard.writeText(s.aiPrompt!).then(() => toast('Prompt kopyalandı'))}><Copy size={12} /> Kopyala</button></div>
+                <code>{s.aiPrompt}</code>
+              </div>
+            )}
             <input className="input sm" defaultValue={s.text} maxLength={40} onBlur={(e) => e.target.value !== s.text && run(() => setShot(i, { text: e.target.value }))} placeholder="Ekran yazısı (boş bırakılabilir)" aria-label={`${i + 1}. çekim yazısı`} />
           </div>
           <div className="shot-file">

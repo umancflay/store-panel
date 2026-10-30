@@ -16,6 +16,20 @@ const W = 1080
 const H = 1920
 export const FONT = process.env.STUDIO_FONT || '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'
 
+const SHOT = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['seconds', 'kind', 'record', 'direction', 'aiPrompt', 'text'],
+  properties: {
+    seconds: { type: 'number' },
+    kind: { type: 'string', enum: ['oyun', 'ai', 'kisi'] },
+    record: { type: 'string' },
+    direction: { type: 'string' },
+    aiPrompt: { type: 'string' },
+    text: { type: 'string' },
+  },
+}
+
 const IDEAS = {
   type: 'object',
   additionalProperties: false,
@@ -35,20 +49,33 @@ const IDEAS = {
           hook: { type: 'string' },
           shots: {
             type: 'array',
-            items: {
-              type: 'object',
-              additionalProperties: false,
-              required: ['seconds', 'record', 'text'],
-              properties: { seconds: { type: 'number' }, record: { type: 'string' }, text: { type: 'string' } },
-            },
+            items: SHOT,
           },
           endText: { type: 'string' },
           storeHeadline: { type: 'string' },
+          style: { type: 'string' },
+          music: { type: 'string' },
         },
       },
     },
   },
 }
+
+// Sonradan detay yazma (eski projeler ya da "promptları yenile"): seçili fikrin çekimleri aynı sırayla
+const DETAILS = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['style', 'music', 'shots'],
+  properties: { style: { type: 'string' }, music: { type: 'string' }, shots: { type: 'array', items: SHOT } },
+}
+
+// Çekim türüne göre ne yapılacağını anlatan ortak kurallar (fikir ve detay istemlerinde)
+const SHOT_RULES = [
+  '- Her çekimde kind: "oyun" (Unity oyun ekranı ya da telefon ekran kaydı), "ai" (yapay zeka video aracıyla üretilecek oyun dışı sahne) ya da "kisi" (insan çekimi: el, yüz, tepki).',
+  '- direction: Türkçe, 2-4 cümlelik çekim yönergesi. "oyun" için: hangi bölüm/sahne, kamera açısı ve yakınlığı, oyunda ne yapılacağı, kayıt ayarı (dikey 9:16, 60 fps, arayüz açık/kapalı), dikkat edilecekler. "kisi" için: kadraj, ışık, ifade. "ai" için: sahnenin kısa Türkçe özeti.',
+  '- aiPrompt: SADECE kind "ai" ise doldur, diğerlerinde boş metin. İngilizce, ayrıntılı, tek paragraf video üretim istemi (Veo, Kling, Runway, Sora gibi araçlara yapıştırılacak): konu ve karakter, eylem saniye saniye, ortam, kamera hareketi ve lensi, ışık, renk paleti, görsel tarz (ör. cinematic, hyper-realistic, 3D stylized, anime), hız, ruh hali; sonuna "vertical 9:16, N seconds, no text, no logos, no watermark" ekle (N çekimin süresi). Oyunun tarzıyla (style) uyumlu olsun.',
+  '- style (fikir düzeyinde): bütün videonun görsel tarzı, renkleri, kurgu hızı (Türkçe, 1-2 cümle). music: önerilen müzik/ses tarzı ve tempo (Türkçe, 1 cümle; telifsiz kütüphanede aranacak anahtar kelimelerle).',
+].join('\n')
 
 // ---- saf yardımcılar (testli) ----
 
@@ -137,9 +164,11 @@ async function patchProject(id, patch) {
   await saveSetting('ad_projects', { ...cur, items })
 }
 
+const WORK = ['ideas_requested', 'detail_requested', 'render_requested']
+
 export async function studioDue() {
   const cur = await setting('ad_projects')
-  return (cur?.items ?? []).some((p) => p.status === 'ideas_requested' || p.status === 'render_requested')
+  return (cur?.items ?? []).some((p) => WORK.includes(p.status))
 }
 
 async function writeIdeas(p) {
@@ -165,8 +194,9 @@ async function writeIdeas(p) {
     `Oyun: ${game?.name ?? p.gameId}${game?.genre ? ` (tür: ${game.genre})` : ''}.`,
     p.note ? `Sahibinin notu: ${p.note}` : '',
     'Görev: bu oyun için çekilebilir 3 kısa dikey video reklam fikri yaz (TikTok / Reels / Shorts).',
-    '- Her fikirde 3-6 çekim (shots). seconds: o çekimin süresi; toplam 15-25 sn. record: oyunda neyin kaydedileceği (Unity oyun ekranı ya da telefon ekran kaydı; kişi çekimi gerekiyorsa açıkça yaz). text: ekrana yazılacak kısa yazı (en fazla 32 karakter, boş olabilir).',
+    '- Her fikirde 3-6 çekim (shots). seconds: o çekimin süresi; toplam 15-25 sn. record: çekimin tek satırlık özeti. text: ekrana yazılacak kısa yazı (en fazla 32 karakter, boş olabilir).',
     '- hook: ilk 2 saniyede izleyiciyi tutan şey. endText: kapanış kartındaki çağrı (ör. "Play now for free"). storeHeadline: mağaza görseline yazılacak 2-5 kelime.',
+    SHOT_RULES,
     '- Ekran yazılarının dili: reklam planındaki hedef ülkelere uygun olsun; plan yoksa İngilizce.',
     '- evidence: fikir "reklam_trendleri"nden geliyorsa "trend", oyunun kendi reklam sonuçlarından ("kampanyalar") çıkıyorsa "veri", ikisi de değilse "yok". why: bu dayanağı tek cümleyle, rakam varsa rakamla. Kazanacağını iddia etme; bunlar denenecek fikirler.',
     '- "onceki_projeler"deki fikirleri tekrar etme.',
@@ -181,9 +211,33 @@ async function writeIdeas(p) {
   ].filter(Boolean).join('\n')
 
   const out = parse(await runClaude(prompt, IDEAS, { model: process.env.CLAUDE_FAST_MODEL || 'sonnet', timeoutMin: 6 }))
-  const ideas = (out.ideas ?? []).slice(0, 3).map((i, n) => ({ ...i, id: `i${n}`, shots: clampShots(i.shots ?? []) }))
+  const ideas = (out.ideas ?? []).slice(0, 3).map((i, n) => ({
+    ...i, id: `i${n}`, shots: clampShots(i.shots ?? []).map((s) => ({ ...s, aiPrompt: s.kind === 'ai' ? s.aiPrompt : '' })),
+  }))
   if (!ideas.length) throw new Error('Fikir üretilemedi')
   await patchProject(p.id, { status: 'pick', ideas, error: null })
+}
+
+// Seçili fikrin çekimlerine ayrıntılı yönerge ve yapay zeka video istemi yazar; yüklenmiş kayıtlar ve yazılar korunur
+async function writeDetails(p) {
+  const [game] = await db(`games?select=id,name,genre&id=eq.${encodeURIComponent(p.gameId)}`)
+  const idea = p.idea
+  const prompt = [
+    `Oyun: ${game?.name ?? p.gameId}${game?.genre ? ` (tür: ${game.genre})` : ''}.`,
+    p.note ? `Sahibinin notu: ${p.note}` : '',
+    `Reklam fikri: ${idea.title}. Kanca: ${idea.hook}. Platform: ${idea.platform}.`,
+    'Görev: bu fikrin çekimlerini AYNI SIRA ve AYNI SÜRELERLE ayrıntılandır. seconds, record ve text değerlerini aynen koru; kind, direction, aiPrompt yaz. Yapay zeka ile üretilecek ya da oyun dışı sahneler kind "ai" olsun.',
+    SHOT_RULES,
+    '',
+    'Çekimler (JSON):',
+    JSON.stringify(idea.shots.map((s) => ({ seconds: s.seconds, record: s.record, text: s.text }))),
+  ].filter(Boolean).join('\n')
+  const out = parse(await runClaude(prompt, DETAILS, { model: process.env.CLAUDE_FAST_MODEL || 'sonnet', timeoutMin: 6 }))
+  const shots = idea.shots.map((s, i) => {
+    const d = out.shots?.[i] ?? {}
+    return { ...s, kind: d.kind ?? s.kind ?? 'oyun', direction: d.direction ?? '', aiPrompt: d.kind === 'ai' ? d.aiPrompt ?? '' : '' }
+  })
+  await patchProject(p.id, { status: 'recording', idea: { ...idea, style: out.style, music: out.music, shots }, error: null })
 }
 
 async function upload(localPath, storePath, mime) {
@@ -262,16 +316,19 @@ async function render(p) {
 }
 
 export async function runStudio() {
-  const items = ((await setting('ad_projects'))?.items ?? []).filter((p) => p.status === 'ideas_requested' || p.status === 'render_requested')
+  const items = ((await setting('ad_projects'))?.items ?? []).filter((p) => WORK.includes(p.status))
   for (const p of items) {
     try {
       console.log(`Stüdyo: ${p.id} (${p.status})`)
       if (p.status === 'ideas_requested') await writeIdeas(p)
+      else if (p.status === 'detail_requested') await writeDetails(p)
       else await render(p)
     } catch (e) {
       console.error(e)
       const msg = String(e.stderr ?? e.message ?? e).slice(0, 400)
-      await patchProject(p.id, { status: p.status === 'ideas_requested' ? 'failed_ideas' : 'failed_render', error: msg })
+      // Detay yazılamazsa proje çekim aşamasında kalır, sadece hata görünür
+      const status = p.status === 'ideas_requested' ? 'failed_ideas' : p.status === 'detail_requested' ? 'recording' : 'failed_render'
+      await patchProject(p.id, { status, error: msg })
     }
   }
 }

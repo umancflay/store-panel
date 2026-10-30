@@ -1087,3 +1087,9 @@ details.adc > summary::-webkit-details-marker { display: none; }
 }
 .input.sm, .select.sm { padding: 6px 10px; font-size: 12px; min-height: 0; }
 .studio-new .input { flex: 1; }
+.studio-brief { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; padding: 12px 14px; border-radius: 14px; background: rgba(255,255,255,.03); font-size: 12px; }
+.studio-brief > div { display: flex; flex-direction: column; gap: 2px; min-width: 160px; flex: 1; }
+.studio-brief .muted { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; }
+.shot-dir { margin: 6px 0 0; font-size: 12px; line-height: 1.55; color: #cfcfcf; }
+.ai-prompt { margin-top: 8px; padding: 10px 12px; border-radius: 12px; background: rgba(57,135,229,.08); border: 1px solid rgba(57,135,229,.3); }
+.ai-prompt code { display: block; margin-top: 6px; font: 12px/1.6 ui-monospace, Consolas, monospace; color: #dfe9f7; white-space: pre-wrap; word-break: break-word; }
