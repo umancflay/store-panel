@@ -271,3 +271,9 @@ Küçük bir Unity mobil oyun stüdyosu (Voo Game Studio / Pixel Game) için tek
 - Reklam trendleri: `scripts/adtrends.mjs`, Claude internette araştırır (WebSearch/WebFetch), `app_settings.ad_trends`. Haftalık ya da panelden "Şimdi araştır" (`ad_trends_request`). assistant.yml içinde ayrı `trends` işi, sohbeti bekletmez.
 - Asistan: sorular hızlı modelle (`vars.CLAUDE_FAST_MODEL`, varsayılan sonnet), reklam/trend/plan/Yayın Uzmanı/uyarı/son sohbet bağlamıyla cevaplanır.
 - Yayın Uzmanı build kartında mağaza kararı tahmini (teknik kontrol, cihaz testi, Google Play/App Store kararı).
+
+## Reklam Stüdyosu (30 Eki 2026)
+- `/studyo` (Reklam › Stüdyo): oyun seç → "Yeni reklam" → Claude 3 fikir yazar (çekim listesi, ekran yazıları, kapanış ve mağaza başlığı; dayanak: trend / veri / yok) → fikir seç → her çekime kayıt yükle ya da Dosyalar'dan seç → "Videoyu hazırla".
+- `scripts/studio.mjs` (assistant.yml › `studio` işi): ffmpeg ile 1080x1920 video (yazılar, kapanış kartı, sessiz ses kanalı), ilk kareden 1024x500 mağaza görseli ve 1080x1080 kare. Çıktılar Dosyalar › Reklam'a düşer.
+- Durumlar: Fikirler hazırlanıyor → Fikir seç → Kayıt eksik n/m → Video hazırlanıyor → İnceleme bekliyor → Paket hazır → Yayımlandı (elle işaretlenir). Hiçbir şey kendiliğinden yayınlanmaz.
+- Veri: `app_settings.ad_projects` (panel ve iş aynı anahtara yazar; her yazmada son hal okunur).

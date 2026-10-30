@@ -62,7 +62,7 @@ export default function Welcome() {
         <Link to="/yayin"><Rocket size={14} /> Build bırak</Link>
         <Link to="/yayin?tab=aso"><Store size={14} /> Mağaza sayfası raporu</Link>
         <Link to="/reklamlar"><Megaphone size={14} /> Reklam panosu</Link>
-        <Link to="/reklamlar"><Flame size={14} /> Çalışan reklamlar</Link>
+        <Link to="/studyo"><Flame size={14} /> Reklam videosu hazırla</Link>
         <Link to="/gelir"><Flag size={14} /> {goal.target > 0 ? 'Gelir hedefi' : 'Hedef koy'}</Link>
         <Link to="/asistan"><Bot size={14} /> Asistana sor</Link>
       </div>

@@ -18,6 +18,7 @@ import { GameDetail, GamesList } from './pages/Games'
 import Reviews from './pages/Reviews'
 import Revenue from './pages/Revenue'
 import Ads from './pages/Ads'
+import Studio from './pages/Studio'
 import Assistant from './pages/Assistant'
 import Settings from './pages/Settings'
 import Workspace from './pages/Workspace'
@@ -49,6 +50,7 @@ function Gate() {
             <Route path="yorumlar" element={<Reviews />} />
             <Route path="gelir" element={<Revenue />} />
             <Route path="reklamlar" element={<Ads />} />
+            <Route path="studyo" element={<Studio />} />
             <Route path="asistan" element={<Assistant />} />
             <Route path="yayin" element={<Expert />} />
             <Route path="surum" element={<Navigate to="/yayin?tab=surum" replace />} />

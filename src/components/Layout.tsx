@@ -2,7 +2,7 @@ import { Component, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
   Home, Radar, Bot, KanbanSquare, Network, Users, Workflow, NotebookPen, CalendarDays, Wallet, Megaphone,
-  BellRing, Gamepad2, MessageSquareText, LayoutDashboard, FolderOpen, Settings, RefreshCw, LogOut, Menu, X, CheckCircle2, AlertTriangle, Info, ChevronDown, Search, Rocket,
+  BellRing, Gamepad2, MessageSquareText, LayoutDashboard, FolderOpen, Settings, RefreshCw, LogOut, Menu, X, CheckCircle2, AlertTriangle, Info, ChevronDown, Search, Rocket, Clapperboard,
 } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { useStore } from '../lib/store'
@@ -58,7 +58,10 @@ export const navGroups: { title: string; items: NavItem[] }[] = [
         tabs: [tab('/oyunlar', 'Oyunlar', 'Mağazalar', Gamepad2), tab('/yorumlar', 'Yorumlar', 'Oyuncular', MessageSquareText)],
       },
       { to: '/gelir', label: 'Gelir', hint: 'AdMob ve satış', icon: Wallet },
-      { to: '/reklamlar', label: 'Reklam', hint: 'Kampanyalar ve trendler', icon: Megaphone },
+      {
+        to: '/reklamlar', label: 'Reklam', hint: 'Kampanyalar, trendler, stüdyo', icon: Megaphone,
+        tabs: [tab('/reklamlar', 'Pano', 'Kampanyalar ve trendler', Megaphone), tab('/studyo', 'Stüdyo', 'Reklam videosu hazırla', Clapperboard)],
+      },
       { to: '/yayin', label: 'Yayın Uzmanı', hint: 'Build, test, yayın', icon: Rocket },
       { to: '/ayarlar', label: 'Ayarlar', hint: 'Profil ve bağlantılar', icon: Settings },
     ],
