@@ -1117,3 +1117,7 @@ details.adc > summary::-webkit-details-marker { display: none; }
 .decision-ico { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; background: rgba(255,255,255,.06); flex: none; }
 .decision.hot .decision-ico { color: #FF7A55; }
 @media (max-width: 640px) { .decision span:not(.decision-ico) { white-space: normal; } }
+.shot.music { border-color: rgba(57,135,229,.3); }
+.screens { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+.screen { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+.screen img { width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,.08); }

@@ -23,3 +23,12 @@ test('segmentArgs resim için döngü, yazı için drawtext ekler', () => {
   assert.ok(!v.includes('-loop'))
   assert.ok(!v[v.indexOf('-vf') + 1].includes('drawtext'))
 })
+
+test('muxArgs müzik varsa kırpar ve sonda yumuşatır, yoksa sessiz kanal ekler', async () => {
+  const { muxArgs } = await import('./studio.mjs')
+  const m = muxArgs({ list: 'l.txt', music: 'm.mp3', seconds: 10, out: 'o.mp4' })
+  assert.ok(m.includes('-stream_loop'))
+  assert.match(m[m.indexOf('-filter_complex') + 1], /atrim=0:10.*afade=t=out:st=8.80/)
+  const s = muxArgs({ list: 'l.txt', music: null, seconds: 10, out: 'o.mp4' })
+  assert.ok(s.join(' ').includes('anullsrc'))
+})

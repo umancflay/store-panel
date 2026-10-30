@@ -19,7 +19,7 @@ type Out = { path: string; fileId: number | null }
 type Status = 'ideas_requested' | 'pick' | 'recording' | 'detail_requested' | 'render_requested' | 'review' | 'ready' | 'published' | 'failed_ideas' | 'failed_render'
 interface Project {
   id: string; gameId: string; status: Status; by: string; createdAt: string; updatedAt?: string; note?: string
-  ideas?: Idea[]; idea?: Idea; outputs?: { video?: Out; feature?: Out; square?: Out }; seconds?: number; error?: string | null; publishedOn?: string; publishedAt?: string
+  ideas?: Idea[]; idea?: Idea; outputs?: { video?: Out; feature?: Out; square?: Out; screens?: { play?: string; ios?: string }[] }; musicFileId?: number | null; musicName?: string; seconds?: number; error?: string | null; publishedOn?: string; publishedAt?: string
   rejected?: { title: string; reason: string }[]; campaignIds?: string[]
 }
 type GameFile = { id: number; name: string; mime: string | null; created_at: string }
@@ -330,6 +330,7 @@ function Shots({ p, idea, patch, run, me, onRender, onDetail }: { p: Project; id
           </div>
         </div>
       ))}
+      <Music p={p} patch={patch} run={run} me={me} suggestion={idea.music} />
       <input ref={input} type="file" accept="video/*,image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) onFile(f) }} />
       <div className="flex between wrap" style={{ gap: 8 }}>
         <span className="muted small">Sonda kapanış kartı: “{idea.endText}” · mağaza görseli yazısı: “{idea.storeHeadline}”</span>
@@ -343,8 +344,9 @@ function Outputs({ p, onApprove, onRedo, onPublished, onLink }: { p: Project; on
   const [urls, setUrls] = useState<Record<string, string>>({})
   const o = p.outputs!
   useEffect(() => {
-    fileUrls([o.video?.path, o.feature?.path, o.square?.path].filter((x): x is string => !!x)).then(setUrls)
-  }, [o.video?.path, o.feature?.path, o.square?.path])
+    const screens = (o.screens ?? []).flatMap((x) => [x.play, x.ios])
+    fileUrls([o.video?.path, o.feature?.path, o.square?.path, ...screens].filter((x): x is string => !!x)).then(setUrls)
+  }, [o.video?.path, o.feature?.path, o.square?.path, o.screens])
   const dl = (path?: string) => (path && urls[path] ? urls[path] : undefined)
   return (
     <div className="outputs">
@@ -353,9 +355,25 @@ function Outputs({ p, onApprove, onRedo, onPublished, onLink }: { p: Project; on
         <div className="out-side">
           {o.feature && <img src={dl(o.feature.path)} alt="Mağaza görseli 1024x500" />}
           {o.square && <img src={dl(o.square.path)} alt="Kare görsel 1080x1080" style={{ maxWidth: 220 }} />}
-          <div className="muted small">Video {p.seconds ? `${Math.round(p.seconds)} sn` : ''} · sessiz (müziği platformda eklersin) · Dosyalar › Reklam klasöründe</div>
+          <div className="muted small">Video {p.seconds ? `${Math.round(p.seconds)} sn` : ''} · {p.musicName ? `müzik: ${p.musicName}` : 'sessiz (müziği platformda eklersin)'} · Dosyalar › Reklam klasöründe</div>
         </div>
       </div>
+      {o.screens && o.screens.length > 0 && (
+        <div>
+          <div className="eyebrow" style={{ marginBottom: 8 }}>Mağaza ekran görüntüleri · Dosyalar › Mağaza</div>
+          <div className="screens">
+            {o.screens.map((x, i) => (
+              <div key={i} className="screen">
+                {x.play && <img src={dl(x.play)} alt={`Play ekran görüntüsü ${i + 1}`} />}
+                <div className="flex" style={{ gap: 4 }}>
+                  {x.play && <a className="btn btn-ghost sm" href={dl(x.play)} download>Play</a>}
+                  {x.ios && <a className="btn btn-ghost sm" href={dl(x.ios)} download>App Store</a>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="flex wrap" style={{ gap: 8 }}>
         {p.status === 'review' && <>
           <button type="button" className="btn btn-green" onClick={onApprove}><Check size={14} /> Onayla</button>
@@ -440,5 +458,60 @@ function LessonsCard({ gameId }: { gameId: string }) {
         {items.map((l, i) => <div key={i} className="small flex" style={{ gap: 8, alignItems: 'flex-start' }}><span className={`badge ${verdictText[l.verdict][1]}`}>{verdictText[l.verdict][0]}</span><span style={{ lineHeight: 1.5 }}>{l.text}</span></div>)}
       </div>
     </section>
+  )
+}
+
+// Müzik: reklamda kullanılabilir parçaları (ör. Pixabay Music) bir kez "Müzik" klasörüne yüklersin, her reklamda seçersin.
+// Video süresine kırpılır, başı ve sonu yumuşatılır (scripts/studio.mjs › muxArgs).
+function Music({ p, patch, run, me, suggestion }: { p: Project; patch: (id: string, x: Partial<Project>) => Promise<void>; run: (fn: () => Promise<unknown>, ok?: string) => Promise<void>; me: string; suggestion?: string }) {
+  const [tracks, setTracks] = useState<GameFile[]>([])
+  const [busy, setBusy] = useState(false)
+  const input = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    if (isDemo) return setTracks([{ id: 9, name: 'Epic Tension.mp3', mime: 'audio/mpeg', created_at: '' }])
+    supabase!.from('files').select('id,name,mime,created_at').like('mime', 'audio*').order('created_at', { ascending: false }).limit(100)
+      .then(({ data }) => setTracks((data as GameFile[]) ?? []))
+  }, [])
+  async function onFile(f: File) {
+    setBusy(true)
+    await run(async () => {
+      if (!f.type.startsWith('audio/')) throw new Error('Ses dosyası seç (mp3, wav, m4a)')
+      if (f.size > 45 * 1024 * 1024) throw new Error("Müzik 45 MB'tan küçük olmalı")
+      const meta = await uploadFile(f)
+      let id = Date.now()
+      if (!isDemo) {
+        const { data, error } = await supabase!.from('files').insert({ ...meta, folder: 'Müzik', uploaded_by: me } as never).select('id').single()
+        if (error) throw new Error(error.message)
+        id = (data as { id: number }).id
+      }
+      setTracks((l) => [{ id, name: meta.name, mime: meta.mime, created_at: new Date().toISOString() }, ...l])
+      await patch(p.id, { musicFileId: id, musicName: meta.name })
+    }, 'Müzik eklendi')
+    setBusy(false)
+  }
+  return (
+    <div className="shot music">
+      <span className="shot-n">♪</span>
+      <div className="grow" style={{ minWidth: 0 }}>
+        <div className="small"><b>Müzik</b> {suggestion && <span className="muted">· öneri: {suggestion}</span>}</div>
+        <div className="muted" style={{ fontSize: 11, marginTop: 4 }}>
+          Reklamda ücretsiz kullanılabilir parça: <a className="linkish" href="https://pixabay.com/music/" target="_blank" rel="noreferrer">Pixabay Music</a> (öneri kelimeleriyle ara, indir). Bir kez yükle, her reklamda seç.
+        </div>
+      </div>
+      <div className="shot-file">
+        {p.musicName ? <span className="small flex" style={{ gap: 4 }}><Check size={12} color="var(--green)" /> {p.musicName}</span> : <span className="small muted">Sessiz</span>}
+        <div className="flex" style={{ gap: 4 }}>
+          <button type="button" className="btn sm" disabled={busy} onClick={() => input.current?.click()}>{busy ? <Loader2 size={12} className="spin" /> : <Upload size={12} />} Yükle</button>
+          <select className="select sm" value={p.musicFileId ?? ''} aria-label="Müzik seç" onChange={(e) => {
+            const t = tracks.find((x) => x.id === Number(e.target.value))
+            run(() => patch(p.id, { musicFileId: t?.id ?? null, musicName: t?.name ?? undefined }))
+          }}>
+            <option value="">Sessiz</option>
+            {tracks.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
+        </div>
+      </div>
+      <input ref={input} type="file" accept="audio/*" hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) onFile(f) }} />
+    </div>
   )
 }

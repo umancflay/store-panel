@@ -146,6 +146,30 @@ export function stillArgs({ frame, w, h, textFile, out, font = FONT }) {
   ]
 }
 
+// Mağaza ekran görüntüsü: üstte renkli şerit ve büyük başlık, altında oyundan kare.
+// Play telefon 1080x1920, App Store 6.9" 1320x2868. Başlık bandı yüksekliğin %24'ü.
+export const STORE_SIZES = { play: [1080, 1920], ios: [1320, 2868] }
+export function screenshotArgs({ frame, w, h, textFile, out, font = FONT, color = '0x10241a' }) {
+  const band = Math.round(h * 0.24)
+  return [
+    '-y', '-f', 'lavfi', '-i', `color=c=${color}:s=${w}x${h}:d=1`, '-i', frame, '-filter_complex', [
+      `[1:v]scale=${w}:${h - band}:force_original_aspect_ratio=increase,crop=${w}:${h - band}[shot]`,
+      `[0:v][shot]overlay=0:${band}[bg]`,
+      `[bg]drawtext=expansion=none:fontfile='${esc(font)}':textfile='${esc(textFile)}':fontcolor=white:fontsize=${Math.round(w / 11)}:line_spacing=${Math.round(w / 60)}:x=(w-text_w)/2:y=(${band}-text_h)/2`,
+    ].join(';'), '-frames:v', '1', out,
+  ]
+}
+
+// Müzik: videonun süresine kırpılır, başta ve sonda yumuşak geçiş; müzik yoksa sessiz kanal
+export function muxArgs({ list, music, seconds, out }) {
+  const d = Math.max(1, seconds)
+  return music
+    ? ['-y', '-f', 'concat', '-safe', '0', '-i', list, '-stream_loop', '-1', '-i', music, '-filter_complex',
+      `[1:a]atrim=0:${d},asetpts=N/SR/TB,afade=t=in:st=0:d=0.4,afade=t=out:st=${Math.max(0, d - 1.2).toFixed(2)}:d=1.2,volume=0.85[a]`,
+      '-map', '0:v', '-map', '[a]', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '160k', '-t', String(d), '-movflags', '+faststart', out]
+    : ['-y', '-f', 'concat', '-safe', '0', '-i', list, '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=stereo', '-shortest', '-c:v', 'copy', '-c:a', 'aac', '-movflags', '+faststart', out]
+}
+
 export const isImageFile = (f) => (f.mime ?? '').startsWith('image/') || /\.(png|jpe?g|webp)$/i.test(f.name ?? '')
 
 // ---- veri ----
@@ -276,9 +300,10 @@ async function render(p) {
   const idea = p.idea
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'studio-'))
   const [game] = await db(`games?select=id,name&id=eq.${encodeURIComponent(p.gameId)}`)
-  const ids = idea.shots.map((s) => s.fileId).filter(Boolean)
+  const ids = [...idea.shots.map((s) => s.fileId), p.musicFileId].filter(Boolean)
   const files = ids.length ? await db(`files?select=id,name,path,mime,parts&id=in.(${ids.join(',')})`) : []
   const segs = []
+  const sources = [] // yazısız kaynak kayıtlar: mağaza ekran görüntülerinin karesi buradan alınır
   for (const [i, s] of idea.shots.entries()) {
     const f = files.find((x) => x.id === s.fileId)
     if (!f) throw new Error(`${i + 1}. çekimin kaydı yok`)
@@ -292,6 +317,7 @@ async function render(p) {
     const out = path.join(dir, `s${i}.mp4`)
     ff(segmentArgs({ input, isImage: isImageFile(f), seconds: s.seconds, textFile, out }))
     segs.push(out)
+    sources.push({ input, isImage: isImageFile(f) })
   }
   const titleFile = path.join(dir, 'title.txt')
   const ctaFile = path.join(dir, 'cta.txt')
@@ -304,8 +330,15 @@ async function render(p) {
   const list = path.join(dir, 'list.txt')
   fs.writeFileSync(list, segs.map((s) => `file '${s.replace(/\\/g, '/')}'`).join('\n'))
   const video = path.join(dir, 'video.mp4')
-  // Platformlar sessiz videoyu sorunlu sayabiliyor: sessiz ses kanalı eklenir (müziği sen eklersin)
-  ff(['-y', '-f', 'concat', '-safe', '0', '-i', list, '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=stereo', '-shortest', '-c:v', 'copy', '-c:a', 'aac', '-movflags', '+faststart', video])
+  const seconds = idea.shots.reduce((a, s) => a + s.seconds, 0) + 2.5
+  // Müzik seçildiyse karıştırılır; yoksa sessiz kanal (platformlar sesi olmayan videoyu sorunlu sayabiliyor)
+  let music = null
+  const mf = p.musicFileId && files.find((x) => x.id === p.musicFileId)
+  if (mf) {
+    music = path.join(dir, `music${path.extname(mf.name) || '.mp3'}`)
+    await downloadFile(mf, music)
+  }
+  ff(muxArgs({ list, music, seconds, out: video }))
 
   const frame = path.join(dir, 'frame.png')
   ff(['-y', '-ss', '1', '-i', segs[0], '-frames:v', '1', frame])
@@ -315,6 +348,23 @@ async function render(p) {
   const square = path.join(dir, 'square.png')
   ff(stillArgs({ frame, w: 1024, h: 500, textFile: head, out: feature }))
   ff(stillArgs({ frame, w: 1080, h: 1080, textFile: head, out: square }))
+
+  // Mağaza ekran görüntüleri: her çekimden bir kare, başlığı çekimin yazısı (yoksa mağaza başlığı); en fazla 5
+  const shotsOut = []
+  for (const [i, s] of idea.shots.slice(0, 5).entries()) {
+    const fr = path.join(dir, `f${i}.png`)
+    const src = sources[i]
+    ff(src.isImage ? ['-y', '-i', src.input, '-frames:v', '1', fr] : ['-y', '-ss', String(Math.min(1.5, s.seconds / 2)), '-i', src.input, '-frames:v', '1', fr])
+    const cap = path.join(dir, `c${i}.txt`)
+    fs.writeFileSync(cap, wrapText(s.text?.trim() || idea.storeHeadline || game?.name || '', 16))
+    const pair = {}
+    for (const [k, [w, h]] of Object.entries(STORE_SIZES)) {
+      const out = path.join(dir, `ss-${k}-${i}.png`)
+      ff(screenshotArgs({ frame: fr, w, h, textFile: cap, out }))
+      pair[k] = out
+    }
+    shotsOut.push(pair)
+  }
 
   // Çıktılar: kovaya ve "Reklam" klasörüne (Dosyalar'da da görünsün)
   const stamp = Date.now()
@@ -327,7 +377,17 @@ async function render(p) {
     const [row] = await db('files', 'POST', { name: `${name} (${label}).${ext}`, path: up.path, size: up.size, mime, folder: 'Reklam', game_id: p.gameId, uploaded_by: 'Reklam Stüdyosu' })
     outputs[k] = { path: up.path, fileId: row?.id ?? null }
   }
-  const seconds = idea.shots.reduce((a, s) => a + s.seconds, 0) + 2.5
+  outputs.screens = []
+  for (const [i, pair] of shotsOut.entries()) {
+    const one = {}
+    for (const [k, file] of Object.entries(pair)) {
+      const up = await upload(file, `${base}-ss-${k}-${i + 1}.png`, 'image/png')
+      const label = k === 'play' ? 'Play ekran görüntüsü' : 'App Store ekran görüntüsü'
+      await db('files', 'POST', { name: `${name} (${label} ${i + 1}).png`, path: up.path, size: up.size, mime: 'image/png', folder: 'Mağaza', game_id: p.gameId, uploaded_by: 'Reklam Stüdyosu' }, 'return=minimal')
+      one[k] = up.path
+    }
+    outputs.screens.push(one)
+  }
   fs.rmSync(dir, { recursive: true, force: true })
   await patchProject(p.id, { status: 'review', outputs, seconds, error: null })
 }
