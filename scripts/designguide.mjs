@@ -9,6 +9,7 @@ import { db } from './db.mjs'
 import { parse, runClaude } from './ai.mjs'
 import { parseSearch, parseStorePage } from './expert/aso.mjs'
 import { profileText, profiles } from './gameprofile.mjs'
+import { downloadFile } from './expert/bundle.mjs'
 
 const UA = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', 'Accept-Language': 'en-US,en;q=0.9' }
 const MAX_REFS = 5
@@ -17,8 +18,9 @@ const SHOTS_PER_REF = 3
 const SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['references', 'style', 'doThis', 'avoid', 'prompts'],
+  required: ['ourGame', 'references', 'style', 'doThis', 'avoid', 'prompts'],
   properties: {
+    ourGame: { type: 'string' },
     references: {
       type: 'array',
       items: { type: 'object', additionalProperties: false, required: ['title', 'notes'], properties: { title: { type: 'string' }, notes: { type: 'string' } } },
@@ -36,12 +38,13 @@ const SCHEMA = {
       items: {
         type: 'object',
         additionalProperties: false,
-        required: ['kind', 'title', 'size', 'prompt', 'tip'],
+        required: ['kind', 'title', 'size', 'prompt', 'promptTr', 'tip'],
         properties: {
           kind: { type: 'string', enum: ['feature', 'screenshot', 'poster', 'icon', 'background'] },
           title: { type: 'string' },
           size: { type: 'string' },
           prompt: { type: 'string' },
+          promptTr: { type: 'string' },
           tip: { type: 'string' },
         },
       },
@@ -125,19 +128,51 @@ async function build(gameId, g) {
   }
   if (!refs.length) throw new Error('Örnek oyunların mağaza sayfası okunamadı')
 
+  // Bizim oyunun görselleri: sahne ve karakterler SADECE buradan ve oyun kartından gelir
+  const own = []
+  if (game.android_package) {
+    try {
+      const html = await get(`https://play.google.com/store/apps/details?id=${game.android_package}&hl=en&gl=US`)
+      for (const [i, u] of screenshotUrls(html).slice(0, 4).entries()) {
+        const f = `oyunumuz-play-${i + 1}.jpg`
+        fs.writeFileSync(path.join(dir, f), await get(`${u}=w720-rj`, true))
+        own.push(f)
+      }
+    } catch {
+      /* oyun yayında değil */
+    }
+  }
+  const uploaded = await db(`files?select=id,name,path,mime,parts&game_id=eq.${encodeURIComponent(gameId)}&mime=like.image*&uploaded_by=neq.${encodeURIComponent('Reklam Stüdyosu')}&order=created_at.desc&limit=4`).catch(() => [])
+  for (const [i, f] of uploaded.entries()) {
+    const ext = (path.extname(f.name) || '.png').toLowerCase()
+    if (!['.png', '.jpg', '.jpeg', '.webp'].includes(ext)) continue
+    const name = `oyunumuz-yuklenen-${i + 1}${ext}`
+    try {
+      await downloadFile(f, path.join(dir, name))
+      own.push(name)
+    } catch {
+      /* indirilemedi */
+    }
+  }
+  const card = profileText((await profiles())[gameId])
+
   const prompt = [
     `Oyunumuz: ${game.name}${game.genre ? ` (tür: ${game.genre})` : ''}.`,
-    'Görev: aşağıdaki popüler oyunların Play Store ikonlarına ve ekran görüntülerine (bu klasördeki dosyalar, Read ile her birine bak) bakıp mağaza görsellerinin tasarım dilini çıkar; sonra BİZİM oyunumuz için o kalitede görsel üretecek promptlar yaz.',
-    '- references: her örnek oyun için 1-2 cümle: ne yapıyor (renk, kompozisyon, başlık yazısı, karakter kullanımı).',
-    '- style (Türkçe, somut): colors (hangi renkler ve kontrast), typography (yazı tipi tarzı, kalınlık, kontur/gölge), layout (ekran görüntüsünde çerçeve, oyun görüntüsü oranı, başlık yeri), captions (başlık uzunluğu ve dili, ör. 2-4 kelime, fiille başlıyor), characters (karakter/nesne nasıl öne çıkarılıyor), icon (ikon tarzı).',
-    '- doThis: oyunumuz için 4-6 somut tavsiye. avoid: 3-5 yaygın hata.',
-    '- prompts: ChatGPT görsel üretimi için İNGİLİZCE, ayrıntılı, tek paragraf promptlar: 1 feature (1024x500 Play tanıtım görseli), 3 screenshot (her biri farklı özellik; dikey 9:16, üstte başlık yazısı alanı; "Use the attached gameplay screenshot of our game as the main image, do not invent gameplay" de), 1 poster (reklam afişi 4:5), 1 icon (512x512), 1 background (ekran görüntüleri için yazısız arka plan). Promptlarda örnek oyunların ADINI ya da karakterlerini kopyalama; sadece tarzı tarif et (renk, ışık, kompozisyon, yazı stili). Başlık yazısı istenen promptlarda yazıyı tırnak içinde ver. size: piksel ya da oran. tip: Türkçe 1 cümle, ChatGPT\'de nasıl kullanılacağı (ör. "oyun ekran görüntünü de ekle").',
-    '- Oyun kartı varsa oyunun gerçek tarzına ve karakterlerine sadık kal; kartta olmayan bir şey uydurma.',
+    'Görev: popüler oyunların Play Store görsellerinden TASARIM DİLİNİ çıkar, sonra BİZİM oyunumuz için o kalitede görsel üretecek promptlar yaz.',
+    'EN ÖNEMLİ KURAL: Promptlardaki sahne, karakter, nesne, mekan ve tema SADECE bizim oyunun görsellerinden ("oyunumuz-*" dosyaları) ve oyun kartından gelir. Örnek oyunlardan SADECE tarz alınır: renk paleti, ışık, yazı stili, kompozisyon, çerçeve. Örnek oyunların konusunu, karakterlerini, mekanlarını (ör. doktor, hastane, savaşçı) bizim oyunda yoksa ASLA kullanma.',
+    own.length
+      ? '- Önce "oyunumuz-*" dosyalarının HER birine Read ile bak. ourGame: bu görsellerde ne gördüğünü Türkçe 2-3 cümleyle yaz (mekan, karakterler, nesneler, renkler, kamera). Promptlardaki sahneleri bu gözleme dayandır.'
+      : '- Bizim oyunun görseli yok. ourGame: "Oyunun görseli yok; promptlar sadece oyun kartına dayanıyor" yaz. Oyun kartında yazmayan bir sahne/karakter tarif etme; gerekirse "[oyun ekran görüntün]" gibi yer tutucu kullan.',
+    '- Sonra örnek oyunların dosyalarına ("1-*", "2-*" …) bak.',
+    '- references: her örnek oyun için 1 cümle: tarzı (renk, kompozisyon, başlık yazısı).',
+    '- style (Türkçe, her biri EN FAZLA 1 kısa cümle): colors, typography, layout, captions, characters (karakter/nesne nasıl öne çıkarılıyor), icon.',
+    '- doThis: oyunumuz için 4 kısa tavsiye (her biri en fazla 12 kelime). avoid: 3 kısa madde.',
+    '- prompts: her görsel için iki dilde aynı prompt: prompt İNGİLİZCE, promptTr aynısının TÜRKÇE hâli (ChatGPT ikisini de anlar). title Türkçe ve kısa. Ayrıntılı, tek paragraf: 1 feature (1024x500 Play tanıtım görseli), 3 screenshot (her biri farklı özellik; dikey 9:16, üstte başlık yazısı alanı; "Use the attached gameplay screenshot of our game as the main image, do not invent gameplay" de), 1 poster (reklam afişi 4:5), 1 icon (512x512), 1 background (ekran görüntüleri için yazısız arka plan). Promptlarda örnek oyunların ADINI ya da karakterlerini kopyalama; sadece tarzı tarif et (renk, ışık, kompozisyon, yazı stili). Başlık yazısı istenen promptlarda yazıyı tırnak içinde ver. size: piksel ya da oran. tip: Türkçe kısa 1 cümle (ör. "oyun ekran görüntünü de ekle").',
     '',
-    'Örnek oyunlar ve dosyaları (JSON):',
+    'Bizim oyunun görselleri:', JSON.stringify(own),
+    'Oyun kartımız (JSON):', JSON.stringify(card),
+    'Örnek oyunlar ve dosyaları (sadece tarz için, JSON):',
     JSON.stringify(refs.map((r) => ({ oyun: r.title, indirme: r.installs, dosyalar: r.files }))),
-    'Oyun kartımız (JSON):',
-    JSON.stringify(profileText((await profiles())[gameId])),
     g.note ? `Sahibinin isteği: ${g.note}` : '',
   ].filter(Boolean).join('\n')
 
@@ -146,6 +181,7 @@ async function build(gameId, g) {
     await patchGuide(gameId, {
       status: 'ready', error: null, at: new Date().toISOString(),
       refs: refs.map((r) => ({ pkg: r.pkg, title: r.title, installs: r.installs })),
+      ourGame: out.ourGame, ownImages: own.length, hasCard: !!card,
       references: out.references, style: out.style, doThis: out.doThis, avoid: out.avoid, prompts: out.prompts,
     })
   } finally {
