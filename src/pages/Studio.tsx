@@ -7,6 +7,7 @@ import { fileUrls, uploadFile } from '../lib/files'
 import { triggerWorkflow } from '../lib/trigger'
 import { trDateTime } from '../lib/rows'
 import { GameLogo, SampleBanner } from '../components/ui'
+import GameProfile from '../components/GameProfile'
 
 // Reklam Stüdyosu: oyun seç → 3 fikir (çekim listesiyle) → kayıtları ekle → video + mağaza görselleri → onayla → paket.
 // Projeler app_settings.ad_projects'te; fikir yazma ve video birleştirme asistan işinde (scripts/studio.mjs).
@@ -134,6 +135,8 @@ export default function Studio() {
           </button>
         ))}
       </div>
+
+      {gid && <GameProfile gameId={gid} gameName={games.find((g) => g.id === gid)?.name ?? gid} />}
 
       <section className="card studio-new">
         <Sparkles size={18} color="var(--green)" />

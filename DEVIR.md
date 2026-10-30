@@ -277,3 +277,4 @@ Küçük bir Unity mobil oyun stüdyosu (Voo Game Studio / Pixel Game) için tek
 - `scripts/studio.mjs` (assistant.yml › `studio` işi): ffmpeg ile 1080x1920 video (yazılar, kapanış kartı, sessiz ses kanalı), ilk kareden 1024x500 mağaza görseli ve 1080x1080 kare. Çıktılar Dosyalar › Reklam'a düşer.
 - Durumlar: Fikirler hazırlanıyor → Fikir seç → Kayıt eksik n/m → Video hazırlanıyor → İnceleme bekliyor → Paket hazır → Yayımlandı (elle işaretlenir). Hiçbir şey kendiliğinden yayınlanmaz.
 - Veri: `app_settings.ad_projects` (panel ve iş aynı anahtara yazar; her yazmada son hal okunur).
+- Oyun kartı (`app_settings.game_profiles`, `scripts/gameprofile.mjs`): Stüdyo'da her oyun için. "Mağazadan oku" Claude'a Play/App Store sayfasını okutur, taslak yazar; sahibi düzeltip onaylar. Stüdyo fikirleri, çekim promptları, reklam trendleri ve asistan bu kartı kullanır; kartta olmayan şey oyun kaydı gibi gösterilmez.

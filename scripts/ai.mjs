@@ -378,6 +378,7 @@ async function questionContext(name) {
       bulgular: (b.report?.findings ?? []).slice(0, 8).map((f) => ({ seviye: f.severity, baslik: f.title })),
     })),
     acik_uyarilar: openAlerts.map((a) => ({ seviye: a.level, baslik: a.title, oyun: name(a.game_id) })),
+    oyun_kartlari: Object.fromEntries(Object.entries((await setting('game_profiles'))?.items ?? {}).map(([id, p]) => [name(id) ?? id, { ozet: p.summary, nasil_oynanir: p.gameplay, gorsel_tarz: p.look }])),
     gecmis_sohbet: past.reverse().map((q) => ({ soru: cut(q.question, 200), cevap: cut(q.answer, 400) })),
   }
 }

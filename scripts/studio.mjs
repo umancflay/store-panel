@@ -11,6 +11,7 @@ import { execFileSync } from 'node:child_process'
 import { db } from './db.mjs'
 import { parse, runClaude } from './ai.mjs'
 import { downloadFile } from './expert/bundle.mjs'
+import { profileText, profiles } from './gameprofile.mjs'
 
 const W = 1080
 const H = 1920
@@ -166,6 +167,14 @@ async function patchProject(id, patch) {
 
 const WORK = ['ideas_requested', 'detail_requested', 'render_requested']
 
+// Gerçekçilik: oyunda olmayan şeyi oyun kaydı gibi göstermek hem yanıltıcı hem mağaza/reklam politikası ihlali
+const REALISM = [
+  '- "oyun_karti" oyunun gerçekte ne olduğunu anlatır. "oyun" türündeki çekimlerde SADECE kartta (nasil_oynanir, kayda_deger_anlar, karakterler_ve_ogeler) geçen şeyleri göster.',
+  '- Kartta olmayan bir an gerekiyorsa onu "ai" ya da "kisi" çekimi yap ve oyun kaydıymış gibi sunma (yanıltıcı reklam politikası).',
+  '- "ai" promptlarında oyunun görsel tarzını (gorsel_tarz) ve karakterlerini kullan ki oyun kayıtlarıyla aynı dünyada dursun.',
+  '- Oyun kartı yoksa ya da onayli=false ise fikirleri genel tut ve why alanına "oyun kartı eksik" yaz.',
+].join(' ')
+
 export async function studioDue() {
   const cur = await setting('ad_projects')
   return (cur?.items ?? []).some((p) => WORK.includes(p.status))
@@ -194,6 +203,7 @@ async function writeIdeas(p) {
     `Oyun: ${game?.name ?? p.gameId}${game?.genre ? ` (tür: ${game.genre})` : ''}.`,
     p.note ? `Sahibinin notu: ${p.note}` : '',
     'Görev: bu oyun için çekilebilir 3 kısa dikey video reklam fikri yaz (TikTok / Reels / Shorts).',
+    REALISM,
     '- Her fikirde 3-6 çekim (shots). seconds: o çekimin süresi; toplam 15-25 sn. record: çekimin tek satırlık özeti. text: ekrana yazılacak kısa yazı (en fazla 32 karakter, boş olabilir).',
     '- hook: ilk 2 saniyede izleyiciyi tutan şey. endText: kapanış kartındaki çağrı (ör. "Play now for free"). storeHeadline: mağaza görseline yazılacak 2-5 kelime.',
     SHOT_RULES,
@@ -203,6 +213,7 @@ async function writeIdeas(p) {
     '',
     'Veri (JSON):',
     JSON.stringify({
+      oyun_karti: profileText((await profiles())[p.gameId]),
       reklam_trendleri: trends ? { trendler: (trends.items ?? []).slice(0, 8), bu_oyun_icin: (trends.forGames ?? []).find((g) => g.game_id === p.gameId)?.ideas ?? [] } : null,
       reklam_plani: plans[0]?.content ?? null,
       kampanyalar: [...agg.values()],
@@ -228,7 +239,10 @@ async function writeDetails(p) {
     `Reklam fikri: ${idea.title}. Kanca: ${idea.hook}. Platform: ${idea.platform}.`,
     'Görev: bu fikrin çekimlerini AYNI SIRA ve AYNI SÜRELERLE ayrıntılandır. seconds, record ve text değerlerini aynen koru; kind, direction, aiPrompt yaz. Yapay zeka ile üretilecek ya da oyun dışı sahneler kind "ai" olsun.',
     SHOT_RULES,
+    REALISM,
     '',
+    'Oyun kartı (JSON):',
+    JSON.stringify(profileText((await profiles())[p.gameId])),
     'Çekimler (JSON):',
     JSON.stringify(idea.shots.map((s) => ({ seconds: s.seconds, record: s.record, text: s.text }))),
   ].filter(Boolean).join('\n')
