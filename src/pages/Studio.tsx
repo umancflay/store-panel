@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Check, Clapperboard, Copy, Download, Film, Image as ImageIcon, Loader2, Plus, RefreshCw, Sparkles, Trash2, Upload, X } from 'lucide-react'
+import { Check, Clapperboard, Copy, FlaskConical, Download, Film, Image as ImageIcon, Loader2, Plus, RefreshCw, Sparkles, Trash2, Upload, X } from 'lucide-react'
 import { supabase, isDemo } from '../lib/supabase'
 import { useData, usePeople } from '../lib/data'
 import { useStore } from '../lib/store'
@@ -19,7 +19,7 @@ type Out = { path: string; fileId: number | null }
 type Status = 'ideas_requested' | 'pick' | 'recording' | 'detail_requested' | 'render_requested' | 'review' | 'ready' | 'published' | 'failed_ideas' | 'failed_render'
 interface Project {
   id: string; gameId: string; status: Status; by: string; createdAt: string; updatedAt?: string; note?: string
-  ideas?: Idea[]; idea?: Idea; outputs?: { video?: Out; feature?: Out; square?: Out; screens?: { play?: string; ios?: string }[] }; musicFileId?: number | null; musicName?: string; seconds?: number; error?: string | null; publishedOn?: string; publishedAt?: string
+  ideas?: Idea[]; idea?: Idea; outputs?: { video?: Out; feature?: Out; square?: Out; screens?: { play?: string; ios?: string }[] }; musicFileId?: number | null; musicName?: string; test?: boolean; seconds?: number; error?: string | null; publishedOn?: string; publishedAt?: string
   rejected?: { title: string; reason: string }[]; campaignIds?: string[]
 }
 type GameFile = { id: number; name: string; mime: string | null; created_at: string }
@@ -120,6 +120,27 @@ export default function Studio() {
     triggerWorkflow('assistant.yml')
   }, 'Fikirler hazırlanıyor; genelde 1-2 dakika')
 
+  // Deneme: kayıt yüklemeden bütün akışı görmek için. Çekimler renkli örnek kliplerle, müzik örnek tonla üretilir.
+  const startTest = () => run(async () => {
+    const name = games.find((g) => g.id === gid)?.name ?? 'Oyun'
+    const p: Project = {
+      id: crypto.randomUUID(), gameId: gid, status: 'render_requested', test: true, by: me.email, createdAt: new Date().toISOString(),
+      idea: {
+        id: 'test', title: `TEST: ${name} deneme videosu`, platform: 'TikTok', evidence: 'yok', why: 'Akışı denemek için örnek proje; gerçek kayıt yok.',
+        hook: 'Renkli örnek klipler, üstte reklam yazıları', endText: 'Play now for free', storeHeadline: `${name}`,
+        style: 'Test: hareketli renk geçişleri', music: 'Test: örnek ton',
+        shots: [
+          { seconds: 3, kind: 'oyun', record: 'Örnek klip 1', text: 'Only 1% can beat this' },
+          { seconds: 4, kind: 'oyun', record: 'Örnek klip 2', text: 'Watch what happens next' },
+          { seconds: 3, kind: 'ai', record: 'Örnek klip 3', text: 'Can you do better?' },
+        ],
+      },
+    }
+    await write((l) => [...l, p])
+    setOpenId(p.id)
+    triggerWorkflow('assistant.yml')
+  }, 'Test videosu hazırlanıyor; 2-4 dakika')
+
   return (
     <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
       <SampleBanner />
@@ -144,6 +165,7 @@ export default function Studio() {
         <Sparkles size={18} color="var(--green)" />
         <input className="input grow" value={note} onChange={(e) => setNote(e.target.value)} placeholder="İstersen not ekle: ör. yeni boss bölümünü göster" aria-label="Not" />
         <button type="button" className="btn btn-primary" onClick={start} disabled={!gid}><Plus size={14} /> Yeni reklam: 3 fikir</button>
+        <button type="button" className="btn" onClick={startTest} disabled={!gid} title="Kayıt yüklemeden bütün akışı dene"><FlaskConical size={14} /> Test videosu</button>
       </section>
 
       {loading ? <div className="empty">Yükleniyor…</div> : list.length === 0 ? (
@@ -197,7 +219,7 @@ function ProjectView({ p, patch, remove, run, me }: { p: Project; patch: (id: st
       </div>
 
       {waiting(p.status) && (
-        <div className="studio-wait"><Loader2 size={16} className="spin" /> {p.status === 'ideas_requested' ? 'Claude trendlere ve reklam verine bakıp fikir yazıyor' : p.status === 'detail_requested' ? 'Her çekim için yönerge ve yapay zeka video promptu yazılıyor' : 'Kayıtlar birleştiriliyor, yazılar ekleniyor'}… <Elapsed since={p.updatedAt ?? p.createdAt} /></div>
+        <div className="studio-wait"><Loader2 size={16} className="spin" /> {p.status === 'ideas_requested' ? 'Claude trendlere ve reklam verine bakıp fikir yazıyor' : p.status === 'detail_requested' ? 'Her çekim için yönerge ve yapay zeka video promptu yazılıyor' : p.test ? 'Örnek klipler üretiliyor, yazılar ve müzik ekleniyor, mağaza görselleri hazırlanıyor' : 'Kayıtlar birleştiriliyor, yazılar ekleniyor'}… <Elapsed since={p.updatedAt ?? p.createdAt} /></div>
       )}
 
       {(p.status === 'failed_ideas' || p.status === 'failed_render') && (

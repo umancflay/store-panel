@@ -170,6 +170,17 @@ export function muxArgs({ list, music, seconds, out }) {
     : ['-y', '-f', 'concat', '-safe', '0', '-i', list, '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=stereo', '-shortest', '-c:v', 'copy', '-c:a', 'aac', '-movflags', '+faststart', out]
 }
 
+// Deneme klibi: hareketli renk geçişi, altta "TEST n" (gerçek kayıt yokken bütün akış denensin diye)
+const TEST_COLORS = [['0x1d4d3a', '0x8FD3AE'], ['0x2a1a4d', '0x3987e5'], ['0x4d1d14', '0xd95926'], ['0x3d3410', '0xE8C07A'], ['0x112233', '0xc8c8c8']]
+export function testClipArgs({ index, seconds, out, font = FONT }) {
+  const [c0, c1] = TEST_COLORS[index % TEST_COLORS.length]
+  return [
+    '-y', '-f', 'lavfi', '-i', `gradients=s=${W}x${H}:c0=${c0}:c1=${c1}:x0=0:y0=0:x1=${W}:y1=${H}:speed=0.03:d=${seconds}:r=30`,
+    '-vf', `drawtext=expansion=none:fontfile='${esc(font)}':text='TEST ${index + 1}':fontcolor=white@0.85:fontsize=150:x=(w-text_w)/2:y=h*0.62`,
+    '-c:v', 'libx264', '-preset', 'veryfast', '-pix_fmt', 'yuv420p', '-t', String(seconds), out,
+  ]
+}
+
 export const isImageFile = (f) => (f.mime ?? '').startsWith('image/') || /\.(png|jpe?g|webp)$/i.test(f.name ?? '')
 
 // ---- veri ----
@@ -305,10 +316,18 @@ async function render(p) {
   const segs = []
   const sources = [] // yazısız kaynak kayıtlar: mağaza ekran görüntülerinin karesi buradan alınır
   for (const [i, s] of idea.shots.entries()) {
-    const f = files.find((x) => x.id === s.fileId)
-    if (!f) throw new Error(`${i + 1}. çekimin kaydı yok`)
-    const input = path.join(dir, `in${i}${path.extname(f.name) || '.bin'}`)
-    await downloadFile(f, input)
+    let f = files.find((x) => x.id === s.fileId)
+    let input
+    if (!f && p.test) {
+      // Deneme projesi: kayıt yerine renkli, üzerinde "TEST ÇEKİM n" yazan örnek klip üretilir
+      input = path.join(dir, `in${i}.mp4`)
+      ff(testClipArgs({ index: i, seconds: s.seconds, out: input }))
+      f = { name: input, mime: 'video/mp4' }
+    } else {
+      if (!f) throw new Error(`${i + 1}. çekimin kaydı yok`)
+      input = path.join(dir, `in${i}${path.extname(f.name) || '.bin'}`)
+      await downloadFile(f, input)
+    }
     let textFile = null
     if (s.text?.trim()) {
       textFile = path.join(dir, `t${i}.txt`)
@@ -337,6 +356,10 @@ async function render(p) {
   if (mf) {
     music = path.join(dir, `music${path.extname(mf.name) || '.mp3'}`)
     await downloadFile(mf, music)
+  } else if (p.test) {
+    // Deneme: müzik karıştırmanın çalıştığı duyulsun diye yumuşak bir akor
+    music = path.join(dir, 'music.m4a')
+    ff(['-y', '-f', 'lavfi', '-i', `aevalsrc='0.12*sin(2*PI*220*t)*(0.6+0.4*sin(2*PI*2*t))+0.08*sin(2*PI*277.18*t)+0.08*sin(2*PI*329.63*t)':s=44100:d=${seconds}`, '-c:a', 'aac', music])
   }
   ff(muxArgs({ list, music, seconds, out: video }))
 
