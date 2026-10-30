@@ -15,6 +15,7 @@ import Needs from '../components/Needs'
 const taskLevel: Record<Signal['level'], TaskLevel> = { k: 'critical', d: 'medium', n: 'low' }
 const rank: Record<Signal['level'], number> = { k: 0, d: 1, n: 2 }
 const levelDot: Record<TaskLevel, string> = { critical: '#FF7A55', medium: '#E8C07A', low: '#8FD3AE' }
+const taskRank: Record<TaskLevel, number> = { critical: 0, medium: 1, low: 2 }
 
 // Komuta merkezi: günün rakamları + her oyunun sinyal → değerlendirme → aksiyon akışı
 export default function Komuta() {
@@ -31,7 +32,9 @@ export default function Komuta() {
   const flows = useMemo(() => computeSignals(games, daily, alerts, builds), [games, daily, alerts, builds])
   const all = flows.flatMap((f) => f.signals)
   const count = (l: Signal['level']) => all.filter((s) => s.level === l).length
-  const open = tasks.filter((x) => x.status !== 'done').sort((a, b) => (a.level === 'critical' ? -1 : 0) - (b.level === 'critical' ? -1 : 0))
+  const open = tasks.filter((x) => x.status !== 'done').sort((a, b) =>
+    taskRank[a.level] - taskRank[b.level] || (a.due_date ?? '9999-12-31').localeCompare(b.due_date ?? '9999-12-31'))
+  const latestMetricDate = daily.reduce((latest, row) => row.date > latest ? row.date : latest, '')
   const taskBySource = new Map(tasks.filter((x) => x.source).map((x) => [x.source!, x]))
 
   async function toTask(s: Signal, gameName: string) {
@@ -62,6 +65,12 @@ export default function Komuta() {
         <span className="eyebrow">Komuta merkezi</span>
         <h1>Bugün neler oluyor</h1>
         <p>Mağazalardan ve AdMob’dan gelen sinyaller tek akışta. Bir sinyali tek tıkla göreve çevirebilirsin.</p>
+        <p className="muted small">
+          {loading ? 'Veriler yükleniyor…' : latestMetricDate
+            ? `En yeni veri: ${trDate(latestMetricDate)} · kaynaklar farklı saatlerde güncellenir.`
+            : 'Henüz veri yok; sinyal olmaması her şeyin yolunda olduğu anlamına gelmez.'}
+          {' '}<Link to="/ayarlar" className="linkish">Bağlantıları incele →</Link>
+        </p>
       </div>
 
       {!connected.admob && !loading && <Needs source="admob" />}
@@ -78,7 +87,7 @@ export default function Komuta() {
           <div className="card-head">
             <div>
               <div className="card-title">Açık görevler</div>
-              <div className="card-sub">Önce kritik olanlar</div>
+              <div className="card-sub">Önce önem seviyesi, aynı seviyede yakın son tarih</div>
             </div>
             <Link to="/gorevler" className="btn sm">Tümü <ArrowRight size={13} /></Link>
           </div>
@@ -160,12 +169,12 @@ export default function Komuta() {
                     </div>
                   </div>
                   <span className="lvl" style={{ background: levelColor[f.level] + '22', color: levelColor[f.level] }}>
-                    {f.level === 'n' ? 'Yolunda' : levelText[f.level]}
+                    {f.level === 'n' ? 'Kritik sinyal yok' : levelText[f.level]}
                   </span>
                 </div>
                 <div className="gcard-stats">
                   <div>
-                    <span>Toplam indirme</span>
+                    <span>{f.game.installs != null ? 'Toplam indirme' : 'İndirme · 7 gün'}</span>
                     <b title={f.game.installsLabel ?? ''}>{f.game.installs != null ? int(f.game.installs) : f.downloads > 0 ? int(f.downloads) : '—'}</b>
                   </div>
                   <div>
@@ -178,7 +187,7 @@ export default function Komuta() {
                   </div>
                 </div>
                 {f.signals.length === 0 ? (
-                  <div className="ok-line"><Check size={14} color="var(--green)" /> Sorun yok, izlemeye devam.</div>
+                  <div className="ok-line"><Check size={14} color="var(--green)" /> Mevcut veride uyarı yok.</div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {f.signals.map((s) => (
