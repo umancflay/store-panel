@@ -19,7 +19,8 @@ type Out = { path: string; fileId: number | null }
 type Status = 'ideas_requested' | 'pick' | 'recording' | 'detail_requested' | 'render_requested' | 'review' | 'ready' | 'published' | 'failed_ideas' | 'failed_render'
 interface Project {
   id: string; gameId: string; status: Status; by: string; createdAt: string; updatedAt?: string; note?: string
-  ideas?: Idea[]; idea?: Idea; outputs?: { video?: Out; feature?: Out; square?: Out }; seconds?: number; error?: string | null; publishedOn?: string
+  ideas?: Idea[]; idea?: Idea; outputs?: { video?: Out; feature?: Out; square?: Out }; seconds?: number; error?: string | null; publishedOn?: string; publishedAt?: string
+  rejected?: { title: string; reason: string }[]; campaignIds?: string[]
 }
 type GameFile = { id: number; name: string; mime: string | null; created_at: string }
 
@@ -137,6 +138,7 @@ export default function Studio() {
       </div>
 
       {gid && <GameProfile gameId={gid} gameName={games.find((g) => g.id === gid)?.name ?? gid} />}
+      {gid && <LessonsCard gameId={gid} />}
 
       <section className="card studio-new">
         <Sparkles size={18} color="var(--green)" />
@@ -171,6 +173,8 @@ export default function Studio() {
 function ProjectView({ p, patch, remove, run, me }: { p: Project; patch: (id: string, x: Partial<Project>) => Promise<void>; remove: () => void; run: (fn: () => Promise<unknown>, ok?: string) => Promise<void>; me: string }) {
   const step = stepOf[p.status]
   const [t, c] = statusLabel[p.status]
+  const [rejecting, setRejecting] = useState<string | null>(null)
+  const [reason, setReason] = useState('')
   const idea = p.idea
   const filled = idea ? idea.shots.filter((s) => s.fileId).length : 0
   const req = (status: Status, x: Partial<Project> = {}) => patch(p.id, { status, error: null, ...x }).then(() => { triggerWorkflow('assistant.yml') })
@@ -205,13 +209,33 @@ function ProjectView({ p, patch, remove, run, me }: { p: Project; patch: (id: st
 
       {p.status === 'pick' && p.ideas && (
         <div className="trend-grid">
+          {p.ideas.length === 0 && (
+            <div className="studio-wait">Hepsini reddettin; sebeplerin hatırlanıyor.
+              <button type="button" className="btn btn-primary sm" onClick={() => run(() => req('ideas_requested'))}><Sparkles size={12} /> Yeni fikir iste</button>
+            </div>
+          )}
           {p.ideas.map((i) => (
             <div key={i.id} className="trend">
               <div className="flex between"><span className="badge b-muted">{i.platform}</span><span className="muted" style={{ fontSize: 10 }}>{i.shots.reduce((a, s) => a + s.seconds, 0)} sn · {i.shots.length} çekim</span></div>
               <b>{i.title}</b>
               <p>{i.hook}</p>
               <span className="trend-why">{evidenceText[i.evidence]} · {i.why}</span>
-              <button type="button" className="btn btn-primary sm" style={{ marginTop: 'auto' }} onClick={() => run(() => patch(p.id, { status: 'recording', idea: i }))}><Check size={13} /> Bunu çekelim</button>
+              {rejecting === i.id ? (
+                <form className="flex" style={{ gap: 6, marginTop: 'auto' }} onSubmit={(e) => {
+                  e.preventDefault()
+                  run(() => patch(p.id, { ideas: p.ideas!.filter((x) => x.id !== i.id), rejected: [...(p.rejected ?? []), { title: i.title, reason: reason.trim() }] }), 'Not alındı; sonraki fikirlerde hatırlanacak')
+                  setRejecting(null)
+                  setReason('')
+                }}>
+                  <input className="input sm grow" autoFocus value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Neden olmaz? ör. oyunda borsa yok" />
+                  <button type="submit" className="btn sm">Gönder</button>
+                </form>
+              ) : (
+                <div className="flex" style={{ gap: 6, marginTop: 'auto' }}>
+                  <button type="button" className="btn btn-primary sm grow" onClick={() => run(() => patch(p.id, { status: 'recording', idea: i }))}><Check size={13} /> Bunu çekelim</button>
+                  <button type="button" className="btn btn-ghost sm" onClick={() => setRejecting(i.id)}><X size={13} /> Olmaz</button>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -226,7 +250,8 @@ function ProjectView({ p, patch, remove, run, me }: { p: Project; patch: (id: st
 
       {(p.status === 'review' || p.status === 'ready' || p.status === 'published') && p.outputs && (
         <Outputs p={p} onApprove={() => run(() => patch(p.id, { status: 'ready' }), 'Paket hazır')} onRedo={() => run(() => patch(p.id, { status: 'recording' }))}
-          onPublished={(on) => run(() => patch(p.id, { status: 'published', publishedOn: on }))} />
+          onPublished={(on) => run(() => patch(p.id, { status: 'published', publishedOn: on, publishedAt: new Date().toISOString() }))}
+          onLink={(ids) => run(() => patch(p.id, { campaignIds: ids }), 'Kampanya bağlandı; sonuçlar her gün derse dönüşür')} />
       )}
     </section>
   )
@@ -314,7 +339,7 @@ function Shots({ p, idea, patch, run, me, onRender, onDetail }: { p: Project; id
   )
 }
 
-function Outputs({ p, onApprove, onRedo, onPublished }: { p: Project; onApprove: () => void; onRedo: () => void; onPublished: (on: string) => void }) {
+function Outputs({ p, onApprove, onRedo, onPublished, onLink }: { p: Project; onApprove: () => void; onRedo: () => void; onPublished: (on: string) => void; onLink: (ids: string[]) => void }) {
   const [urls, setUrls] = useState<Record<string, string>>({})
   const o = p.outputs!
   useEffect(() => {
@@ -349,6 +374,71 @@ function Outputs({ p, onApprove, onRedo, onPublished }: { p: Project; onApprove:
         )}
         {p.status === 'published' && <span className="badge b-ok">Yayımlandı · {p.publishedOn}</span>}
       </div>
+      {p.status === 'published' && <CampaignLink p={p} onLink={onLink} />}
     </div>
+  )
+}
+
+// Yayımlanan videoyu reklam kampanyasına bağla: günlük iş sonuçları ölçüp "ders" yazar (scripts/adlessons.mjs)
+type Lesson = { projectId: string; gameId: string; verdict: 'iyi' | 'orta' | 'kotu' | 'erken' | 'ret'; text: string; kind: 'result' | 'rejected' }
+const verdictText = { iyi: ['İşe yaradı', 'b-ok'], orta: ['Ortalama', 'b-muted'], kotu: ['Pahalı', 'b-critical'], erken: ['Veri az', 'b-muted'], ret: ['Reddedildi', 'b-muted'] } as const
+
+function useLessons() {
+  const [items, setItems] = useState<Lesson[]>([])
+  useEffect(() => {
+    if (isDemo) return
+    supabase!.from('app_settings').select('value').eq('key', 'ad_lessons').maybeSingle()
+      .then(({ data }) => setItems((data as { value?: { items?: Lesson[] } } | null)?.value?.items ?? []))
+  }, [])
+  return items
+}
+
+type Camp = { key: string; name: string; platform: string; game_id: string | null }
+function CampaignLink({ p, onLink }: { p: Project; onLink: (ids: string[]) => void }) {
+  const [camps, setCamps] = useState<Camp[]>([])
+  const lesson = useLessons().find((l) => l.projectId === p.id && l.kind === 'result')
+  useEffect(() => {
+    if (isDemo) return
+    const since = new Date(Date.now() - 120 * 86400000).toISOString().slice(0, 10)
+    supabase!.from('campaigns').select('platform,external_id,name,game_id,date').gte('date', since).order('date', { ascending: false }).limit(2000)
+      .then(({ data }) => {
+        const m = new Map<string, Camp>()
+        for (const c of (data as { platform: string; external_id: string; name: string; game_id: string | null }[]) ?? []) {
+          const key = `${c.platform}:${c.external_id}`
+          if (!m.has(key)) m.set(key, { key, name: c.name, platform: c.platform, game_id: c.game_id })
+        }
+        setCamps([...m.values()].sort((a, b) => Number(b.game_id === p.gameId) - Number(a.game_id === p.gameId)))
+      })
+  }, [p.gameId])
+  const linked = p.campaignIds ?? []
+  const name = (k: string) => camps.find((c) => c.key === k)?.name ?? k
+  return (
+    <div className="studio-wait" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+      <div className="small"><b>Hangi kampanyada yayında?</b> <span className="muted">Bağlarsan sonuçları her gün ölçülür, sonraki fikirlerde ders olarak kullanılır.</span></div>
+      <div className="flex wrap" style={{ gap: 6 }}>
+        {linked.map((k) => (
+          <span key={k} className="chip-btn on" style={{ paddingLeft: 12 }}>{name(k)} <button type="button" className="linkish" onClick={() => onLink(linked.filter((x) => x !== k))} aria-label="Bağı kaldır"><X size={11} /></button></span>
+        ))}
+        <select className="select sm" value="" style={{ width: 'auto' }} onChange={(e) => e.target.value && onLink([...linked, e.target.value])} aria-label="Kampanya bağla">
+          <option value="">{camps.length ? '+ Kampanya bağla' : 'Kampanya bulunamadı'}</option>
+          {camps.filter((c) => !linked.includes(c.key)).map((c) => <option key={c.key} value={c.key}>{c.name} · {c.platform === 'google_ads' ? 'Google' : c.platform === 'meta' ? 'Meta' : c.platform}</option>)}
+        </select>
+      </div>
+      {lesson && <div className="small flex" style={{ gap: 6 }}><span className={`badge ${verdictText[lesson.verdict][1]}`}>{verdictText[lesson.verdict][0]}</span> {lesson.text}</div>}
+    </div>
+  )
+}
+
+function LessonsCard({ gameId }: { gameId: string }) {
+  const items = useLessons().filter((l) => l.gameId === gameId)
+  if (!items.length) return null
+  return (
+    <section className="card">
+      <div className="card-title">Öğrenilenler</div>
+      <div className="card-sub" style={{ marginBottom: 10 }}>Gerçek reklam sonuçları ve reddettiğin fikirler · her yeni fikirde kullanılır</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {items.map((l, i) => <div key={i} className="small flex" style={{ gap: 8, alignItems: 'flex-start' }}><span className={`badge ${verdictText[l.verdict][1]}`}>{verdictText[l.verdict][0]}</span><span style={{ lineHeight: 1.5 }}>{l.text}</span></div>)}
+      </div>
+    </section>
   )
 }

@@ -12,6 +12,7 @@ import { db } from './db.mjs'
 import { parse, runClaude } from './ai.mjs'
 import { downloadFile } from './expert/bundle.mjs'
 import { profileText, profiles } from './gameprofile.mjs'
+import { updateAdLessons } from './adlessons.mjs'
 
 const W = 1080
 const H = 1920
@@ -210,10 +211,12 @@ async function writeIdeas(p) {
     '- Ekran yazılarının dili: reklam planındaki hedef ülkelere uygun olsun; plan yoksa İngilizce.',
     '- evidence: fikir "reklam_trendleri"nden geliyorsa "trend", oyunun kendi reklam sonuçlarından ("kampanyalar") çıkıyorsa "veri", ikisi de değilse "yok". why: bu dayanağı tek cümleyle, rakam varsa rakamla. Kazanacağını iddia etme; bunlar denenecek fikirler.',
     '- "onceki_projeler"deki fikirleri tekrar etme.',
+    '- "dersler" gerçek sonuçlardır: verdict "iyi" olan kurguların benzerini dene ve why alanında bu dersi rakamıyla an (evidence "veri"); "kotu" olanlardan ve reddedilen fikirlerin sebeplerinden kaçın. "erken" olanlardan hüküm çıkarma.',
     '',
     'Veri (JSON):',
     JSON.stringify({
       oyun_karti: profileText((await profiles())[p.gameId]),
+      dersler: (await updateAdLessons().catch(() => [])).filter((l) => l.gameId === p.gameId).map((l) => ({ tur: l.kind === 'rejected' ? 'reddedilen_fikir' : 'sonuc', hukum: l.verdict, ders: l.text })),
       reklam_trendleri: trends ? { trendler: (trends.items ?? []).slice(0, 8), bu_oyun_icin: (trends.forGames ?? []).find((g) => g.game_id === p.gameId)?.ideas ?? [] } : null,
       reklam_plani: plans[0]?.content ?? null,
       kampanyalar: [...agg.values()],

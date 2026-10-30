@@ -1107,3 +1107,13 @@ details.adc > summary::-webkit-details-marker { display: none; }
 .gp-grid textarea { resize: vertical; font: 12px/1.55 var(--font); }
 .gp-grid textarea { min-height: 72px; height: auto; }
 .gp-grid label.wide textarea { min-height: 84px; }
+
+/* Ana sayfa: bugün karar ver */
+.decisions { display: flex; flex-direction: column; gap: 8px; max-width: 760px; }
+.decision { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.035); backdrop-filter: blur(6px); }
+.decision.hot { border-color: rgba(255,122,85,.45); background: rgba(255,122,85,.07); }
+.decision b { display: block; font-size: 13px; font-weight: 600; }
+.decision span:not(.decision-ico) { display: block; font-size: 11px; color: var(--muted); line-height: 1.45; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.decision-ico { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; background: rgba(255,255,255,.06); flex: none; }
+.decision.hot .decision-ico { color: #FF7A55; }
+@media (max-width: 640px) { .decision span:not(.decision-ico) { white-space: normal; } }

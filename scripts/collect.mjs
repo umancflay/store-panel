@@ -20,6 +20,7 @@ import { runAi, aiReady } from './ai.mjs'
 import { needsAdPlans, runAdPlans } from './adplans.mjs'
 import { flushOutbox, notifyCritical, notifyDaily, pushReady } from './push.mjs'
 import { needsWorkPlan, runWorkPlan } from './workplan.mjs'
+import { updateAdLessons } from './adlessons.mjs'
 
 const job = process.argv[2] || 'manual'
 
@@ -62,6 +63,7 @@ if (job === 'daily' || job === 'manual' || light) {
   if (!light) await step('Uyarı kuralları', null, true, applyRules)
   // Gelir hedefi ve ani düşüş: dünün verisi sabah işinde tamamlanmış olur
   if (job === 'daily') await step('Gelir hedefi', null, true, applyGoals, { soft: true })
+  if (!light) await step('Reklam dersleri', null, true, updateAdLessons, { soft: true })
   // Claude sadece öneri yazar (özet, çözüm adımı, cevap taslağı); hiçbir şeyi uygulamaz
   await step('Claude analizi', 'claude', aiReady, () => runAi({ light }), { soft: true })
   await step('Telefon bildirimi', 'push', pushReady, notifyCritical)

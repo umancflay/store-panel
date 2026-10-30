@@ -9,6 +9,7 @@ import { periodRows, totals } from '../lib/metrics'
 import { int, money } from '../lib/format'
 import { SampleBanner } from '../components/ui'
 import { useGoal } from '../components/GoalCard'
+import Decisions from '../components/Decisions'
 
 // Ana sayfa: büyük karşılama, günün özeti ve iki giriş düğmesi
 export default function Welcome() {
@@ -66,6 +67,8 @@ export default function Welcome() {
         <Link to="/gelir"><Flag size={14} /> {goal.target > 0 ? 'Gelir hedefi' : 'Hedef koy'}</Link>
         <Link to="/asistan"><Bot size={14} /> Asistana sor</Link>
       </div>
+
+      <Decisions />
 
       <div className="welcome-stats">
         <div>
