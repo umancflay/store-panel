@@ -62,7 +62,8 @@ export async function collectAdmob() {
   })
 
   await upsert('admob_daily', out, 'date,game_id,platform,country,ad_unit_id')
-  await setConnection('admob', 'connected', `${out.length} satır güncellendi (son ${fromDays} gün)`)
+  const shown = await revealEarning(out)
+  await setConnection('admob', 'connected', `${out.length} satır güncellendi (son ${fromDays} gün)${shown.length ? ` · gösterilmeye başlandı: ${shown.join(', ')}` : ''}`)
   console.log(`AdMob: ${out.length} satır yazıldı.`)
 }
 
@@ -76,4 +77,28 @@ async function gameMapper(rows) {
     map.set(d.APP.value, await link({ name: d.APP.displayLabel ?? d.APP.value, platform, admobAppId: d.APP.value }))
   }
   return (appId) => map.get(appId)
+}
+
+// Gizlenmiş bir oyun para kazanmaya başladıysa panelde kendiliğinden görünür ve telefona haber gider:
+// gizli oyunun geliri hiçbir toplamda sayılmadığı için sessizce kaybolmasın.
+// min: kuruşluk gelirler (ör. tek bir test gösterimi) oyunu açmaya yetmez
+export function earningHidden(rows, games, min = 0.05) {
+  const hidden = new Map(games.filter((g) => g.hidden).map((g) => [g.id, g]))
+  const sum = new Map()
+  for (const r of rows) if (hidden.has(r.game_id) && r.revenue > 0) sum.set(r.game_id, (sum.get(r.game_id) ?? 0) + r.revenue)
+  return [...sum].filter(([, revenue]) => revenue >= min).map(([id, revenue]) => ({ id, name: hidden.get(id).name, revenue }))
+}
+
+// Her oyun bir kez açılır (app_settings.revealed_games); sonradan bilerek gizlersen gizli kalır
+async function revealEarning(rows) {
+  const games = await db('games?select=id,name,hidden&hidden=is.true')
+  const done = (await db('app_settings?select=value&key=eq.revealed_games'))[0]?.value?.ids ?? []
+  const list = earningHidden(rows, games).filter((g) => !done.includes(g.id))
+  if (list.length) await upsert('app_settings', [{ key: 'revealed_games', value: { ids: [...done, ...list.map((g) => g.id)] }, updated_at: new Date().toISOString() }], 'key')
+  for (const g of list) {
+    await db(`games?id=eq.${encodeURIComponent(g.id)}`, 'PATCH', { hidden: false }, 'return=minimal')
+    await db('notify_outbox', 'POST', { title: `${g.name} para kazanmaya başladı`, body: `Gizliydi; son günlerde ${g.revenue.toFixed(2)} $ getirdi, artık panelde görünüyor.`, url: './#/gelir' }, 'return=minimal')
+    console.log(`Gizli oyun gösterildi: ${g.name}`)
+  }
+  return list.map((g) => g.name)
 }
