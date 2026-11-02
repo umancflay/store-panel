@@ -9,7 +9,7 @@ import { GameChip, SampleBanner, Seg, Toggle, initials } from '../components/ui'
 import { requirements } from '../data/requirements'
 import Needs from '../components/Needs'
 
-const sources = ['admob', 'google_play', 'app_store', 'gmail', 'claude', 'google_ads', 'apple_ads', 'meta', 'tiktok'].map((id) => requirements[id])
+const sources = ['admob', 'google_play', 'app_store', 'gmail', 'claude', 'google_ads', 'apple_ads', 'meta', 'tiktok', 'firebase'].map((id) => requirements[id])
 
 export default function Settings() {
   const { toast } = useStore()

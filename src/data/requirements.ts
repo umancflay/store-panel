@@ -105,6 +105,18 @@ export const requirements: Record<string, Requirement> = {
     steps: ['Google Ads › Araçlar › API Merkezi\'nden geliştirici token\'ı başvurusu yap. Onay gelince 6. aşamada bağlanacak.'],
   },
   apple_ads: { id: 'apple_ads', name: 'Apple Ads', phase: 6, gives: 'Arama reklamı harcaması ve kurulumlar.', needs: ['Apple Ads hesabı', 'API erişimi (Apple Ads › Ayarlar › API)'], steps: ['6. aşamada bağlanacak.'] },
+  firebase: {
+    id: 'firebase', name: 'Firebase (oyuncu sayısı)', phase: 7, gives: 'Şu an kaç kişinin oynadığı ve bugün kaç yeni oyuncu geldiği (Play indirme raporundan 2-5 gün önce).',
+    needs: ['Oyunlarda Firebase Analytics (Unity paketi)', 'Play servis hesabının Analytics'e "Görüntüleyen" olarak eklenmesi'],
+    steps: [
+      'console.firebase.google.com › Proje ekle (oyun başına bir proje ya da hepsi tek projede) › Google Analytics açık kalsın.',
+      'Projeye Android uygulaması ekle: paket adı oyunun paket adı olsun; google-services.json'u indir. iOS için de aynısı (GoogleService-Info.plist).',
+      'Unity: Firebase Unity SDK › FirebaseAnalytics.unitypackage'ı içe aktar, indirdiğin dosyayı Assets klasörüne koy. Kod yazmana gerek yok; ilk açılış ve oyuncu sayısı kendiliğinden gönderilir.',
+      'Yeni build çıkar (Yayın Uzmanı'na bırakabilirsin).',
+      'Firebase › Proje ayarları › Kullanıcılar ve izinler › Üye ekle: Play servis hesabının e-postası (Ayarlar › Google Play bağlantısındaki), rol: Görüntüleyen. Ya da analytics.google.com › Yönetici › Mülk erişim yönetimi › Görüntüleyen.',
+      'Bir sonraki saatlik güncellemede ana sayfada "Şu an oynayan" ve "Bugün yeni oyuncu" görünür.',
+    ],
+  },
   meta: {
     id: 'meta', name: 'Meta', phase: 5, gives: 'Facebook/Instagram kampanyalarının harcaması, gösterim, tıklama ve kurulumları (sadece okuma).',
     needs: ['Meta Business hesabı ve reklam hesabı', 'developers.facebook.com\'da bir uygulama (Marketing API)', 'ads_read izinli token'],

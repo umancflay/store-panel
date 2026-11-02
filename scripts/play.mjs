@@ -30,6 +30,7 @@ export async function saToken() {
         'https://www.googleapis.com/auth/playdeveloperreporting',
         'https://www.googleapis.com/auth/devstorage.read_only',
         'https://www.googleapis.com/auth/cloud-platform', // Test Lab, sonuç kovası, faturalandırma kontrolü (Yayın Uzmanı)
+        'https://www.googleapis.com/auth/analytics.readonly', // Firebase / Google Analytics oyuncu sayıları (scripts/firebase.mjs)
       ].join(' '),
       aud: 'https://oauth2.googleapis.com/token',
       iat: now,

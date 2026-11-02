@@ -10,6 +10,7 @@ import { int, money } from '../lib/format'
 import { SampleBanner } from '../components/ui'
 import { useGoal } from '../components/GoalCard'
 import Decisions from '../components/Decisions'
+import LiveStats from '../components/LiveStats'
 
 // Ana sayfa: büyük karşılama, günün özeti ve iki giriş düğmesi
 export default function Welcome() {
@@ -71,6 +72,7 @@ export default function Welcome() {
       <Decisions />
 
       <div className="welcome-stats">
+        <LiveStats />
         <div>
           <span>Dünkü gelir</span>
           <b>{loading ? '…' : money(y.revenue)}</b>

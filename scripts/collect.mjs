@@ -21,6 +21,7 @@ import { needsAdPlans, runAdPlans } from './adplans.mjs'
 import { flushOutbox, notifyCritical, notifyDaily, pushReady } from './push.mjs'
 import { needsWorkPlan, runWorkPlan } from './workplan.mjs'
 import { updateAdLessons } from './adlessons.mjs'
+import { collectFirebase, firebaseReady } from './firebase.mjs'
 
 const job = process.argv[2] || 'manual'
 
@@ -59,6 +60,7 @@ if (job === 'daily' || job === 'manual' || light) {
   await step('Google Play', 'google_play', playReady, () => collectPlay({ light }))
   await step('App Store', 'app_store', appStoreReady, () => collectAppStore({ light }))
   await step('Meta', 'meta', metaReady, () => collectMeta({ light }))
+  await step('Firebase', 'firebase', firebaseReady, collectFirebase, { soft: true })
   await step('Gmail', 'gmail', googleReady, () => collectGmail({ days: light ? 7 : 30 }))
   if (!light) await step('Uyarı kuralları', null, true, applyRules)
   // Gelir hedefi ve ani düşüş: dünün verisi sabah işinde tamamlanmış olur
