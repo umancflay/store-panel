@@ -11,6 +11,7 @@ import { refreshPush } from '../lib/push'
 import CommandPalette from './CommandPalette'
 import { Brand, initials } from './ui'
 import { usePresenceTracker } from '../lib/presence'
+import { useBackground } from '../lib/background'
 
 // Menü grupları: günlük bakış, ekip ve mağaza/gelir. Benzer sayfalar tek menü öğesinde sekme olarak durur.
 type Page = { to: string; label: string; hint: string; icon: typeof Home }
@@ -77,6 +78,7 @@ export default function Layout() {
   const { signOut } = useAuth()
   const { alerts, toasts, triggerUpdate, updating } = useStore()
   const { me } = usePeople()
+  useBackground(me.email) // başka cihazda seçilen arka planı getirir
   const [menu, setMenu] = useState(false)
   const [sheet, setSheet] = useState(false)
   const [cmd, setCmd] = useState(false)

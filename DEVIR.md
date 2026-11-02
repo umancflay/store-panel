@@ -283,3 +283,7 @@ Küçük bir Unity mobil oyun stüdyosu (Voo Game Studio / Pixel Game) için tek
 - Stüdyo müzik ve mağaza görselleri: projeye "Müzik" klasöründen parça seçilir (`musicFileId`), video süresine kırpılıp yumuşatılır (`muxArgs`). Her çekimin yazısız kaynak karesinden Play (1080x1920) ve App Store 6.9" (1320x2868) ekran görüntüsü üretilir, Dosyalar › Mağaza'ya düşer (`screenshotArgs`).
 - Tasarım rehberi (`scripts/designguide.mjs`, `app_settings.design_guides`): Stüdyo'da oyun başına. Türündeki popüler oyunların (ya da yazılan örneklerin) Play ikonu ve ekran görüntüleri indirilir, Claude görüntülere bakar (Read), tasarım dilini çıkarır, ChatGPT'de kullanılacak İngilizce görsel promptları yazar (tanıtım, 3 ekran görüntüsü, afiş, ikon, arka plan). Görsel üretmez.
 - `scripts/templates.mjs`: HTML şablon + başsız Chrome ile mağaza/reklam görseli (henüz Stüdyo'ya bağlı değil).
+
+## Cam görünüm (2 Kas 2026)
+- `src/lib/background.ts` + `src/components/Appearance.tsx` (Ayarlar › Görünüm): fotoğraf arka plan (6 hazır Unsplash/Lorem Picsum fotoğrafı ya da yüklenen fotoğraf, 1920 px JPEG'e küçültülür) ve karartma; "Klasik koyu" eski tema. Seçim localStorage `ui-bg` + `app_settings.ui_backgrounds[e-posta]`.
+- `html.glass` sınıfı: kartlar, menüler, üst çubuk ve alt menü yarı saydam + backdrop-filter (styles.css sonu).

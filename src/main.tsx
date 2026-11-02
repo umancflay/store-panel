@@ -2,6 +2,10 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
 import './styles.css'
+import { applyBackground, readLocal } from './lib/background'
+
+// Seçili arka plan ilk çizimden önce uygulansın (koyu tema yanıp sönmesin)
+applyBackground(readLocal())
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

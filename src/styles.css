@@ -1155,3 +1155,74 @@ details.adc > summary::-webkit-details-marker { display: none; }
 @media (max-width: 640px) { .prompt-head .muted { display: none; } }
 .live-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #8FD3AE; margin-right: 4px; box-shadow: 0 0 0 0 rgba(143,211,174,.6); animation: live-pulse 1.8s infinite; vertical-align: middle; }
 @keyframes live-pulse { 0% { box-shadow: 0 0 0 0 rgba(143,211,174,.6) } 70% { box-shadow: 0 0 0 7px rgba(143,211,174,0) } 100% { box-shadow: 0 0 0 0 rgba(143,211,174,0) } }
+
+/* ---------- Cam görünüm: fotoğraf arka plan + buzlu cam (Ayarlar › Görünüm) ---------- */
+html.glass {
+  --bg-dim: .35;
+  --card: rgba(255,255,255,.09);
+  --card2: rgba(255,255,255,.10);
+  --panel: rgba(255,255,255,.08);
+  --inner: rgba(255,255,255,.07);
+  --line: rgba(255,255,255,.12);
+  --line2: rgba(255,255,255,.2);
+  --hl: inset 0 1px 0 rgba(255,255,255,.2);
+  --muted: #d6d6d6;
+  --dim: #bdbdbd;
+  --dim2: #a8a8a8;
+}
+html.glass body { background: #0b0b0b; }
+html.glass .page { background: transparent; }
+html.glass .page::before { content: ''; position: fixed; inset: 0; z-index: -2; background: #111 var(--bg-image) center / cover no-repeat; }
+html.glass .page::after {
+  content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(180deg, rgba(0,0,0,calc(var(--bg-dim) + .15)) 0%, rgba(0,0,0,var(--bg-dim)) 35%, rgba(0,0,0,calc(var(--bg-dim) + .2)) 100%);
+}
+html.glass .streak, html.glass .glow-pool { display: none; }
+
+/* Cam yüzeyler */
+html.glass .card, html.glass .stat, html.glass .account, html.glass .decision, html.glass .today,
+html.glass .sidenav, html.glass .menu-pop, html.glass .tip, html.glass .toast, html.glass .auth-box, html.glass .cmdk {
+  backdrop-filter: blur(22px) saturate(150%); -webkit-backdrop-filter: blur(22px) saturate(150%);
+}
+html.glass .card { border-color: rgba(255,255,255,.14); box-shadow: var(--hl), 0 18px 50px rgba(0,0,0,.25); }
+html.glass .card:hover { border-color: rgba(255,255,255,.24); }
+html.glass .card::after { background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent); }
+html.glass .inner { border-color: rgba(255,255,255,.1); }
+html.glass .menu-pop { background: rgba(28,28,28,.55); border-color: rgba(255,255,255,.16); box-shadow: 0 40px 100px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.12); }
+html.glass .tip, html.glass .toast { background: rgba(30,30,30,.6); }
+html.glass .sheet { background: rgba(12,12,12,.55); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px); }
+
+/* Üst çubuk: şeffaf; düğmeler ayrı cam haplar (referanstaki gibi) */
+html.glass .topbar { background: linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,0)); border-bottom: 0; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+html.glass .menu-btn, html.glass .icon-btn, html.glass .user-pill, html.glass .btn:not(.btn-primary):not(.btn-green):not(.btn-red):not(.btn-hot):not(.btn-ghost) {
+  background: rgba(255,255,255,.13); border-color: rgba(255,255,255,.18); backdrop-filter: blur(16px) saturate(140%); -webkit-backdrop-filter: blur(16px) saturate(140%);
+}
+html.glass .menu-btn:hover, html.glass .icon-btn:hover { background: rgba(255,255,255,.22); }
+html.glass .seg { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.16); backdrop-filter: blur(16px); }
+html.glass .select, html.glass .input, html.glass .textarea { background: rgba(255,255,255,.09); border-color: rgba(255,255,255,.16); }
+html.glass .chip { background: rgba(255,255,255,.14); }
+
+/* Sol menü: yüzen cam panel */
+html.glass .sidenav { padding: 12px 8px; border-radius: 24px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); box-shadow: inset 0 1px 0 rgba(255,255,255,.18); }
+html.glass .side-item:hover { background: rgba(255,255,255,.1); }
+html.glass .side-item.active { background: rgba(255,255,255,.16); }
+html.glass .side-ico { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.14); }
+
+@media (max-width: 900px) {
+  html.glass .bottom-nav { background: rgba(30,30,30,.45); border-color: rgba(255,255,255,.18); backdrop-filter: blur(26px) saturate(160%); -webkit-backdrop-filter: blur(26px) saturate(160%); }
+}
+
+/* Görünüm seçici (Ayarlar) */
+.bg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.bg-opt { position: relative; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; border: 2px solid transparent; padding: 0; cursor: pointer; background: #1a1a1a center / cover; color: #fff; font: 600 11px var(--font); }
+.bg-opt span { position: absolute; left: 8px; bottom: 6px; text-shadow: 0 1px 6px rgba(0,0,0,.8); }
+.bg-opt.on { border-color: #8FD3AE; box-shadow: 0 0 0 3px rgba(143,211,174,.25); }
+.bg-opt.dark { background: radial-gradient(120% 80% at 50% 0%, #2a2a2a 0%, #080808 70%); }
+.bg-opt.add { display: grid; place-items: center; background: rgba(255,255,255,.06); border: 2px dashed rgba(255,255,255,.2); }
+html.glass .cmdk { background: rgba(28,28,28,.6); }
+html.glass .welcome h1 span { color: rgba(255,255,255,.72); }
+html.glass .welcome-sub, html.glass .page-head p { color: #e2e2e2; }
+html.glass .auth-page { background: transparent; }
+html.glass .auth-page::before { content: ''; position: fixed; inset: 0; z-index: -2; background: #111 var(--bg-image) center / cover no-repeat; }
+html.glass .auth-page::after { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: rgba(0,0,0,calc(var(--bg-dim) + .15)); }
+html.glass .auth-box { background: rgba(255,255,255,.1); }

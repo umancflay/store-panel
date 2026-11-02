@@ -8,6 +8,7 @@ import { enablePush, pushConfigured, pushState, sendTestPush } from '../lib/push
 import { GameChip, SampleBanner, Seg, Toggle, initials } from '../components/ui'
 import { requirements } from '../data/requirements'
 import Needs from '../components/Needs'
+import Appearance from '../components/Appearance'
 
 const sources = ['admob', 'google_play', 'app_store', 'gmail', 'claude', 'google_ads', 'apple_ads', 'meta', 'tiktok', 'firebase'].map((id) => requirements[id])
 
@@ -96,6 +97,8 @@ export default function Settings() {
         <h1>Profil ve bağlantılar</h1>
       </div>
       {!connections.some((c) => c.status === 'connected') && <SampleBanner>Henüz hiçbir hesap bağlı değil. Bağlantılar aşama aşama eklenecek.</SampleBanner>}
+
+      <Appearance />
 
       <section className="card">
         <div className="card-title flex" style={{ gap: 8, marginBottom: 12 }}><UserRound size={16} /> Profil</div>
