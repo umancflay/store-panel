@@ -1159,9 +1159,9 @@ details.adc > summary::-webkit-details-marker { display: none; }
 /* ---------- Cam görünüm: fotoğraf arka plan + buzlu cam (Ayarlar › Görünüm) ---------- */
 html.glass {
   --bg-dim: .35;
-  --card: rgba(255,255,255,.09);
-  --card2: rgba(255,255,255,.10);
-  --panel: rgba(255,255,255,.08);
+  --card: rgba(255,255,255,.11);
+  --card2: rgba(255,255,255,.12);
+  --panel: rgba(255,255,255,.10);
   --inner: rgba(255,255,255,.07);
   --line: rgba(255,255,255,.12);
   --line2: rgba(255,255,255,.2);
@@ -1182,7 +1182,7 @@ html.glass .streak, html.glass .glow-pool { display: none; }
 /* Cam yüzeyler */
 html.glass .card, html.glass .stat, html.glass .account, html.glass .decision, html.glass .today,
 html.glass .sidenav, html.glass .menu-pop, html.glass .tip, html.glass .toast, html.glass .auth-box, html.glass .cmdk {
-  backdrop-filter: blur(22px) saturate(150%); -webkit-backdrop-filter: blur(22px) saturate(150%);
+  backdrop-filter: blur(36px) saturate(160%); -webkit-backdrop-filter: blur(36px) saturate(160%);
 }
 html.glass .card { border-color: rgba(255,255,255,.14); box-shadow: var(--hl), 0 18px 50px rgba(0,0,0,.25); }
 html.glass .card:hover { border-color: rgba(255,255,255,.24); }
@@ -1190,12 +1190,12 @@ html.glass .card::after { background: linear-gradient(90deg, transparent, rgba(2
 html.glass .inner { border-color: rgba(255,255,255,.1); }
 html.glass .menu-pop { background: rgba(28,28,28,.55); border-color: rgba(255,255,255,.16); box-shadow: 0 40px 100px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.12); }
 html.glass .tip, html.glass .toast { background: rgba(30,30,30,.6); }
-html.glass .sheet { background: rgba(12,12,12,.55); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px); }
+html.glass .sheet { background: rgba(12,12,12,.55); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); }
 
 /* Üst çubuk: şeffaf; düğmeler ayrı cam haplar (referanstaki gibi) */
 html.glass .topbar { background: linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,0)); border-bottom: 0; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
 html.glass .menu-btn, html.glass .icon-btn, html.glass .user-pill, html.glass .btn:not(.btn-primary):not(.btn-green):not(.btn-red):not(.btn-hot):not(.btn-ghost) {
-  background: rgba(255,255,255,.13); border-color: rgba(255,255,255,.18); backdrop-filter: blur(16px) saturate(140%); -webkit-backdrop-filter: blur(16px) saturate(140%);
+  background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.18); backdrop-filter: blur(24px) saturate(150%); -webkit-backdrop-filter: blur(24px) saturate(150%);
 }
 html.glass .menu-btn:hover, html.glass .icon-btn:hover { background: rgba(255,255,255,.22); }
 html.glass .seg { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.16); backdrop-filter: blur(16px); }
@@ -1226,3 +1226,4 @@ html.glass .auth-page { background: transparent; }
 html.glass .auth-page::before { content: ''; position: fixed; inset: 0; z-index: -2; background: #111 var(--bg-image) center / cover no-repeat; }
 html.glass .auth-page::after { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: rgba(0,0,0,calc(var(--bg-dim) + .15)); }
 html.glass .auth-box { background: rgba(255,255,255,.1); }
+html.glass .inner, html.glass .trend, html.glass .verdict, html.glass .studio-wait, html.glass .shot, html.glass .prompt-row, html.glass .guide-style > div, html.glass .ad-tab, html.glass .studio-item, html.glass .expert-stats > div { backdrop-filter: blur(20px) saturate(150%); -webkit-backdrop-filter: blur(20px) saturate(150%); }

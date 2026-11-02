@@ -10,6 +10,14 @@ export type Background = { kind: 'none' } | { kind: 'preset'; id: string; dim: n
 
 const pic = (id: number, w = 1920, h = 1080) => `https://picsum.photos/id/${id}/${w}/${h}`
 export const PRESETS = [
+  // Şehir
+  { id: 'neon', name: 'Neon cadde', url: pic(274), thumb: pic(274, 320, 180) },
+  { id: 'kopru', name: 'Köprü, gün batımı', url: pic(392), thumb: pic(392, 320, 180) },
+  { id: 'gokdelen', name: 'Gökdelenler', url: pic(737), thumb: pic(737, 320, 180) },
+  { id: 'newyork', name: 'New York', url: pic(43), thumb: pic(43, 320, 180) },
+  { id: 'gecekopru', name: 'Gece köprüsü', url: pic(84), thumb: pic(84, 320, 180) },
+  { id: 'isik', name: 'Işık izleri', url: pic(352), thumb: pic(352, 320, 180) },
+  // Doğa
   { id: 'gunbatimi', name: 'Gün batımı', url: pic(110), thumb: pic(110, 320, 180) },
   { id: 'sis', name: 'Sisli dağlar', url: pic(177), thumb: pic(177, 320, 180) },
   { id: 'gol', name: 'Göl', url: pic(128), thumb: pic(128, 320, 180) },
