@@ -61,6 +61,7 @@ export function profileText(p) {
     one_cikanlar: list(p.selling),
     reklamda_olmasin: p.avoid || '',
     sahibinin_notu: p.notes || '',
+    ekran_yonu: p.orientation || null,
   }
 }
 

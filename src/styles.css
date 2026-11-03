@@ -1227,3 +1227,7 @@ html.glass .auth-page::before { content: ''; position: fixed; inset: 0; z-index:
 html.glass .auth-page::after { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: rgba(0,0,0,calc(var(--bg-dim) + .15)); }
 html.glass .auth-box { background: rgba(255,255,255,.1); }
 html.glass .inner, html.glass .trend, html.glass .verdict, html.glass .studio-wait, html.glass .shot, html.glass .prompt-row, html.glass .guide-style > div, html.glass .ad-tab, html.glass .studio-item, html.glass .expert-stats > div { backdrop-filter: blur(20px) saturate(150%); -webkit-backdrop-filter: blur(20px) saturate(150%); }
+.attach-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 4px 0 8px; font-size: 11px; }
+.attach-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px; border-radius: 10px; background: rgba(143,211,174,.12); border: 1px solid rgba(143,211,174,.35); color: #fff; font-size: 11px; text-decoration: none; }
+.attach-chip img { width: 64px; height: 36px; object-fit: cover; border-radius: 7px; }
+.attach-chip:hover { background: rgba(143,211,174,.22); }

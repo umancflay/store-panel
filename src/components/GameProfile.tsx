@@ -11,6 +11,7 @@ import { trDateTime } from '../lib/rows'
 export interface Profile {
   status?: 'requested' | 'draft' | 'ok' | 'failed'
   summary?: string; gameplay?: string; moments?: string[]; look?: string; characters?: string[]; audience?: string; selling?: string[]; avoid?: string; notes?: string
+  orientation?: 'yatay' | 'dikey'
   sources?: string[]; error?: string | null; updatedAt?: string
 }
 type Items = Record<string, Profile>
@@ -80,7 +81,7 @@ export default function GameProfile({ gameId, gameName }: { gameId: string; game
   }
   const set = (k: keyof Profile, list: boolean | undefined, v: string) => setForm((f) => ({ ...f, [k]: list ? v.split('\n') : v }))
   const clean = (f: Profile): Profile => Object.fromEntries(Object.entries(f).map(([k, v]) => [k, Array.isArray(v) ? v.map((x) => x.trim()).filter(Boolean) : v])) as Profile
-  const fields2 = (f: Profile) => Object.fromEntries(fields.map((x) => [x.key, f[x.key]])) as Profile
+  const fields2 = (f: Profile) => ({ ...Object.fromEntries(fields.map((x) => [x.key, f[x.key]])), orientation: f.orientation }) as Profile
 
   const run = async (p: Profile, ok: string, trigger = false) => {
     try {
@@ -109,6 +110,15 @@ export default function GameProfile({ gameId, gameName }: { gameId: string; game
       {open && (
         <div className="gp-body">
           {profile?.error && <div className="studio-wait bad">{profile.error}</div>}
+          <div className="flex wrap" style={{ gap: 10, alignItems: 'center', fontSize: 12 }}>
+            <b>Oyun ekranı</b>
+            <div className="seg">
+              {([['yatay', 'Yatay'], ['dikey', 'Dikey']] as const).map(([v, l]) => (
+                <button key={v} type="button" className={form.orientation === v ? 'on' : ''} onClick={() => setForm((f) => ({ ...f, orientation: f.orientation === v ? undefined : v }))}>{l}</button>
+              ))}
+            </div>
+            <span className="muted" style={{ fontSize: 11 }}>{form.orientation ? 'Mağaza görselleri bu yönde hazırlanır' : 'Seçmezsen yüklediğin ekran görüntülerinden anlaşılır'}</span>
+          </div>
           <div className="gp-grid">
             {fields.map((f) => (
               <label key={f.key} className={f.key === 'notes' || f.key === 'gameplay' ? 'wide' : ''}>

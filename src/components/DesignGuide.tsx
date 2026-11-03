@@ -5,15 +5,16 @@ import { useStore } from '../lib/store'
 import { usePeople } from '../lib/data'
 import { triggerWorkflow } from '../lib/trigger'
 import { trDateTime } from '../lib/rows'
-import { uploadFile } from '../lib/files'
+import { fileUrls, uploadFile } from '../lib/files'
 
 // Tasarım rehberi: Claude önce SENİN oyununun görsellerine (Play sayfası + panele yüklenenler) ve oyun kartına bakar,
 // popüler oyunlardan sadece tarzı (renk, yazı, kompozisyon) alır, ChatGPT'de kullanılacak promptları yazar (scripts/designguide.mjs).
 
-type Prompt = { kind: 'feature' | 'screenshot' | 'poster' | 'icon' | 'background'; title: string; size: string; prompt: string; promptTr?: string; tip: string }
+type Prompt = { kind: 'feature' | 'screenshot' | 'poster' | 'icon' | 'background'; title: string; size: string; prompt: string; promptTr?: string; tip: string; attach?: string[] }
 interface Guide {
   status?: 'requested' | 'ready' | 'failed'; error?: string | null; at?: string; refs?: { pkg: string; title: string; installs?: string | null }[]
-  ourGame?: string; ownImages?: number; hasCard?: boolean
+  ourGame?: string; ownImages?: number; hasCard?: boolean; orientation?: 'yatay' | 'dikey' | null
+  images?: { file: string; name: string; path: string | null }[]
   references?: { title: string; notes: string }[]; style?: Record<'colors' | 'typography' | 'layout' | 'captions' | 'characters' | 'icon', string>
   doThis?: string[]; avoid?: string[]; prompts?: Prompt[]; refs_input?: string; note?: string
 }
@@ -90,6 +91,15 @@ export default function DesignGuide({ gameId, gameName }: { gameId: string; game
   const setLanguage = (l: 'tr' | 'en') => { setLang(l); try { localStorage.setItem(LANG_KEY, l) } catch { /* yok */ } }
   const textOf = (p: Prompt) => (lang === 'tr' && p.promptTr ? p.promptTr : p.prompt)
 
+  // Prompta eklenecek ekran görüntüleri: küçük resim + indirme (ChatGPT'ye sürükleyip bırakırsın)
+  const [thumbs, setThumbs] = useState<Record<string, string>>({})
+  const imgKey = (g?.images ?? []).map((x) => x.path).join(',')
+  useEffect(() => {
+    const paths = (g?.images ?? []).map((x) => x.path).filter((x): x is string => !!x)
+    if (paths.length) fileUrls(paths).then(setThumbs)
+  }, [imgKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  const imageOf = (file: string) => g?.images?.find((x) => x.file === file)
+
   async function start() {
     try {
       await patch(gameId, { status: 'requested', error: null, refs_input: refs, note })
@@ -144,7 +154,7 @@ export default function DesignGuide({ gameId, gameName }: { gameId: string; game
         <span className="grow">
           {noBasis
             ? 'Oyunundan görsel yok: promptlar tahmine kalır. 2-4 ekran görüntüsü ekle.'
-            : `Claude oyununu ${ownCount} görselinden${g?.hasCard ? ' ve oyun kartından' : ''} tanıyor.`}
+            : `Claude oyununu ${ownCount} görselinden${g?.hasCard ? ' ve oyun kartından' : ''} tanıyor.${g?.orientation ? ` Oyun ekranı: ${g.orientation}.` : ''}`}
         </span>
         <button type="button" className="btn btn-ghost sm" disabled={uploading} onClick={() => file.current?.click()}>
           {uploading ? <Loader2 size={12} className="spin" /> : <ImagePlus size={12} />} Ekran görüntüsü ekle
@@ -187,6 +197,20 @@ export default function DesignGuide({ gameId, gameName }: { gameId: string; game
                 {openPrompt === i && (
                   <div className="prompt-body">
                     <p>{textOf(p)}</p>
+                    {p.attach && p.attach.length > 0 && (
+                      <div className="attach-row">
+                        <b>ChatGPT'ye bunu da ekle:</b>
+                        {p.attach.map((a) => {
+                          const im = imageOf(a)
+                          const url = im?.path ? thumbs[im.path] : undefined
+                          return url ? (
+                            <a key={a} className="attach-chip" href={url} target="_blank" rel="noreferrer" download={im?.name} title="İndir, sonra ChatGPT'ye sürükle">
+                              <img src={url} alt="" /> {im?.name}
+                            </a>
+                          ) : <span key={a} className="attach-chip">{im?.name ?? a}</span>
+                        })}
+                      </div>
+                    )}
                     {p.tip && <span>💡 {p.tip}</span>}
                   </div>
                 )}
