@@ -68,7 +68,14 @@ export async function runRobo({ filePath, buildId, minSdk, storeShot, fetchImpl 
 
   // Para harcamama güvencesi: faturalandırma kapalı olmalı
   const billing = await call(`https://cloudbilling.googleapis.com/v1/projects/${project}/billingInfo`).catch((e) => ({ error: e }))
-  if (billing.error) return { skipped: `ücretsiz plan doğrulanamadı (${billing.error.status ?? 'hata'})` }
+  if (billing.error) {
+    // 403'ün iki sebebi olur: API projede kapalı ya da hizmet hesabının projeyi görme izni yok
+    const off = /SERVICE_DISABLED|has not been used|is disabled/i.test(billing.error.message)
+    const why = off
+      ? `Google Cloud'da "Cloud Billing API" kapalı (proje ${project}): console.cloud.google.com › API'ler › Cloud Billing API › Etkinleştir`
+      : `hizmet hesabının projeyi görme izni yok: console.cloud.google.com › IAM › hizmet hesabına "Görüntüleyici" (Viewer) rolü`
+    return { skipped: `ücretsiz plan doğrulanamadı (${billing.error.status ?? 'hata'}); ${why}` }
+  }
   if (billing.billingEnabled) return { skipped: 'Firebase projesinde faturalandırma açık; ücret çıkmasın diye test yapılmadı' }
 
   const { defaultBucket } = await call(`https://www.googleapis.com/toolresults/v1beta3/projects/${project}:initializeSettings`, { method: 'POST' })
