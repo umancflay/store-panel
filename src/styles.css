@@ -1231,3 +1231,15 @@ html.glass .inner, html.glass .trend, html.glass .verdict, html.glass .studio-wa
 .attach-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px; border-radius: 10px; background: rgba(143,211,174,.12); border: 1px solid rgba(143,211,174,.35); color: #fff; font-size: 11px; text-decoration: none; }
 .attach-chip img { width: 64px; height: 36px; object-fit: cover; border-radius: 7px; }
 .attach-chip:hover { background: rgba(143,211,174,.22); }
+
+/* Üst çubuk: son güncelleme */
+.last-sync { display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,.05); border: 1px solid var(--line2); color: inherit; text-decoration: none; white-space: nowrap; }
+.last-sync:hover { background: rgba(255,255,255,.08); }
+.last-sync .dot { width: 8px; height: 8px; border-radius: 99px; flex-shrink: 0; }
+.last-sync-txt { display: flex; flex-direction: column; line-height: 1.2; }
+.last-sync-txt small { font-size: 9px; color: var(--muted); letter-spacing: .3px; }
+.last-sync-txt b { font-size: 11px; font-weight: 500; }
+@media (max-width: 640px) {
+  .last-sync { padding: 5px 9px; }
+  .last-sync-txt small, .last-sync-txt .muted { display: none; }
+}

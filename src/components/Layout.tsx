@@ -6,7 +6,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { useStore } from '../lib/store'
-import { usePeople } from '../lib/data'
+import { useData, usePeople } from '../lib/data'
 import { refreshPush } from '../lib/push'
 import CommandPalette from './CommandPalette'
 import { Brand, initials } from './ui'
@@ -73,6 +73,34 @@ export const allPages: Page[] = navGroups.flatMap((g) => g.items.flatMap((i) => 
 const links = navGroups.flatMap((g) => g.items)
 const pathsOf = (n: NavItem) => (n.tabs ?? [n]).map((t) => t.to)
 const mobileMain = ['/', '/gelir', '/reklamlar', '/yayin']
+
+// Verilerin en son ne zaman güncellendiği (en yeni veri toplama ya da kaynak senkronu); dakikada bir tazelenir
+function LastSync() {
+  const { lastRun, connections, demo } = useData()
+  const [, tick] = useState(0)
+  useEffect(() => {
+    const t = setInterval(() => tick((n) => n + 1), 60_000)
+    return () => clearInterval(t)
+  }, [])
+  if (demo) return null
+  const times = [lastRun?.finished_at, ...connections.map((c) => c.last_sync_at)].filter((x): x is string => !!x)
+  if (!times.length) return null
+  const last = times.sort()[times.length - 1]
+  const d = new Date(last)
+  const mins = Math.max(0, Math.round((Date.now() - d.getTime()) / 60000))
+  const ago = mins < 1 ? 'az önce' : mins < 60 ? `${mins} dk önce` : mins < 1440 ? `${Math.round(mins / 60)} sa önce` : `${Math.round(mins / 1440)} gün önce`
+  const date = d.toLocaleString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  const failed = lastRun?.status === 'failed'
+  return (
+    <Link to="/ayarlar" className="last-sync" title={`Son güncelleme: ${d.toLocaleString('tr-TR', { dateStyle: 'full', timeStyle: 'short' })}${failed ? ' · son çalışmada hata var' : ''}`}>
+      <span className="dot" style={{ background: failed ? 'var(--orange)' : mins > 180 ? 'var(--gold)' : 'var(--green)' }} />
+      <span className="last-sync-txt">
+        <small>Son güncelleme</small>
+        <b>{date} <span className="muted">· {ago}</span></b>
+      </span>
+    </Link>
+  )
+}
 
 export default function Layout() {
   const { signOut } = useAuth()
@@ -170,6 +198,7 @@ export default function Layout() {
             </div>
 
             <div className="top-right">
+              <LastSync />
               <button type="button" className="icon-btn" onClick={() => setCmd(true)} title="Hızlı arama (Ctrl+K)" aria-label="Hızlı arama">
                 <Search size={15} />
               </button>
