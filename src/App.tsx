@@ -19,6 +19,7 @@ import Reviews from './pages/Reviews'
 import Revenue from './pages/Revenue'
 import Ads from './pages/Ads'
 import Studio from './pages/Studio'
+import Live from './pages/Live'
 import Assistant from './pages/Assistant'
 import Settings from './pages/Settings'
 import Workspace from './pages/Workspace'
@@ -35,6 +36,7 @@ function Gate() {
         <Routes>
           <Route element={<Layout />}>
             <Route index element={<Welcome />} />
+            <Route path="veriler" element={<Live />} />
             <Route path="komuta" element={<Komuta />} />
             <Route path="calisma" element={<Workspace />} />
             <Route path="dosyalar" element={<Files />} />

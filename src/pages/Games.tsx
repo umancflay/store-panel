@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import GameExtras from '../components/GameExtras'
 import { Area, AreaChart, CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { ArrowLeft, Download, Wallet, Star, Bug, Package, EyeOff } from 'lucide-react'
 import { gameById, type Platform } from '../data/sample'
@@ -214,6 +215,8 @@ export function GameDetail() {
           )}
         </div>
       </section>
+
+      <GameExtras gameId={game.id} />
 
       {game.platforms.includes('android') && platform !== 'ios' && (demo || connected.google_play) && <Players gameId={game.id} />}
 

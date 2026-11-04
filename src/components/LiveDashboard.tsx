@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { ArrowRight } from 'lucide-react'
 import { supabase, isDemo } from '../lib/supabase'
 import { useData } from '../lib/data'
 import { countryName, int, localIso, money, pct } from '../lib/format'
@@ -43,7 +45,8 @@ const ago = (iso?: string | null) => {
   return m < 1 ? 'az önce' : m < 60 ? `${m} dk önce` : `${Math.round(m / 60)} sa önce`
 }
 
-export default function LiveDashboard() {
+// compact: ana sayfada sadece CANLI şeridi ve para; tam hali Canlı veriler sayfasında
+export default function LiveDashboard({ compact = false }: { compact?: boolean }) {
   const { daily, today, countries, adUnits, games, currency, connections, demo, reload } = useData()
   const [live, setLive] = useState<LiveRow[] | null>(null)
   const [ages, setAges] = useState<AgeRow[]>([])
@@ -62,7 +65,7 @@ export default function LiveDashboard() {
     return () => { clearInterval(a); clearInterval(b) }
   }, [reload])
   useEffect(() => {
-    if (isDemo) return
+    if (isDemo || compact) return
     supabase!.from('ad_breakdowns').select('key,results,clicks').eq('dimension', 'age_gender').then(({ data }) => {
       const m = new Map<string, AgeRow>()
       for (const r of (data as { key: string; results: number; clicks: number }[]) ?? []) {
@@ -76,7 +79,7 @@ export default function LiveDashboard() {
       }
       setAges([...m.values()].filter((x) => x.women + x.men > 0).sort((a, b) => a.age.localeCompare(b.age)))
     })
-  }, [])
+  }, [compact])
 
   const rev = (r: LiveRow) => Number(currency === 'TRY' && r.revenue_try != null ? r.revenue_try : r.revenue)
   const liveRows = (live ?? []).filter((r) => visible.has(r.game_id))
@@ -90,6 +93,11 @@ export default function LiveDashboard() {
   const d30 = localIso(new Date(Date.now() - 30 * 86400000))
   const month = daily.filter((r) => r.date >= monthStart).reduce((a, r) => a + r.adRevenue + r.iapRevenue, 0) + todayTotal
   const last30 = daily.filter((r) => r.date >= d30).reduce((a, r) => a + r.adRevenue + r.iapRevenue, 0)
+  const d7 = localIso(new Date(Date.now() - 7 * 86400000))
+  const avg7 = daily.filter((r) => r.date >= d7).reduce((a, r) => a + r.adRevenue + r.iapRevenue, 0) / 7
+  const now = new Date()
+  const daysLeft = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() - now.getDate()
+  const forecast = month + avg7 * daysLeft
 
   // Bugün ülkeler (canlı) ve son 30 gün ülkeler
   const todayCountries = useMemo(() => {
@@ -140,8 +148,13 @@ export default function LiveDashboard() {
         </div>
         <div className="money-tile"><span>Dün</span><b>{money(dayRev(yIso))}</b></div>
         <div className="money-tile"><span>Bu ay</span><b>{money(month)}</b></div>
-        <div className="money-tile"><span>Son 30 gün</span><b>{money(last30)}</b></div>
+        {compact ? (
+          <Link to="/veriler" className="money-tile go"><span>Ülkeler, oyunlar, grafikler</span><b className="flex" style={{ gap: 8 }}>Canlı veriler <ArrowRight size={18} /></b></Link>
+        ) : (
+          <div className="money-tile" title="Bu ay şimdiye kadar + son 7 günün günlük ortalaması × kalan gün"><span>Ay sonu tahmini</span><b>{money(forecast)}</b><small>son 30 gün {money(last30)}</small></div>
+        )}
       </div>
+      {compact ? null : <>
 
       {topCountries.length > 0 && (
         <div className="live-grid">
@@ -236,6 +249,7 @@ export default function LiveDashboard() {
           </div>
         )}
       </div>
+      </>}
     </section>
   )
 }

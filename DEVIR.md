@@ -291,3 +291,7 @@ Küçük bir Unity mobil oyun stüdyosu (Voo Game Studio / Pixel Game) için tek
 ## Ana sayfa canlı pano (5 Kas 2026)
 - `src/components/LiveDashboard.tsx` (Welcome'da selamlamanın altında): CANLI rozeti (AdMob son güncelleme), bugünün parası (admob_daily bugün, dakikada bir yenilenir; panel verisi 5 dk'da bir), dün / bu ay / 30 gün; dünya küresi (`LiveGlobe.tsx`, canvas, sürüklenir) ve bugün en çok kazandıran ülkeler; 30 günlük ülke sıralaması; Meta yaş-cinsiyet (yoksa reklam türleri); oyun gelir halkaları.
 - Küre verisi `src/data/globe.ts`: Natural Earth 110m kara noktaları + mledoze/countries ülke merkezleri (ODbL), bir kez üretildi.
+- Canlı veriler ayrı sayfa (`/veriler`, `src/pages/Live.tsx`): tam canlı pano + ay sonu tahmini + haftalık rapor. Ana sayfada sadece CANLI şeridi, bugün/dün/bu ay ve "Canlı veriler" kısa yolu (`LiveDashboard compact`).
+- Haftalık rapor (`scripts/weekly.mjs`): pazartesi (ya da 7 günden eskiyse) günlük işte Claude yazar → `ai_insights.weekly_report` + bildirim. Kart: `WeeklyReport.tsx`.
+- Reklam kârı (`AdProfit.tsx`, Reklam sayfası): oyun başına 30 gün harcama ve gelir oranı.
+- Oyun sayfası ekleri (`GameExtras.tsx`): oyunun ülkeleri, oyun kartı, Stüdyo/Reklam kısa yolları.

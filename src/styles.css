@@ -1302,3 +1302,12 @@ html.glass .inner, html.glass .trend, html.glass .verdict, html.glass .studio-wa
   .rings { grid-template-columns: 1fr; }
   .rings-svg { max-width: 200px; margin: 0 auto; }
 }
+.money-tile.go { justify-content: space-between; text-decoration: none; color: #fff; transition: background .2s, transform .2s; }
+.money-tile.go:hover { background: rgba(255,255,255,.14); transform: translateY(-2px); }
+.money-tile.go b { font-size: 18px; }
+.weekly-head { margin: 0 0 12px; font-size: 15px; line-height: 1.55; }
+.profit-list { display: flex; flex-direction: column; gap: 8px; }
+.profit-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px; background: rgba(255,255,255,.03); }
+.profit-row b { font-size: 13px; }
+.profit-dot { width: 32px; height: 32px; border-radius: 10px; background: rgba(255,255,255,.08); flex: none; }
+.game-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }

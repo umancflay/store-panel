@@ -60,7 +60,7 @@ export default function Welcome() {
         </Link>
       </div>
 
-      <LiveDashboard />
+      <LiveDashboard compact />
 
       {/* Sık yapılan işlere tek dokunuş */}
       <div className="quick-actions">

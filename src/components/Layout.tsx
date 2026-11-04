@@ -2,7 +2,7 @@ import { Component, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
   Home, Radar, Bot, KanbanSquare, Network, Users, Workflow, NotebookPen, CalendarDays, Wallet, Megaphone,
-  BellRing, Gamepad2, MessageSquareText, LayoutDashboard, FolderOpen, Settings, RefreshCw, LogOut, Menu, X, CheckCircle2, AlertTriangle, Info, ChevronDown, Search, Rocket, Clapperboard,
+  BellRing, Gamepad2, MessageSquareText, LayoutDashboard, FolderOpen, Settings, RefreshCw, LogOut, Menu, X, CheckCircle2, AlertTriangle, Info, ChevronDown, Search, Rocket, Clapperboard, Activity,
 } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { useStore } from '../lib/store'
@@ -22,6 +22,7 @@ export const navGroups: { title: string; items: NavItem[] }[] = [
     title: 'Günlük',
     items: [
       { to: '/', label: 'Ana sayfa', hint: 'Günün özeti', icon: Home },
+      { to: '/veriler', label: 'Canlı veriler', hint: 'Para, ülkeler, oyunlar', icon: Activity },
       {
         to: '/komuta', label: 'Komuta', hint: 'Sinyaller ve uyarılar', icon: Radar,
         tabs: [tab('/komuta', 'Sinyaller', 'Oyunlar ve sinyaller', Radar), tab('/uyarilar', 'Uyarılar', 'Politika ve hatalar', BellRing)],
@@ -72,7 +73,7 @@ export const navGroups: { title: string; items: NavItem[] }[] = [
 export const allPages: Page[] = navGroups.flatMap((g) => g.items.flatMap((i) => i.tabs ?? [i]))
 const links = navGroups.flatMap((g) => g.items)
 const pathsOf = (n: NavItem) => (n.tabs ?? [n]).map((t) => t.to)
-const mobileMain = ['/', '/gelir', '/reklamlar', '/yayin']
+const mobileMain = ['/', '/veriler', '/reklamlar', '/yayin']
 
 // Verilerin en son ne zaman güncellendiği (en yeni veri toplama ya da kaynak senkronu); dakikada bir tazelenir
 function LastSync() {

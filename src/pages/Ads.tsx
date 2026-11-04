@@ -6,6 +6,7 @@ import Needs from '../components/Needs'
 import AdDashboard from '../components/AdDashboard'
 import AdConnect from '../components/AdConnect'
 import AdTrends from '../components/AdTrends'
+import AdProfit from '../components/AdProfit'
 import { money } from '../lib/format'
 import { useStore } from '../lib/store'
 import { trDateTime } from '../lib/rows'
@@ -35,6 +36,8 @@ export default function Ads() {
       </div>
 
       <AdDashboard />
+
+      <AdProfit />
 
       <AdTrends />
 

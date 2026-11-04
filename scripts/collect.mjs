@@ -22,6 +22,7 @@ import { flushOutbox, notifyCritical, notifyDaily, pushReady } from './push.mjs'
 import { needsWorkPlan, runWorkPlan } from './workplan.mjs'
 import { updateAdLessons } from './adlessons.mjs'
 import { collectFirebase, firebaseReady } from './firebase.mjs'
+import { runWeekly, weeklyDue } from './weekly.mjs'
 
 const job = process.argv[2] || 'manual'
 
@@ -70,6 +71,7 @@ if (job === 'daily' || job === 'manual' || light) {
   await step('Claude analizi', 'claude', aiReady, () => runAi({ light }), { soft: true })
   await step('Telefon bildirimi', 'push', pushReady, notifyCritical)
   if (job === 'daily') await step('Günün özeti bildirimi', null, pushReady, notifyDaily)
+  if (job === 'daily' && (await weeklyDue().catch(() => false))) await step('Haftalık rapor', 'claude', aiReady, runWeekly, { soft: true })
   // Reklam planı haftada bir; ilk kurulumda ya da plan eskiyse günlük işte de hazırlanır
   if (!light && (await needsAdPlans().catch(() => false))) await step('Reklam planı', 'claude', aiReady, runAdPlans, { soft: true })
   // Haftalık iş bölümü: pazartesi (ad_plans işi) ya da son plan 7 günden eskiyse
