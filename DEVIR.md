@@ -287,3 +287,7 @@ Küçük bir Unity mobil oyun stüdyosu (Voo Game Studio / Pixel Game) için tek
 ## Cam görünüm (2 Kas 2026)
 - `src/lib/background.ts` + `src/components/Appearance.tsx` (Ayarlar › Görünüm): fotoğraf arka plan (6 hazır Unsplash/Lorem Picsum fotoğrafı ya da yüklenen fotoğraf, 1920 px JPEG'e küçültülür) ve karartma; "Klasik koyu" eski tema. Seçim localStorage `ui-bg` + `app_settings.ui_backgrounds[e-posta]`.
 - `html.glass` sınıfı: kartlar, menüler, üst çubuk ve alt menü yarı saydam + backdrop-filter (styles.css sonu).
+
+## Ana sayfa canlı pano (5 Kas 2026)
+- `src/components/LiveDashboard.tsx` (Welcome'da selamlamanın altında): CANLI rozeti (AdMob son güncelleme), bugünün parası (admob_daily bugün, dakikada bir yenilenir; panel verisi 5 dk'da bir), dün / bu ay / 30 gün; dünya küresi (`LiveGlobe.tsx`, canvas, sürüklenir) ve bugün en çok kazandıran ülkeler; 30 günlük ülke sıralaması; Meta yaş-cinsiyet (yoksa reklam türleri); oyun gelir halkaları.
+- Küre verisi `src/data/globe.ts`: Natural Earth 110m kara noktaları + mledoze/countries ülke merkezleri (ODbL), bir kez üretildi.

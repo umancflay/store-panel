@@ -6,11 +6,12 @@ import { useRows, useInsight } from '../lib/rows'
 import { demoNodes, demoTasks } from '../data/demo'
 import type { PlanNode, Task } from '../lib/types'
 import { periodRows, totals } from '../lib/metrics'
-import { int, money } from '../lib/format'
+import { int } from '../lib/format'
 import { SampleBanner } from '../components/ui'
 import { useGoal } from '../components/GoalCard'
 import Decisions from '../components/Decisions'
 import LiveStats from '../components/LiveStats'
+import LiveDashboard from '../components/LiveDashboard'
 
 // Ana sayfa: büyük karşılama, günün özeti ve iki giriş düğmesi
 export default function Welcome() {
@@ -59,6 +60,8 @@ export default function Welcome() {
         </Link>
       </div>
 
+      <LiveDashboard />
+
       {/* Sık yapılan işlere tek dokunuş */}
       <div className="quick-actions">
         <Link to="/yayin"><Rocket size={14} /> Build bırak</Link>
@@ -73,10 +76,6 @@ export default function Welcome() {
 
       <div className="welcome-stats">
         <LiveStats />
-        <div>
-          <span>Dünkü gelir</span>
-          <b>{loading ? '…' : money(y.revenue)}</b>
-        </div>
         <div>
           <span>Dünkü indirme</span>
           <b>{loading ? '…' : hasStore && y.downloads > 0 ? int(y.downloads) : '—'}</b>
