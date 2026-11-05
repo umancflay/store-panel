@@ -46,7 +46,7 @@ jobs:
 
   trends:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 40
     concurrency:
       group: adtrends
       cancel-in-progress: false
@@ -57,15 +57,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Reklam trendleri gerekli mi?
+      - name: Reklam trendleri / oyun fikirleri gerekli mi?
         id: check
         run: node scripts/assistant.mjs trends-check
       - name: Claude Code'u kur
         if: steps.check.outputs.has == 'true'
         run: npm install -g --no-audit --no-fund @anthropic-ai/claude-code
-      - name: Trendleri araştır
+      - name: Trendleri araştır / oyun fikirleri üret
         if: steps.check.outputs.has == 'true'
-        run: node scripts/assistant.mjs trends
+        run: node scripts/assistant.mjs trends "${{ steps.check.outputs.which }}"
 
   # Reklam Stüdyosu: fikirler (Claude) ve video/görsel hazırlama (ffmpeg). İş yoksa birkaç saniyede biter.
   studio:

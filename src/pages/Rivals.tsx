@@ -6,6 +6,7 @@ import { useStore } from '../lib/store'
 import { isDemo } from '../lib/supabase'
 import { GameLogo, SampleBanner } from '../components/ui'
 import TopCharts, { useCharts } from '../components/TopCharts'
+import GameIdeas from '../components/GameIdeas'
 
 // Rakip ve anahtar kelime takibi. Ne takip edileceğini burada seçersin; günlük iş (scripts/ranks.mjs)
 // Play ve App Store'da sıranı, rakiplerin puanını, indirmesini ve güncellemelerini yazar.
@@ -232,6 +233,8 @@ export default function Rivals() {
       )}
 
       <TopCharts />
+
+      <GameIdeas />
     </div>
   )
 }

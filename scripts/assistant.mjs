@@ -10,6 +10,7 @@ import { flushOutbox, notifyPeople } from './push.mjs'
 import { runWorkPlan, workPlanRequested } from './workplan.mjs'
 import { hasAssistantTasks, runAssistantTasks } from './assistanttasks.mjs'
 import { markTrendsStarted, runAdTrends, trendsDue } from './adtrends.mjs'
+import { ideasDue, markIdeasStarted, runGameIdeas } from './gameideas.mjs'
 import { runStudio, studioDue } from './studio.mjs'
 import { profilesDue, runProfiles } from './gameprofile.mjs'
 import { guidesDue, runGuides } from './designguide.mjs'
@@ -19,13 +20,16 @@ if (!dbReady) {
   process.exit(0)
 }
 
-// Reklam trendleri ayrı adımda (ayrı iş) çalışır: uzun sürer, sohbet cevaplarını bekletmesin
+// Reklam trendleri ve oyun fikirleri ayrı adımda (ayrı iş) çalışır: uzun sürer, sohbet cevaplarını bekletmesin
+// which: hangileri çalışacak ("trends", "ideas" ya da "trends,ideas")
 if (process.argv[2] === 'trends-check') {
-  const due = aiReady && (await trendsDue())
-  if (due) await markTrendsStarted()
-  if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `has=${due}
+  const which = []
+  if (aiReady && (await trendsDue())) { await markTrendsStarted(); which.push('trends') }
+  if (aiReady && (await ideasDue())) { await markIdeasStarted(); which.push('ideas') }
+  if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `has=${which.length > 0}
+which=${which.join(',')}
 `)
-  console.log(due ? 'Reklam trendleri araştırılacak' : 'Reklam trendleri güncel')
+  console.log(which.length ? `Çalışacak: ${which.join(', ')}` : 'Reklam trendleri ve oyun fikirleri güncel')
   process.exit(0)
 }
 // Reklam Stüdyosu: fikir yazma ve video birleştirme (ffmpeg) ayrı işte
@@ -43,8 +47,12 @@ if (process.argv[2] === 'studio') {
   process.exit(0)
 }
 if (process.argv[2] === 'trends') {
-  await runAdTrends()
-  process.exit(0)
+  // Eski çağrı (argümansız) sadece trendleri çalıştırır
+  const which = (process.argv[3] ?? 'trends').split(',')
+  let failed = false
+  if (which.includes('trends')) await runAdTrends().catch((e) => { failed = true; console.error('Reklam trendleri hatası:', e) })
+  if (which.includes('ideas')) await runGameIdeas().catch((e) => { failed = true; console.error('Oyun fikirleri hatası:', e) })
+  process.exit(failed ? 1 : 0)
 }
 
 if (process.argv[2] === 'check') {

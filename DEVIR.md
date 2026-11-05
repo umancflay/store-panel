@@ -321,3 +321,8 @@ Küçük bir Unity mobil oyun stüdyosu (Voo Game Studio / Pixel Game) için tek
 - `supabase/phase14-ads-countries.sql`: `ingest_ads` güncellendi; `breakdowns` gelirse bu platformun `ad_breakdowns` (dimension 'country') satırları silinip yeniden yazılır (TL ise son kurla USD). Bağlantı mesajında "betik vN" yazar; panel v2 değilse "Yeni betik hazır" uyarısı gösterir.
 - Görünüm: Reklam › Google Ads seçilince mevcut "Ülkeler" kartı (AdDashboard) bu veriyle dolar.
 - Kurulum: SQL bir kez çalıştırılır, sonra Google Ads'teki "Voo Panel" betiğinin içi yeni betikle değiştirilir.
+
+## Oyun fikirleri (Rakipler sayfasının en altı)
+- `scripts/gameideas.mjs`: Claude (web açık) App Store listelerinin özetine (`chartDigest`, testli: ilk 20, yeni girenler, 5+ sıra yükselenler, türler), oyunlarımıza, oyun kartlarına ve son 14 gün metriklerine bakıp 5 yeni oyun fikri (neden şimdi, oynanış, reklam anı, para, ~hafta, elimizdekinden ne kullanılır, ilham, risk, puanlar) ve mevcut oyunlara 3-5 küçük ekleme yazar. Kayıt: `app_settings.game_ideas`.
+- Tetik: panelde "Yeni fikir üret" (`game_ideas_request` = { at, note }, isteğe bağlı yön notu) ya da haftada bir. `assistant.yml` › `trends` işi: `trends-check` hem trendleri hem fikirleri sorar, `which` çıktısıyla ikisini/birini çalıştırır (iş süresi 40 dk).
+- Beğen/geç: `app_settings.game_ideas_feedback` › items[fikir adı] = like | pass; sonraki istemde kullanılır. Önceki fikirler tekrar önerilmez.

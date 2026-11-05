@@ -1353,3 +1353,21 @@ html.glass .inner, html.glass .trend, html.glass .verdict, html.glass .studio-wa
 .guard-bar.warn span { background: var(--orange, #ffb020); }
 .guard-bar.bad span { background: var(--red, #ff6b6b); }
 .adc-update { margin: 6px 0 10px; padding: 8px 12px; border-radius: 10px; background: rgba(255,176,32,.1); border: 1px solid rgba(255,176,32,.25); color: #ffd28a; line-height: 1.5; }
+
+/* Oyun fikirleri */
+.idea-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.idea { display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 14px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07); }
+.idea.like { border-color: rgba(52,211,153,.45); }
+.idea.pass { opacity: .5; }
+.idea-name { font-size: 16px; }
+.idea p { margin: 0; font-size: 12.5px; line-height: 1.55; color: #d8d8d8; }
+.idea-scores { display: flex; flex-wrap: wrap; gap: 10px; }
+.idea-score { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--muted); }
+.idea-score i { display: inline-flex; gap: 2px; }
+.idea-score b { width: 8px; height: 8px; border-radius: 2px; background: rgba(255,255,255,.1); }
+.idea-score b.on { background: var(--orange, #ffb020); }
+.idea-more { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; font-size: 12px; line-height: 1.5; }
+.idea-more dt { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .05em; padding-top: 2px; }
+.idea-more dd { margin: 0; }
+.icon-btn.on-like { color: var(--green); border-color: rgba(52,211,153,.5); }
+.icon-btn.on-pass { color: var(--red, #ff6b6b); border-color: rgba(255,107,107,.5); }

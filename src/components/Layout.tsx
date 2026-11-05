@@ -57,7 +57,7 @@ export const navGroups: { title: string; items: NavItem[] }[] = [
     title: 'Mağaza ve gelir',
     items: [
       {
-        to: '/oyunlar', label: 'Oyunlar', hint: 'Mağazalar, rakipler, popüler oyunlar', icon: Gamepad2,
+        to: '/oyunlar', label: 'Oyunlar', hint: 'Mağazalar, rakipler, oyun fikirleri', icon: Gamepad2,
         tabs: [tab('/oyunlar', 'Oyunlar', 'Mağazalar', Gamepad2), tab('/yorumlar', 'Yorumlar', 'Oyuncular', MessageSquareText), tab('/rakipler', 'Rakipler', 'Arama sırası', Swords)],
       },
       { to: '/gelir', label: 'Gelir', hint: 'AdMob ve satış', icon: Wallet },
