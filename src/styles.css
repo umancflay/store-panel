@@ -1311,3 +1311,20 @@ html.glass .inner, html.glass .trend, html.glass .verdict, html.glass .studio-wa
 .profit-row b { font-size: 13px; }
 .profit-dot { width: 32px; height: 32px; border-radius: 10px; background: rgba(255,255,255,.08); flex: none; }
 .game-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
+
+/* Rakipler ve arama sırası */
+.rank-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.rank-table th { text-align: left; font: 600 10px var(--font); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 0 6px 8px; }
+.rank-table td { padding: 8px 6px; border-top: 1px solid rgba(255,255,255,.06); }
+.rank-table td:last-child, .rank-table th:last-child { width: 28px; text-align: right; }
+.rank { display: inline-flex; align-items: center; gap: 6px; }
+.rank.top b { color: var(--green); }
+.rank small { display: inline-flex; align-items: center; gap: 1px; font-size: 10px; font-weight: 600; }
+.rank small.up { color: var(--green); }
+.rank small.down { color: var(--red, #ff6b6b); }
+.rival-list { display: flex; flex-direction: column; }
+.rival-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid rgba(255,255,255,.06); }
+.rival-row:first-child { border-top: 0; }
+.rival-row img, .rival-ph { width: 32px; height: 32px; border-radius: 8px; flex: none; background: rgba(255,255,255,.06); }
+.rival-row .badge { white-space: nowrap; }
+@media (max-width: 640px) { .rival-row .badge { display: none; } }

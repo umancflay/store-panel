@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
   Home, Radar, Bot, KanbanSquare, Network, Users, Workflow, NotebookPen, CalendarDays, Wallet, Megaphone,
   BellRing, Gamepad2, MessageSquareText, LayoutDashboard, FolderOpen, Settings, RefreshCw, LogOut, Menu, X, CheckCircle2, AlertTriangle, Info, ChevronDown, Search, Rocket, Clapperboard, Activity,
+  Swords,
 } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { useStore } from '../lib/store'
@@ -56,8 +57,8 @@ export const navGroups: { title: string; items: NavItem[] }[] = [
     title: 'Mağaza ve gelir',
     items: [
       {
-        to: '/oyunlar', label: 'Oyunlar', hint: 'Mağazalar ve yorumlar', icon: Gamepad2,
-        tabs: [tab('/oyunlar', 'Oyunlar', 'Mağazalar', Gamepad2), tab('/yorumlar', 'Yorumlar', 'Oyuncular', MessageSquareText)],
+        to: '/oyunlar', label: 'Oyunlar', hint: 'Mağazalar, yorumlar, rakipler', icon: Gamepad2,
+        tabs: [tab('/oyunlar', 'Oyunlar', 'Mağazalar', Gamepad2), tab('/yorumlar', 'Yorumlar', 'Oyuncular', MessageSquareText), tab('/rakipler', 'Rakipler', 'Arama sırası', Swords)],
       },
       { to: '/gelir', label: 'Gelir', hint: 'AdMob ve satış', icon: Wallet },
       {

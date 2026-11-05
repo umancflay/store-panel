@@ -23,6 +23,7 @@ import { needsWorkPlan, runWorkPlan } from './workplan.mjs'
 import { updateAdLessons } from './adlessons.mjs'
 import { collectFirebase, firebaseReady } from './firebase.mjs'
 import { runWeekly, weeklyDue } from './weekly.mjs'
+import { ranksDue, runRanks } from './ranks.mjs'
 
 const job = process.argv[2] || 'manual'
 
@@ -62,6 +63,8 @@ if (job === 'daily' || job === 'manual' || light) {
   await step('App Store', 'app_store', appStoreReady, () => collectAppStore({ light }))
   await step('Meta', 'meta', metaReady, () => collectMeta({ light }))
   await step('Firebase', 'firebase', firebaseReady, collectFirebase, { soft: true })
+  // Rakip ve anahtar kelime takibi: günde bir (ya da panelde "Şimdi kontrol et"e basılınca sonraki işte)
+  if (await ranksDue().catch(() => false)) await step('Mağaza takibi', null, true, runRanks, { soft: true })
   await step('Gmail', 'gmail', googleReady, () => collectGmail({ days: light ? 7 : 30 }))
   if (!light) await step('Uyarı kuralları', null, true, applyRules)
   // Gelir hedefi ve ani düşüş: dünün verisi sabah işinde tamamlanmış olur

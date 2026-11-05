@@ -20,6 +20,7 @@ import Revenue from './pages/Revenue'
 import Ads from './pages/Ads'
 import Studio from './pages/Studio'
 import Live from './pages/Live'
+import Rivals from './pages/Rivals'
 import Assistant from './pages/Assistant'
 import Settings from './pages/Settings'
 import Workspace from './pages/Workspace'
@@ -50,6 +51,7 @@ function Gate() {
             <Route path="oyunlar" element={<GamesList />} />
             <Route path="oyunlar/:id" element={<GameDetail />} />
             <Route path="yorumlar" element={<Reviews />} />
+            <Route path="rakipler" element={<Rivals />} />
             <Route path="gelir" element={<Revenue />} />
             <Route path="reklamlar" element={<Ads />} />
             <Route path="studyo" element={<Studio />} />

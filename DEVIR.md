@@ -295,3 +295,10 @@ Küçük bir Unity mobil oyun stüdyosu (Voo Game Studio / Pixel Game) için tek
 - Haftalık rapor (`scripts/weekly.mjs`): pazartesi (ya da 7 günden eskiyse) günlük işte Claude yazar → `ai_insights.weekly_report` + bildirim. Kart: `WeeklyReport.tsx`.
 - Reklam kârı (`AdProfit.tsx`, Reklam sayfası): oyun başına 30 gün harcama ve gelir oranı.
 - Oyun sayfası ekleri (`GameExtras.tsx`): oyunun ülkeleri, oyun kartı, Stüdyo/Reklam kısa yolları.
+
+## Rakip ve anahtar kelime takibi (Oyunlar › Rakipler, `#/rakipler`)
+- Panelden oyun başına seçilir: en fazla 15 anahtar kelime, 10 rakip (Play linki ya da paket adı), ülke. Kayıt: `app_settings.rank_watch` › items[oyun] = { keywords, rivals, country }; "Şimdi kontrol et" → `requested: true`.
+- `scripts/ranks.mjs` (testli): Play arama sayfasında sıra (ilk ~30), App Store'da iTunes Search API ile sıra (ilk 200); rakibin Play sayfasından puan, yorum, kesin indirme sayısı, son güncelleme tarihi. Geçmiş `app_settings.rank_history` (60 gün).
+- `collect.mjs` her işte `ranksDue()` sorar: istek varsa ya da son kontrol 20 saatten eskiyse çalışır (saatlik iş sayesinde istek en geç ~1 saatte işlenir).
+- Bildirim (`notify_outbox`, en fazla 5): kelime ilk 10'a girdi/çıktı, rakip güncelleme yaptı.
+- Rakip önerileri tasarım rehberinin örnek oyunlarından (`design_guides.refs`) gelir.
