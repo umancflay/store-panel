@@ -302,3 +302,9 @@ Küçük bir Unity mobil oyun stüdyosu (Voo Game Studio / Pixel Game) için tek
 - `collect.mjs` her işte `ranksDue()` sorar: istek varsa ya da son kontrol 20 saatten eskiyse çalışır (saatlik iş sayesinde istek en geç ~1 saatte işlenir).
 - Bildirim (`notify_outbox`, en fazla 5): kelime ilk 10'a girdi/çıktı, rakip güncelleme yaptı.
 - Rakip önerileri tasarım rehberinin örnek oyunlarından (`design_guides.refs`) gelir.
+
+## Şu an popüler oyunlar (Rakipler sayfasının altı)
+- `scripts/charts.mjs` (testli), günde bir (`chartsDue`: 20 saat): App Store resmi RSS listeleri, ABD + Türkiye, oyun kategorisi (6014), en çok indirilen ücretsiz ve en çok kazanan, ilk 50. Tür ve puan `itunes.apple.com/lookup` ile toplu. Düne göre değişim (`prev`, null = yeni girdi) ve türlerin dağılımı.
+- Takip edilen kelimeler için App Store arama önerileri (MZSearchHints, ABD) → Rakipler sayfasında "Oyuncular şunu da arıyor" (tek tıkla takibe eklenir).
+- Kayıt: `app_settings.top_charts`. Google Play herkese açık sıralama listesi vermediği için yok.
+- Ülke menüsü koyu temada okunmuyordu: `select option` rengi ve `color-scheme: dark` eklendi.

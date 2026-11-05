@@ -5,6 +5,7 @@ import { useSetting, trDateTime } from '../lib/rows'
 import { useStore } from '../lib/store'
 import { isDemo } from '../lib/supabase'
 import { GameLogo, SampleBanner } from '../components/ui'
+import TopCharts, { useCharts } from '../components/TopCharts'
 
 // Rakip ve anahtar kelime takibi. Ne takip edileceğini burada seçersin; günlük iş (scripts/ranks.mjs)
 // Play ve App Store'da sıranı, rakiplerin puanını, indirmesini ve güncellemelerini yazar.
@@ -48,6 +49,7 @@ export default function Rivals() {
   const [watchSetting, saveWatch] = useSetting<WatchSetting>('rank_watch', isDemo ? demoWatch : { items: {} })
   const [hist] = useSetting<HistSetting>('rank_history', isDemo ? demoHist : { items: {} })
   const [guides] = useSetting<Guides>('design_guides', { items: {} })
+  const charts = useCharts()
   const [picked, setPicked] = useState<string | null>(null)
   const [kwInput, setKwInput] = useState('')
   const [rivalInput, setRivalInput] = useState('')
@@ -138,7 +140,7 @@ export default function Rivals() {
                 <div className="card-title flex" style={{ gap: 8 }}><Search size={16} /> Arama sırası</div>
                 <div className="card-sub">Oyuncu bu kelimeyi aratınca {game.name} kaçıncı çıkıyor</div>
               </div>
-              <select className="input sm" value={watch.country} onChange={(e) => update({ country: e.target.value })} aria-label="Ülke" style={{ width: 'auto' }}>
+              <select className="select sm" value={watch.country} onChange={(e) => update({ country: e.target.value })} aria-label="Ülke" style={{ width: 'auto' }}>
                 {COUNTRIES.map(([c, n]) => <option key={c} value={c}>{n}</option>)}
               </select>
             </div>
@@ -166,6 +168,16 @@ export default function Rivals() {
                 </tbody>
               </table>
             )}
+            {(() => {
+              // App Store'un arama önerileri: takip edilen kelimeleri yazanlar bunları da arıyor
+              const ideas = [...new Set(watch.keywords.flatMap((k) => charts.hints?.[k] ?? []))].filter((t) => !watch.keywords.includes(t)).slice(0, 10)
+              return ideas.length > 0 && (
+                <div className="flex wrap" style={{ gap: 6, marginTop: 12 }}>
+                  <span className="muted small">Oyuncular şunu da arıyor:</span>
+                  {ideas.map((t) => <button key={t} type="button" className="chip-btn" onClick={() => watch.keywords.length < 15 && update({ keywords: [...watch.keywords, t] })}><Plus size={11} /> {t}</button>)}
+                </div>
+              )
+            })()}
             <p className="muted" style={{ fontSize: 11, marginTop: 10, lineHeight: 1.5 }}>
               Play ilk 30, App Store ilk 200 sonuca bakılır. Oklar geçen haftaya göre değişim. "—" = oyun o mağazada yok.
             </p>
@@ -218,6 +230,8 @@ export default function Rivals() {
           </section>
         </div>
       )}
+
+      <TopCharts />
     </div>
   )
 }
