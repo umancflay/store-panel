@@ -13,7 +13,7 @@ const SUPA = import.meta.env.VITE_SUPABASE_URL as string | undefined
 const ANON = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 
 function adsScript(key: string) {
-  return `// Voo Game Studio paneli: kampanya sonuçlarını panele gönderir (sadece okur, hiçbir şeyi değiştirmez).
+  return `// Voo Game Studio paneli, betik sürüm 2: kampanya sonuçlarını ve ülke kırılımını panele gönderir (sadece okur, hiçbir şeyi değiştirmez).
 var PANEL = '${SUPA}/rest/v1/rpc/ingest_ads';
 var APIKEY = '${ANON}';
 var KEY = '${key}';
@@ -35,11 +35,35 @@ function main() {
       installs: r.campaign.advertisingChannelType === 'MULTI_CHANNEL' ? Number(r.metrics.conversions || 0) : 0
     });
   }
-  var acc = AdsApp.currentAccount();
+  var payload = { v: 2, platform: 'google_ads', account: AdsApp.currentAccount().getCustomerId(), currency: AdsApp.currentAccount().getCurrencyCode(), rows: rows };
+  // Ülke kırılımı (son 30 gün toplamı); hata olursa kampanya verisi yine gider
+  try {
+    var geo = AdsApp.search('SELECT campaign.id, geographic_view.country_criterion_id, metrics.cost_micros, ' +
+      'metrics.impressions, metrics.clicks, metrics.conversions FROM geographic_view WHERE segments.date DURING LAST_30_DAYS');
+    var sum = {}, ids = {};
+    while (geo.hasNext()) {
+      var g = geo.next();
+      var cid = String(g.geographicView.countryCriterionId || '');
+      if (!cid) continue;
+      var k = g.campaign.id + '|' + cid;
+      var s = sum[k] || (sum[k] = { campaignId: String(g.campaign.id), geo: cid, cost: 0, impressions: 0, clicks: 0, conversions: 0 });
+      s.cost += Number(g.metrics.costMicros || 0) / 1e6; s.impressions += Number(g.metrics.impressions || 0);
+      s.clicks += Number(g.metrics.clicks || 0); s.conversions += Number(g.metrics.conversions || 0);
+      ids[cid] = true;
+    }
+    var codes = {}, list = Object.keys(ids);
+    if (list.length) {
+      var gt = AdsApp.search('SELECT geo_target_constant.id, geo_target_constant.country_code FROM geo_target_constant ' +
+        'WHERE geo_target_constant.id IN (' + list.join(',') + ')');
+      while (gt.hasNext()) { var c = gt.next().geoTargetConstant; codes[String(c.id)] = c.countryCode; }
+    }
+    payload.breakdowns = Object.keys(sum).map(function (k) { var s = sum[k]; s.key = codes[s.geo] || ''; delete s.geo; return s; })
+      .filter(function (s) { return s.key && (s.cost > 0 || s.impressions > 0); });
+  } catch (e) { Logger.log('Ülke kırılımı alınamadı: ' + e); }
   var res = UrlFetchApp.fetch(PANEL, {
     method: 'post', contentType: 'application/json', muteHttpExceptions: true,
     headers: { apikey: APIKEY },
-    payload: JSON.stringify({ p_key: KEY, p_payload: { platform: 'google_ads', account: acc.getCustomerId(), currency: acc.getCurrencyCode(), rows: rows } })
+    payload: JSON.stringify({ p_key: KEY, p_payload: payload })
   });
   Logger.log('Panel: ' + res.getResponseCode() + ' ' + res.getContentText());
 }
@@ -122,6 +146,9 @@ export default function AdConnect() {
             </div>
             <span className={`badge ${googleOn ? 'b-ok' : 'b-warning'}`}>{googleOn ? 'Bağlı' : 'Kurulum bekliyor'}</span>
           </div>
+          {googleOn && !/betik v2/.test(google?.message ?? '') && (
+            <div className="adc-update small">Yeni betik hazır: kampanyaları <b>ülke ülke</b> de gönderiyor. "Betiği göster" › kopyala › Google Ads'teki "Voo Panel" betiğinin içini silip yapıştır › Kaydet.</div>
+          )}
           {!showScript ? (
             <button type="button" className="btn btn-primary sm" onClick={() => prepare()}><KeyRound size={13} /> {googleOn ? 'Betiği göster' : 'Kurulumu başlat'}</button>
           ) : (

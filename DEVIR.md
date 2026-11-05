@@ -315,3 +315,9 @@ Küçük bir Unity mobil oyun stüdyosu (Voo Game Studio / Pixel Game) için tek
 - Bütçe: bu ay toplam harcama (campaigns, USD) sınırın %80'i / %100'ü, ay sonu tahmini sınırın %5 üstü, dünkü harcama son 7 gün ortalamasının `spike` katı.
 - Uyarılar `alerts`'a `resolution=ignore-duplicates` ile yazılır (çözüldü işaretlenen tekrar açılmaz), yalnız yeni olanlar için `notify_outbox`. Hiçbir kampanyaya dokunulmaz.
 - Panel: Gelir › "eCPM alarmı" kartı (oyun başına dün vs normal, eşik %20/30/50), Reklam › "Bütçe bekçisi" kartı (aylık sınır, ilerleme çubuğu, ay sonu tahmini).
+
+## Google Ads ülke kırılımı (betik v2)
+- `AdConnect.tsx` › `adsScript`: sürüm 2. `geographic_view` (son 30 gün, kampanya × ülke kriteri) toplanır, `geo_target_constant` ile ISO ülke koduna çevrilir, `payload.breakdowns` olarak gönderilir. Hata olursa kampanya verisi yine gider. `payload.v = 2`.
+- `supabase/phase14-ads-countries.sql`: `ingest_ads` güncellendi; `breakdowns` gelirse bu platformun `ad_breakdowns` (dimension 'country') satırları silinip yeniden yazılır (TL ise son kurla USD). Bağlantı mesajında "betik vN" yazar; panel v2 değilse "Yeni betik hazır" uyarısı gösterir.
+- Görünüm: Reklam › Google Ads seçilince mevcut "Ülkeler" kartı (AdDashboard) bu veriyle dolar.
+- Kurulum: SQL bir kez çalıştırılır, sonra Google Ads'teki "Voo Panel" betiğinin içi yeni betikle değiştirilir.
