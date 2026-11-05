@@ -1340,3 +1340,15 @@ html.glass .inner, html.glass .trend, html.glass .verdict, html.glass .studio-wa
 .chart-move.up { color: var(--green); }
 .chart-move.down { color: var(--red, #ff6b6b); }
 .ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+
+/* Korumalar: bütçe bekçisi ve eCPM alarmı */
+.guard-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.guard-stats div { display: flex; flex-direction: column; gap: 3px; }
+.guard-stats span { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.guard-stats b { font-size: 20px; font-weight: 600; }
+.guard-stats b.warn { color: var(--orange, #ffb020); }
+.guard-stats b.bad { color: var(--red, #ff6b6b); }
+.guard-bar { height: 6px; border-radius: 99px; background: rgba(255,255,255,.08); margin-top: 12px; overflow: hidden; }
+.guard-bar span { display: block; height: 100%; border-radius: inherit; background: var(--green); transition: width .4s; }
+.guard-bar.warn span { background: var(--orange, #ffb020); }
+.guard-bar.bad span { background: var(--red, #ff6b6b); }

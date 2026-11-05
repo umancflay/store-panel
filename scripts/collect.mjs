@@ -25,6 +25,7 @@ import { collectFirebase, firebaseReady } from './firebase.mjs'
 import { runWeekly, weeklyDue } from './weekly.mjs'
 import { ranksDue, runRanks } from './ranks.mjs'
 import { chartsDue, runCharts } from './charts.mjs'
+import { runGuards } from './guards.mjs'
 
 const job = process.argv[2] || 'manual'
 
@@ -69,6 +70,8 @@ if (job === 'daily' || job === 'manual' || light) {
   if (await chartsDue().catch(() => false)) await step('Popüler oyunlar', null, true, runCharts, { soft: true })
   await step('Gmail', 'gmail', googleReady, () => collectGmail({ days: light ? 7 : 30 }))
   if (!light) await step('Uyarı kuralları', null, true, applyRules)
+  // eCPM düşüşü ve bütçe bekçisi: sadece uyarı + bildirim, hiçbir kampanyaya dokunmaz
+  if (!light) await step('Korumalar', null, true, runGuards, { soft: true })
   // Gelir hedefi ve ani düşüş: dünün verisi sabah işinde tamamlanmış olur
   if (job === 'daily') await step('Gelir hedefi', null, true, applyGoals, { soft: true })
   if (!light) await step('Reklam dersleri', null, true, updateAdLessons, { soft: true })

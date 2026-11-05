@@ -7,6 +7,7 @@ import AdDashboard from '../components/AdDashboard'
 import AdConnect from '../components/AdConnect'
 import AdTrends from '../components/AdTrends'
 import AdProfit from '../components/AdProfit'
+import { BudgetGuard } from '../components/Guards'
 import { money } from '../lib/format'
 import { useStore } from '../lib/store'
 import { trDateTime } from '../lib/rows'
@@ -37,7 +38,10 @@ export default function Ads() {
 
       <AdDashboard />
 
-      <AdProfit />
+      <div className="grid g-2" style={{ alignItems: 'start' }}>
+        <AdProfit />
+        <BudgetGuard />
+      </div>
 
       <AdTrends />
 

@@ -308,3 +308,10 @@ Küçük bir Unity mobil oyun stüdyosu (Voo Game Studio / Pixel Game) için tek
 - Takip edilen kelimeler için App Store arama önerileri (MZSearchHints, ABD) → Rakipler sayfasında "Oyuncular şunu da arıyor" (tek tıkla takibe eklenir).
 - Kayıt: `app_settings.top_charts`. Google Play herkese açık sıralama listesi vermediği için yok.
 - Ülke menüsü koyu temada okunmuyordu: `select option` rengi ve `color-scheme: dark` eklendi.
+
+## Korumalar: eCPM alarmı ve bütçe bekçisi
+- `scripts/guards.mjs` (testli), günlük işte (`collect.mjs` › "Korumalar", light işte çalışmaz). Ayarlar `app_settings.guards` = { ecpm: { enabled, drop (%), minImpressions }, budget: { enabled, monthly (USD|null), spike (kat, 0=kapalı) } }.
+- eCPM: dünkü eCPM son 14 günün ortalamasından `drop`% düşükse (her iki dönemde ≥ minImpressions gösterim) uyarı; en çok düşen reklam türü yazılır. %50+ kritik.
+- Bütçe: bu ay toplam harcama (campaigns, USD) sınırın %80'i / %100'ü, ay sonu tahmini sınırın %5 üstü, dünkü harcama son 7 gün ortalamasının `spike` katı.
+- Uyarılar `alerts`'a `resolution=ignore-duplicates` ile yazılır (çözüldü işaretlenen tekrar açılmaz), yalnız yeni olanlar için `notify_outbox`. Hiçbir kampanyaya dokunulmaz.
+- Panel: Gelir › "eCPM alarmı" kartı (oyun başına dün vs normal, eşik %20/30/50), Reklam › "Bütçe bekçisi" kartı (aylık sınır, ilerleme çubuğu, ay sonu tahmini).

@@ -11,6 +11,7 @@ import Needs from '../components/Needs'
 import AdmobSummary from '../components/AdmobSummary'
 import Select from '../components/Select'
 import GoalCard from '../components/GoalCard'
+import { EcpmGuard } from '../components/Guards'
 
 type View = 'game' | 'country' | 'format' | 'unit'
 const formatColors = ['#FFFFFF', '#8FD3AE', '#E8C07A', '#8A8A8A', '#D9D9D9']
@@ -98,7 +99,10 @@ export default function Revenue() {
         </div>
       </div>
 
-      <GoalCard />
+      <div className="grid g-2" style={{ alignItems: 'start' }}>
+        <GoalCard />
+        <EcpmGuard />
+      </div>
 
       {connected.admob || demo ? <AdmobSummary /> : null}
 
